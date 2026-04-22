@@ -993,7 +993,7 @@ function logEntry(action, taskId, taskTitle, field, from, to){
 
 let managers=[
   {code:'TD',name:'Таня', col:'#e06030',vacFrom:'',vacTo:'',role:'admin',   email:'tanya@waymark.app'},
-  {code:'MK',name:'Міша', col:'#3a9e6a',vacFrom:'',vacTo:'',role:'admin',   email:'misha@waymark.app'}
+  {code:'MK',name:'Міша', col:'#3a9e6a',vacFrom:'',vacTo:'',role:'admin',   email:'misha@waymark.app'} // суперадмін
 ];
 let selectedMgrColor=MGR_COLORS[2];
 let tasks=[
@@ -1525,7 +1525,11 @@ function renderMgrList(){
     return `<div class="mgr-row">
       <div class="mgr-top">
         <div class="mgr-av" style="background:${m.col}">${esc(m.code)}</div>
-        <div class="mgr-name">${esc(m.name)} (${esc(m.code)})${vac?` <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px">🏖 відпустка</span>`:''}</div>
+        <input value="${esc(m.name)}" placeholder="Ім'я"
+          onblur="setMgrName('${esc(m.code)}',this.value)"
+          style="border:1px solid #e4e0da;border-radius:6px;font-size:13px;font-weight:600;padding:3px 8px;font-family:inherit;width:100px;flex-shrink:0;color:#333"
+          ${canEdit?'':'disabled'}>
+        ${vac?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px">🏖 відпустка</span>`:''}
         <input type="email" value="${esc(m.email||'')}" placeholder="email для входу"
           onblur="setMgrEmail('${esc(m.code)}',this.value)"
           style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px;flex-shrink:0"
@@ -1563,6 +1567,11 @@ function setMgrRole(code,role){
     logEntry('role',null,m.name,'роль',oldRole,role);
     save();renderMgrList();
   }
+}
+function setMgrName(code,name){
+  const n=name.trim();if(!n) return;
+  const m=managers.find(x=>x.code===code);
+  if(m){m.name=n;save();renderMgrList();render();}
 }
 function setMgrEmail(code,email){
   const m=managers.find(x=>x.code===code);
@@ -2199,7 +2208,7 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     </div>
     <div class="del-modal-title">Встановіть пароль суперадміна</div>
-    <div class="del-modal-sub">Це перший запуск. Задайте пароль для захищеного доступу суперадміна.</div>
+    <div class="del-modal-sub">Встановіть пароль суперадміна (Міша). Використовується для розширених прав: зміна ролей, делегування, видалення назавжди.</div>
     <input id="saFirstPwd" type="password" placeholder="Новий пароль (мін. 4 симв.)" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box">
     <input id="saFirstPwd2" type="password" placeholder="Підтвердіть пароль" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:6px;box-sizing:border-box">
     <div id="saFirstErr" style="font-size:11px;color:#c0392b;min-height:16px;margin-bottom:10px"></div>
