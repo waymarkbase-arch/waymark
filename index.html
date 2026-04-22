@@ -907,7 +907,8 @@ function startRealtimeSync(){
     // only apply if another user changed it (not our own save)
     if(d.updatedBy && d.updatedBy !== curU){
       if(d.tasks)        tasks        = d.tasks;
-      if(d.managers)     managers     = d.managers;
+      // never overwrite managers during SA session — prevents role lockout
+      if(d.managers && !isSuperAdmin()) managers = d.managers;
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
@@ -1551,6 +1552,10 @@ function renderMgrList(){
 }
 function setMgrRole(code,role){
   if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати права.');return;}
+  // prevent SA from accidentally locking themselves out
+  if(isSuperAdmin() && code===curU && role!=='admin'){
+    if(!confirm(`Ви змінюєте власну роль на «${role}». Якщо завершите SA-сесію — втратите права адміна. Продовжити?`)) return;
+  }
   const m=managers.find(x=>x.code===code);
   if(m){
     const oldRole=m.role;
