@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Waymark — Task Management</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238b1a1a'/><text x='32' y='48' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-weight='bold' font-size='46' fill='white'>W</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%238b1a1a'/><text x='32' y='48' text-anchor='middle' font-family='Georgia,serif' font-style='italic' font-weight='bold' font-size='46' fill='white'>W</text></svg>">
 <link rel="manifest" id="pwaManifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,7 +19,8 @@
 // ═══════════════════════════════════════════════
 import { initializeApp }              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signInWithPopup,
-         GoogleAuthProvider, signOut,
+         GoogleAuthProvider, signOut, createUserWithEmailAndPassword,
+         sendPasswordResetEmail,
          onAuthStateChanged }          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc,
          onSnapshot, collection,
@@ -40,6 +43,7 @@ const googleProv = new GoogleAuthProvider();
 // ── expose to global scope so non-module JS can call ──
 window._fb = { fbAuth, db, signInWithEmailAndPassword, signInWithPopup,
                googleProv, signOut, onAuthStateChanged,
+               createUserWithEmailAndPassword, sendPasswordResetEmail,
                doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp };
 </script>
 <style>
@@ -1597,6 +1601,7 @@ function renderMgrList(){
           <option value='admin' ${m.role==='admin'?'selected':''}>Адмін</option>
         </select>
         ${isSA?`<button onclick="saDelegateSuper('${esc(m.code)}')" title="Делегувати суперадміна" style="border:none;background:#fef3c7;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e">👑 Делег.</button>`:''}
+        ${(canEdit&&m.email)?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати запрошення на пошту" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">✉ Запросити</button>`:''}
         <button class="mgr-del" onclick="delManager('${esc(m.code)}')" ${canEdit?'':'disabled'}>×</button>
       </div>
       <div class="vac-row">
@@ -1654,6 +1659,37 @@ function clearVac(code){const m=managers.find(x=>x.code===code);if(m){m.vacFrom=
 function delManager(code){
   if(managers.length<=1) return;
   managers=managers.filter(m=>m.code!==code);save();renderMgrList();render();
+}
+async function sendInvite(code){
+  if(!canDo('admin')&&!isSuperAdmin()){alert('Недостатньо прав для надсилання запрошень.');return;}
+  const m=managers.find(x=>x.code===code);
+  if(!m||!m.email){alert('Email менеджера не вказано.');return;}
+  const btn=document.getElementById('invBtn_'+code);
+  if(btn){btn.textContent='⏳ Надсилаємо...';btn.style.pointerEvents='none';}
+  try{
+    const {fbAuth, createUserWithEmailAndPassword, sendPasswordResetEmail}=window._fb;
+    // Спроба створити акаунт з тимчасовим паролем
+    const tempPwd='Waymark_'+Math.random().toString(36).slice(2,10)+'!';
+    try{
+      await createUserWithEmailAndPassword(fbAuth, m.email, tempPwd);
+      // Одразу виходимо з щойно створеного акаунту — щоб не зламати сесію поточного адміна
+      // Просто надсилаємо reset без signOut, бо createUser не міняє поточну сесію в тому ж fbAuth
+    }catch(createErr){
+      // Якщо акаунт вже існує — це нормально, йдемо далі
+      if(createErr.code!=='auth/email-already-in-use') throw createErr;
+    }
+    // Надсилаємо лист для встановлення/скидання паролю
+    await sendPasswordResetEmail(fbAuth, m.email);
+    if(btn){btn.textContent='✅ Надіслано!';btn.style.background='#d4edda';btn.style.color='#1a5e30';}
+    setTimeout(()=>{if(btn){btn.textContent='✉ Запросити';btn.style.pointerEvents='';btn.style.background='#e8f5ee';btn.style.color='#2e8653';}},4000);
+  }catch(e){
+    if(btn){btn.textContent='✉ Запросити';btn.style.pointerEvents='';}
+    const msgs={
+      'auth/invalid-email':'Невірний формат email.',
+      'auth/too-many-requests':'Забагато спроб. Зачекайте хвилину.',
+    };
+    alert('Помилка: '+(msgs[e.code]||e.message));
+  }
 }
 function updateAvatarUI(){
   const m=mgr(curU);
