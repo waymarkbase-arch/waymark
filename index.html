@@ -252,7 +252,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .dbtn.on{background:#1c1c1c;color:#fff;border-color:#1c1c1c}
 .mgr-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
 .mgr-row{background:#f8f8f5;border-radius:10px;padding:8px 12px}
-.mgr-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mgr-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.mgr-top input{min-width:0}
 .mgr-av{width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .mgr-name{flex:1;font-size:13px;color:#333}
 .mgr-del{background:none;border:none;cursor:pointer;color:#d4a0a0;font-size:16px;padding:0 2px}
@@ -934,9 +935,37 @@ function showSyncToast(byCode){
 
 // ── MATCH firebase email → manager code ──
 function emailToCode(email){
-  // looks up managers array for matching email field, fallback to first manager
   const m = managers.find(x=>x.email && x.email.toLowerCase()===email.toLowerCase());
-  return m ? m.code : managers[0]?.code || 'MK';
+  return m ? m.code : null; // null = unknown user
+}
+
+// ── IDENTITY PICKER — shown when Google email doesn't match any manager ──
+function openIdentityPicker(firebaseEmail){
+  const el=document.getElementById('identityPicker');
+  const list=document.getElementById('identityList');
+  list.innerHTML=managers.map(m=>`
+    <button onclick="assignIdentity('${esc(m.code)}','${esc(firebaseEmail)}')"
+      style="display:flex;align-items:center;gap:12px;width:100%;border:1px solid #e4e0da;border-radius:11px;padding:12px 14px;background:#fff;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:background .12s"
+      onmouseover="this.style.background='#f8f6f3'" onmouseout="this.style.background='#fff'">
+      <div style="width:36px;height:36px;border-radius:50%;background:${m.col};color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${esc(m.code)}</div>
+      <div style="text-align:left">
+        <div style="font-size:14px;font-weight:600;color:#333">${esc(m.name)}</div>
+        <div style="font-size:11px;color:#aaa">${esc(m.email||'email не вказано')}</div>
+      </div>
+    </button>`).join('');
+  el.style.display='flex';
+}
+
+async function assignIdentity(code, firebaseEmail){
+  // save this Google email to the manager profile
+  const m=managers.find(x=>x.code===code);
+  if(m){ m.email=firebaseEmail.toLowerCase(); await save(); }
+  curU=code;
+  document.getElementById('identityPicker').style.display='none';
+  bootApp();
+  startRealtimeSync();
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
 }
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
@@ -953,11 +982,17 @@ window.addEventListener('load', ()=>{
           document.getElementById('loginSpinner').style.display='none';
           await loadFromFirestore();
           migrateMgrRoles();
-          curU = emailToCode(user.email);
-          bootApp();
-          startRealtimeSync();
-          document.getElementById('loginScreen').style.display='none';
-          document.getElementById('appShell').style.display='block';
+          const code = emailToCode(user.email);
+          if(!code){
+            // Google email not matched — ask user who they are
+            openIdentityPicker(user.email);
+          } else {
+            curU = code;
+            bootApp();
+            startRealtimeSync();
+            document.getElementById('loginScreen').style.display='none';
+            document.getElementById('appShell').style.display='block';
+          }
         } else {
           // not logged in — show login screen
           document.getElementById('appShell').style.display='none';
@@ -2262,6 +2297,17 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
       <button class="cyes-v" onclick="confirmSAHardDelete()">Видалити назавжди</button>
       <button onclick="closeM('mSAHardDel')">Скасувати</button>
     </div>
+  </div>
+</div>
+<!-- IDENTITY PICKER -->
+<div id="identityPicker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.15)">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:32px;margin-bottom:8px">👋</div>
+      <div style="font-size:16px;font-weight:700;color:#1c1c1c">Хто ви?</div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px">Ваш Google-акаунт ще не прив'язаний.<br>Оберіть свій профіль — він збережеться автоматично.</div>
+    </div>
+    <div id="identityList"></div>
   </div>
 </div>
 </div><!-- /appShell -->
