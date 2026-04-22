@@ -1583,6 +1583,7 @@ function renderMgrList(){
   document.getElementById('mgrList').innerHTML=managers.map(m=>{
     const vac=isOnVacation(m);
     const canEdit=isSA||canDo('admin');
+    const canInvite=isSA||canDo('extended');
     return `<div class="mgr-row">
       <div class="mgr-top">
         <div class="mgr-av" style="background:${m.col}">${esc(m.code)}</div>
@@ -1601,7 +1602,7 @@ function renderMgrList(){
           <option value='admin' ${m.role==='admin'?'selected':''}>Адмін</option>
         </select>
         ${isSA?`<button onclick="saDelegateSuper('${esc(m.code)}')" title="Делегувати суперадміна" style="border:none;background:#fef3c7;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e">👑 Делег.</button>`:''}
-        ${(canEdit&&m.email)?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати запрошення на пошту" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">✉ Запросити</button>`:''}
+        ${canInvite?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати запрошення на пошту" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">✉ Запросити</button>`:''}
         <button class="mgr-del" onclick="delManager('${esc(m.code)}')" ${canEdit?'':'disabled'}>×</button>
       </div>
       <div class="vac-row">
@@ -1663,7 +1664,8 @@ function delManager(code){
 async function sendInvite(code){
   if(!canDo('admin')&&!isSuperAdmin()){alert('Недостатньо прав для надсилання запрошень.');return;}
   const m=managers.find(x=>x.code===code);
-  if(!m||!m.email){alert('Email менеджера не вказано.');return;}
+  if(!m){return;}
+  if(!m.email){alert('Спочатку вкажіть email менеджера у полі вище і збережіть (натисніть Tab або клікніть поза полем).');return;}
   const btn=document.getElementById('invBtn_'+code);
   if(btn){btn.textContent='⏳ Надсилаємо...';btn.style.pointerEvents='none';}
   try{
