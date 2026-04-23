@@ -764,12 +764,12 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
     <div id="settingsSAOnly" style="display:none">
       <div class="sec-title">Суперадмін</div>
-      <div style="background:#e8f5ee;border:1px solid #2e8653;border-radius:9px;padding:9px 12px;font-size:11px;color:#1a5e30;margin-bottom:10px;line-height:1.5">
-        <strong>✅ Firestore Rules:</strong> обмежте доступ до бази лише email вашої команди у Firebase Console → Firestore → Rules.
-      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="openSALogin()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
-        <button onclick="openSASetPwd()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔐 Змінити пароль</button>
+        <button onclick="openSALogin()" id="btnSALogin" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
+        <button onclick="openSASetPwd()" id="btnSASetPwd" style="display:none;border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔐 Змінити пароль</button>
+      </div>
+      <div id="fsRulesBanner" style="display:none;background:#e8f5ee;border:1px solid #2e8653;border-radius:9px;padding:9px 12px;font-size:11px;color:#1a5e30;margin-top:10px;line-height:1.5">
+        <strong>✅ Firestore Rules:</strong> обмежте доступ до бази лише email вашої команди у Firebase Console → Firestore → Rules.
       </div>
     </div>
     <div style="text-align:right;margin-top:14px"><button style="background:#1c1c1c;color:#fff;border:none;border-radius:9px;padding:9px 22px;cursor:pointer;font-size:13px;font-family:inherit" onclick="saveCfg()">Зберегти</button></div>
@@ -2409,9 +2409,15 @@ function showSet(){
   // Admin-only sections: add manager, color picker
   const adminOnly=document.getElementById('settingsAdminOnly');
   if(adminOnly) adminOnly.style.display=isAdm?'':'none';
-  // SA-only section: superadmin controls
+  // SA section: visible to MK always (to allow login), inner buttons depend on session
   const saOnly=document.getElementById('settingsSAOnly');
-  if(saOnly) saOnly.style.display=isSuperAdmin()?'':'none';
+  if(saOnly) saOnly.style.display=(curU===SA_OWNER_CODE)?'':'none';
+  const btnSALogin=document.getElementById('btnSALogin');
+  if(btnSALogin) btnSALogin.style.display=isSuperAdmin()?'none':'';
+  const btnSASetPwd=document.getElementById('btnSASetPwd');
+  if(btnSASetPwd) btnSASetPwd.style.display=isSuperAdmin()?'':'none';
+  const fsRulesBanner=document.getElementById('fsRulesBanner');
+  if(fsRulesBanner) fsRulesBanner.style.display=isSuperAdmin()?'':'none';
   // "Менеджери" title — rename for non-admins
   const mgrTitle=document.getElementById('settingsMgrTitle');
   if(mgrTitle) mgrTitle.textContent=isAdm?'Менеджери':'Мій профіль';
