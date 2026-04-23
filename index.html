@@ -761,9 +761,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <p style="font-size:11px;color:#bbb;margin:10px 0 5px">Slack Webhook (Beta)</p>
     <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
     <div class="sec-title">Суперадмін</div>
-    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:9px;padding:9px 12px;font-size:11px;color:#92400e;margin-bottom:10px;line-height:1.5" id="fsRulesBanner">
-      <strong>⚠ Firestore Rules:</strong> переконайтесь, що у Firebase Console → Firestore → Rules встановлено:
-      <code style="display:block;background:#fff8e1;border-radius:5px;padding:4px 8px;margin-top:5px;font-size:10px;color:#555">allow read, write: if request.auth != null && request.auth.token.email_verified == true;</code>
+    <div style="background:#e8f5ee;border:1px solid #2e8653;border-radius:9px;padding:9px 12px;font-size:11px;color:#1a5e30;margin-bottom:10px;line-height:1.5">
+      <strong>✅ Firestore Rules:</strong> обмежте доступ до бази лише email вашої команди у Firebase Console → Firestore → Rules.
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button onclick="openSALogin()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
@@ -876,6 +875,9 @@ async function doGoogleLogin(){
 }
 
 async function doLogout(){
+  window._accessDeniedShown = false;
+  const picker = document.getElementById('identityPicker');
+  if(picker) picker.style.display='none';
   const {fbAuth, signOut} = window._fb;
   if(_unsubSnapshot){_unsubSnapshot();_unsubSnapshot=null;}
   superAdminSession=false;_saUid=null;
@@ -1012,8 +1014,8 @@ function openIdentityPicker(firebaseEmail){
     </button>
   </div>`;
   el.style.display='flex';
-  // Auto-sign out from Firebase so the session doesn't persist
-  doLogout();
+  // Mark that we're in the "access denied" state — doLogout() called by the button
+  window._accessDeniedShown = true;
 }
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
@@ -1043,6 +1045,8 @@ window.addEventListener('load', ()=>{
           }
         } else {
           // not logged in — show login screen
+          // But if we showed the access-denied modal, keep it visible until user clicks "Вийти"
+          if(window._accessDeniedShown) return;
           document.getElementById('appShell').style.display='none';
           document.getElementById('loginScreen').style.display='flex';
           setTimeout(()=>document.getElementById('loginEmail').focus(),100);
@@ -1156,7 +1160,10 @@ function saHash(s){
   return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))
     .then(buf=>Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''));
 }
-function openSALogin(){openM('mSALogin');setTimeout(()=>document.getElementById('saLoginPwd').focus(),80);}
+function openSALogin(){
+  if(curU!==SA_OWNER_CODE){alert('Суперадмін-доступ недоступний для цього акаунту.');return;}
+  openM('mSALogin');setTimeout(()=>document.getElementById('saLoginPwd').focus(),80);
+}
 async function trySALogin(){
   const pwd=document.getElementById('saLoginPwd').value;
   const key=_saKey();
@@ -1210,11 +1217,20 @@ async function saveSAPwd(){
   document.getElementById('saNewPwd').value='';document.getElementById('saNewPwd2').value='';
   err.textContent='';closeM('mSASetPwd');alert('✅ Пароль суперадміна збережено');
 }
+const SA_OWNER_CODE='MK'; // єдиний менеджер, якому дозволено бути суперадміном
 async function saFirstSetup(){
+  // Only the designated SA owner can set up the superadmin password
+  if(curU!==SA_OWNER_CODE) return;
   const key=_saKey();
   if(key&&!localStorage.getItem(key)){openM('mSAFirstSetup');}
 }
 async function saveFirstSAPwd(){
+  // Double-check: only the designated SA owner can save this password
+  if(curU!==SA_OWNER_CODE){
+    closeM('mSAFirstSetup');
+    alert('Недостатньо прав для встановлення пароля суперадміна.');
+    return;
+  }
   const p1=document.getElementById('saFirstPwd').value;
   const p2=document.getElementById('saFirstPwd2').value;
   const err=document.getElementById('saFirstErr');
@@ -1677,7 +1693,7 @@ function renderMgrList(){
           <option value='admin' ${m.role==='admin'?'selected':''}>Адмін</option>
         </select>
         ${isSA?`<button onclick="saDelegateSuper('${esc(m.code)}')" title="Делегувати суперадміна" style="border:none;background:#fef3c7;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e">👑 Делег.</button>`:''}
-        ${canInvite?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати запрошення на пошту" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">✉ Запросити</button>`:''}
+        ${canInvite?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати лист для скидання пароля" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">🔑 Скинути пароль</button>`:''}
         <button class="mgr-del" onclick="delManager('${esc(m.code)}')" ${canEdit?'':'disabled'}>×</button>
       </div>
       <div class="vac-row">
@@ -1763,9 +1779,9 @@ async function sendInvite(code){
     // a clear instruction instead.
     await sendPasswordResetEmail(fbAuth, m.email);
     if(btn){btn.textContent='✅ Надіслано!';btn.style.background='#d4edda';btn.style.color='#1a5e30';}
-    setTimeout(()=>{if(btn){btn.textContent='✉ Запросити';btn.style.pointerEvents='';btn.style.background='#e8f5ee';btn.style.color='#2e8653';}},4000);
+    setTimeout(()=>{if(btn){btn.textContent='🔑 Скинути пароль';btn.style.pointerEvents='';btn.style.background='#e8f5ee';btn.style.color='#2e8653';}},4000);
   }catch(e){
-    if(btn){btn.textContent='✉ Запросити';btn.style.pointerEvents='';}
+    if(btn){btn.textContent='🔑 Скинути пароль';btn.style.pointerEvents='';}
     const msgs={
       'auth/invalid-email':'Невірний формат email.',
       'auth/too-many-requests':'Забагато спроб. Зачекайте хвилину.',
