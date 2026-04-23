@@ -509,7 +509,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <button class="sort-btn" data-s="deadline" onclick="toggleSort('deadline')" title="За дедлайном" style="border:none;background:none;border-radius:7px;padding:5px 10px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500">Дедлайн <span id="sort-deadline-icon">↑</span></button>
     </div>
     <button class="btn-add" onclick="openAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>ЗАВДАННЯ</button>
-    <button onclick="toggleBatchMode()" title="Пакетне редагування (☑)" style="background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:11px 13px;font-size:14px;cursor:pointer">☑</button>
+    <button onclick="toggleBatchMode()" title="Пакетне редагування (☑)" id="batchModeBtn" style="background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:11px 13px;font-size:14px;cursor:pointer">☑</button>
     <button class="btn-qk" onclick="openQ()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>ШВИДКЕ ЗАВДАННЯ</button>
   </div>
   <div class="ta" id="ta"></div>
@@ -748,6 +748,10 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <p style="font-size:11px;color:#bbb;margin:10px 0 5px">Slack Webhook (Beta)</p>
     <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
     <div class="sec-title">Суперадмін</div>
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:9px;padding:9px 12px;font-size:11px;color:#92400e;margin-bottom:10px;line-height:1.5" id="fsRulesBanner">
+      <strong>⚠ Firestore Rules:</strong> переконайтесь, що у Firebase Console → Firestore → Rules встановлено:
+      <code style="display:block;background:#fff8e1;border-radius:5px;padding:4px 8px;margin-top:5px;font-size:10px;color:#555">allow read, write: if request.auth != null && request.auth.token.email_verified == true;</code>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button onclick="openSALogin()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
       <button onclick="openSASetPwd()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔐 Змінити пароль</button>
@@ -861,11 +865,11 @@ async function doGoogleLogin(){
 async function doLogout(){
   const {fbAuth, signOut} = window._fb;
   if(_unsubSnapshot){_unsubSnapshot();_unsubSnapshot=null;}
+  superAdminSession=false;_saUid=null;
   await signOut(fbAuth);
   document.getElementById('appShell').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginPwd').value='';
-  superAdminSession=false;
 }
 
 // ── FIRESTORE PATHS ──
@@ -873,7 +877,7 @@ const FS_DOC = 'waymark/main'; // single shared document
 
 // ── SAVE to Firestore ──
 async function save(){
-  // also mirror to localStorage as offline cache
+  // Mirror to localStorage as offline cache
   try{
     localStorage.setItem('wm_tasks',    JSON.stringify(tasks));
     localStorage.setItem('wm_managers', JSON.stringify(managers));
@@ -881,7 +885,15 @@ async function save(){
     localStorage.setItem('wm_cfg',      JSON.stringify(cfg));
     localStorage.setItem('wm_log',      JSON.stringify(auditLog));
   }catch(e){}
-  // push to Firestore
+  // Push to Firestore.
+  // IMPORTANT: For production — add Firestore Security Rules in Firebase Console:
+  //   match /waymark/main {
+  //     allow read, write: if request.auth != null
+  //       && request.auth.token.email_verified == true;
+  //   }
+  // This ensures only authenticated, email-verified Firebase users can read/write.
+  // Role-level access control lives here in the client, but network-level auth
+  // is enforced by Firestore Rules on the server.
   try{
     const {db, doc, setDoc, serverTimestamp} = window._fb;
     await setDoc(doc(db, 'waymark','main'), {
@@ -966,26 +978,54 @@ function emailToCode(email){
 }
 
 // ── IDENTITY PICKER — shown when Google email doesn't match any manager ──
+// Security: only managers whose stored email matches the Google domain are offered.
+// If zero matches — show a "contact admin" message, never let the user self-assign.
 function openIdentityPicker(firebaseEmail){
   const el=document.getElementById('identityPicker');
   const list=document.getElementById('identityList');
-  list.innerHTML=managers.map(m=>`
+  const googleDomain=(firebaseEmail.split('@')[1]||'').toLowerCase();
+
+  // Candidates: managers whose email exactly matches OR whose email is empty
+  // but only when there is exactly ONE admin present (first-run scenario).
+  const exactMatch=managers.filter(m=>m.email&&m.email.toLowerCase()===firebaseEmail.toLowerCase());
+  const domainMatch=managers.filter(m=>m.email&&m.email.toLowerCase().endsWith('@'+googleDomain)&&!exactMatch.includes(m));
+  const noEmailMgrs=managers.filter(m=>!m.email);
+
+  // Determine candidates: exact > domain > (first-run: no-email managers if ≤2 total mgrs and no SA pwd set)
+  const isFirstRun=managers.length<=2&&!localStorage.getItem(SA_KEY);
+  let candidates=[...exactMatch,...domainMatch,...(isFirstRun?noEmailMgrs:[])];
+
+  if(!candidates.length){
+    list.innerHTML=`<div style="text-align:center;padding:20px 0;font-size:13px;color:#888">
+      <div style="font-size:28px;margin-bottom:10px">🔒</div>
+      <div style="font-weight:600;color:#333;margin-bottom:6px">Акаунт не знайдено</div>
+      <div>Ваш Google-акаунт (<strong>${esc(firebaseEmail)}</strong>) не прив'язаний до жодного менеджера.<br>
+      Зверніться до адміністратора Waymark для отримання доступу.</div>
+      <button onclick="doLogout()" style="margin-top:16px;border:1px solid #e4e0da;border-radius:9px;padding:9px 20px;font-size:13px;font-family:inherit;cursor:pointer;background:#fff;color:#b83a2a">Вийти</button>
+    </div>`;
+    el.style.display='flex';
+    return;
+  }
+
+  list.innerHTML=candidates.map(m=>`
     <button onclick="assignIdentity('${esc(m.code)}','${esc(firebaseEmail)}')"
       style="display:flex;align-items:center;gap:12px;width:100%;border:1px solid #e4e0da;border-radius:11px;padding:12px 14px;background:#fff;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:background .12s"
       onmouseover="this.style.background='#f8f6f3'" onmouseout="this.style.background='#fff'">
       <div style="width:36px;height:36px;border-radius:50%;background:${m.col};color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${esc(m.code)}</div>
       <div style="text-align:left">
         <div style="font-size:14px;font-weight:600;color:#333">${esc(m.name)}</div>
-        <div style="font-size:11px;color:#aaa">${esc(m.email||'email не вказано')}</div>
+        <div style="font-size:11px;color:#aaa">${m.email?esc(m.email):'email не прив\'язано'}</div>
       </div>
     </button>`).join('');
   el.style.display='flex';
 }
 
 async function assignIdentity(code, firebaseEmail){
-  // save this Google email to the manager profile
   const m=managers.find(x=>x.code===code);
-  if(m){ m.email=firebaseEmail.toLowerCase(); await save(); }
+  if(!m) return;
+  // Bind this Google email to the manager so future logins auto-match
+  m.email=firebaseEmail.toLowerCase();
+  await save();
   curU=code;
   document.getElementById('identityPicker').style.display='none';
   bootApp();
@@ -1074,19 +1114,23 @@ let pendingDelLabel=null;
 let batchSelected=new Set();
 let batchMode=false;
 let charts={};
-// ── SUPERADMIN ──
-let superAdminSession=false; // true when logged in as superadmin this session
-const SA_KEY='wm_sa_hash'; // localStorage key for hashed password
+// ── SUPERADMIN — declared in SUPERADMIN AUTH block below ──
 
 function migrateMgrRoles(){
+  // Assign 'basic' to any manager missing a role field
   managers.forEach(m=>{if(!m.role) m.role='basic';});
-  if(managers.length>=1 && managers[0].code==='TD' && managers[0].role==='basic') managers[0].role='admin';
-  if(managers.length>=2 && managers[1].code==='MK' && (managers[1].role==='basic'||managers[1].role==='extended')) managers[1].role='admin';
+  // Ensure the two founding managers keep admin if they were basic/extended
+  // — search by code, not by array index, to survive Firestore reordering
+  const td=managers.find(m=>m.code==='TD');
+  if(td&&td.role==='basic') td.role='admin';
+  const mk=managers.find(m=>m.code==='MK');
+  if(mk&&(mk.role==='basic'||mk.role==='extended')) mk.role='admin';
 }
 
 function bootApp(){
   migrateMgrRoles();
   updateAvatarUI();
+  updateRoleUI();
   reqNotifPerm();initTheme();renderLabelPills();rStats();render();updClk();renderVacBanner();renderSAIndicator();
   setInterval(updClk,20000);
   setInterval(checkDeadlines,3600000);
@@ -1094,28 +1138,53 @@ function bootApp(){
   setTimeout(saFirstSetup,600);
 }
 
+function updateRoleUI(){
+  // Batch mode button — extended+ only
+  const batchBtn=document.getElementById('batchModeBtn');
+  if(batchBtn) batchBtn.style.display=canDo('extended')||isSuperAdmin()?'':'none';
+  // Quick task button visible to all (basic+ can create tasks)
+  // Export button — extended+ only
+  const expBtn=document.querySelector('.btn-exp');
+  if(expBtn) expBtn.style.display=canDo('extended')||isSuperAdmin()?'':'none';
+}
+
 /* ── ROLES ── */
 function curMgr(){return managers.find(m=>m.code===curU)||{role:'basic'};}
-function isSuperAdmin(){return superAdminSession;}
 function canDo(minRole){
   if(isSuperAdmin()) return true;
   const order={basic:0,extended:1,admin:2};
   return (order[curMgr().role||'basic']||0)>=(order[minRole]||0);
 }
 
-/* ── SUPERADMIN AUTH ── */
-async function saHash(s){
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+// ── SUPERADMIN AUTH ──
+// SA password hash is stored per Firebase UID: `wm_sa_hash_<uid>`
+// This means each user has their own SA password, and the hash on another
+// device/browser under a different account is useless.
+let superAdminSession=false; // true when logged in as superadmin this session
+let _saUid=null; // Firebase UID that started the current SA session
+const SA_KEY='wm_sa_hash'; // prefix; actual key = SA_KEY + '_' + firebaseUID
+
+function _saKey(){
+  const {fbAuth}=window._fb||{};
+  const uid=fbAuth&&fbAuth.currentUser&&fbAuth.currentUser.uid;
+  return uid ? SA_KEY+'_'+uid : null;
+}
+
+function saHash(s){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))
+    .then(buf=>Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''));
 }
 function openSALogin(){openM('mSALogin');setTimeout(()=>document.getElementById('saLoginPwd').focus(),80);}
 async function trySALogin(){
   const pwd=document.getElementById('saLoginPwd').value;
-  const stored=localStorage.getItem(SA_KEY);
+  const key=_saKey();
+  if(!key){document.getElementById('saLoginErr').textContent='Потрібен вхід у Firebase.';return;}
+  const stored=localStorage.getItem(key);
   if(!stored){document.getElementById('saLoginErr').textContent='Пароль не встановлено. Спочатку задайте його у Налаштуваннях.';return;}
   const h=await saHash(pwd);
   if(h===stored){
     superAdminSession=true;
+    _saUid=window._fb.fbAuth.currentUser.uid;
     document.getElementById('saLoginPwd').value='';
     closeM('mSALogin');
     renderSAIndicator();
@@ -1125,7 +1194,18 @@ async function trySALogin(){
     document.getElementById('saLoginErr').textContent='Невірний пароль';
   }
 }
-function saLogout(){superAdminSession=false;renderSAIndicator();renderMgrList();}
+function saLogout(){
+  superAdminSession=false;_saUid=null;
+  renderSAIndicator();renderMgrList();
+}
+function _assertSAStillValid(){
+  // Revoke SA session if the Firebase user changed
+  if(!superAdminSession) return;
+  const {fbAuth}=window._fb||{};
+  const uid=fbAuth&&fbAuth.currentUser&&fbAuth.currentUser.uid;
+  if(uid!==_saUid){saLogout();}
+}
+function isSuperAdmin(){_assertSAStillValid();return superAdminSession;}
 function renderSAIndicator(){
   const el=document.getElementById('saIndicator');
   if(!el) return;
@@ -1139,27 +1219,29 @@ async function saveSAPwd(){
   const p1=document.getElementById('saNewPwd').value;
   const p2=document.getElementById('saNewPwd2').value;
   const err=document.getElementById('saSetPwdErr');
-  if(p1.length<4){err.textContent='Мінімум 4 символи';return;}
+  if(p1.length<8){err.textContent='Мінімум 8 символів';return;}
   if(p1!==p2){err.textContent='Паролі не збігаються';return;}
+  const key=_saKey();if(!key){err.textContent='Помилка: не знайдено Firebase UID.';return;}
   const h=await saHash(p1);
-  localStorage.setItem(SA_KEY,h);
+  localStorage.setItem(key,h);
   document.getElementById('saNewPwd').value='';document.getElementById('saNewPwd2').value='';
   err.textContent='';closeM('mSASetPwd');alert('✅ Пароль суперадміна збережено');
 }
 async function saFirstSetup(){
-  // called on init if no SA password exists
-  const stored=localStorage.getItem(SA_KEY);
-  if(!stored){openM('mSAFirstSetup');}
+  const key=_saKey();
+  if(key&&!localStorage.getItem(key)){openM('mSAFirstSetup');}
 }
 async function saveFirstSAPwd(){
   const p1=document.getElementById('saFirstPwd').value;
   const p2=document.getElementById('saFirstPwd2').value;
   const err=document.getElementById('saFirstErr');
-  if(p1.length<4){err.textContent='Мінімум 4 символи';return;}
+  if(p1.length<8){err.textContent='Мінімум 8 символів';return;}
   if(p1!==p2){err.textContent='Паролі не збігаються';return;}
+  const key=_saKey();if(!key){err.textContent='Помилка: потрібен Firebase UID.';return;}
   const h=await saHash(p1);
-  localStorage.setItem(SA_KEY,h);
+  localStorage.setItem(key,h);
   superAdminSession=true;
+  _saUid=window._fb.fbAuth.currentUser.uid;
   document.getElementById('saFirstPwd').value='';document.getElementById('saFirstPwd2').value='';
   closeM('mSAFirstSetup');
   renderSAIndicator();renderMgrList();
@@ -1193,6 +1275,7 @@ function saDelegateSuper(code){
 
 /* ── BATCH EDIT ── */
 function toggleBatchMode(){
+  if(!canDo('extended')&&!isSuperAdmin()){alert('Пакетне редагування потребує розширеного доступу.');return;}
   batchMode=!batchMode;batchSelected.clear();
   document.getElementById('ta').classList.toggle('batch-mode',batchMode);
   document.getElementById('batchBar').style.display=batchMode?'flex':'none';
@@ -1204,14 +1287,20 @@ function toggleBatchItem(id,el){
   updateBatchBar();
 }
 function updateBatchBar(){document.getElementById('batchCount').textContent=batchSelected.size+' вибрано';}
-function batchChangeStatus(){if(batchSelected.size)openM('mBatch');}
+function batchChangeStatus(){
+  if(!batchSelected.size) return;
+  if(!canDo('extended')&&!isSuperAdmin()){alert('Пакетна зміна статусу потребує розширеного доступу.');return;}
+  openM('mBatch');
+}
 function applyBatchStatus(){
+  if(!canDo('extended')&&!isSuperAdmin()){alert('Недостатньо прав.');closeM('mBatch');return;}
   const st=document.getElementById('batchSt').value;
   batchSelected.forEach(id=>{const t=tasks.find(t=>t.id===id);if(t){t.status=st;t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);}});
   save();batchSelected.clear();toggleBatchMode();rStats();render();closeM('mBatch');
 }
 function batchArchive(){
   if(!batchSelected.size)return;
+  if(!canDo('extended')&&!isSuperAdmin()){alert('Пакетне архівування потребує розширеного доступу.');return;}
   if(!confirm('Перемістити '+batchSelected.size+' завдань до архіву?'))return;
   const d=new Date().toISOString().split('T')[0];
   batchSelected.forEach(id=>{const t=tasks.find(t=>t.id===id);if(t){t.arch=true;t.archAt=d;}});
@@ -1532,15 +1621,15 @@ function render(){
           <div class="tc-tags">${tagsH}${stH}</div>
           <div style="display:flex;gap:6px;align-items:center">
             ${spinH}
-            <button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c8c8c4" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>
-            <span class="x-btn" onclick="event.stopPropagation();askDel(${tid})"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d4a0a0" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+            ${canEditTask(t)?`<button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c8c8c4" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>`:''}
+            ${canArchiveTask(t)?`<span class="x-btn" onclick="event.stopPropagation();askDel(${tid})"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d4a0a0" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>`:''}
           </div>
         </div>
         ${ttH}${urlH}${noteH}${dtH}${overdueH}${fcH}${resH}${driveFilesH(t.driveFiles)}${cmtsH}
         <div class="tc-cmt-box" id="cb${t.id}"><textarea id="ct${t.id}" placeholder="Нотатка або коментар..."></textarea><button onclick="addCmt(${tid})">Зберегти</button></div>
         <div class="tc-foot">
           <button class="comm-btn" onclick="togCmt(${tid})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Додати нотатку</button>
-          <button class="cst-btn" onclick="event.stopPropagation();openSt(${tid})">Змінити статус</button>
+          ${canChangeStatus(t)?`<button class="cst-btn" onclick="event.stopPropagation();openSt(${tid})">Змінити статус</button>`:''}
           ${isSuperAdmin()?`<button onclick="event.stopPropagation();openSAHardDelete(${tid})" style="border:none;background:#fdecea;color:#b83a2a;border-radius:9px;padding:7px 12px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600">🗑 Видалити назавжди</button>`:''}
         </div>
       </div>
@@ -1580,10 +1669,13 @@ document.addEventListener('click',e=>{if(!e.target.closest('.ment-wrap'))documen
 /* ── MANAGERS ── */
 function renderMgrList(){
   const isSA=isSuperAdmin();
+  const isAdm=canDo('admin');
   document.getElementById('mgrList').innerHTML=managers.map(m=>{
     const vac=isOnVacation(m);
-    const canEdit=isSA||canDo('admin');
-    const canInvite=isSA||canDo('extended');
+    const canEdit=isSA||isAdm;
+    const canInvite=isSA||isAdm;
+    // Email field: visible only to admins (hides private contact from basic/extended users)
+    const emailVal=canEdit?esc(m.email||''):'••••••••';
     return `<div class="mgr-row">
       <div class="mgr-top">
         <div class="mgr-av" style="background:${m.col}">${esc(m.code)}</div>
@@ -1592,10 +1684,10 @@ function renderMgrList(){
           style="border:1px solid #e4e0da;border-radius:6px;font-size:13px;font-weight:600;padding:3px 8px;font-family:inherit;width:100px;flex-shrink:0;color:#333"
           ${canEdit?'':'disabled'}>
         ${vac?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px">🏖 відпустка</span>`:''}
-        <input type="email" value="${esc(m.email||'')}" placeholder="email для входу"
-          onblur="setMgrEmail('${esc(m.code)}',this.value)"
+        <input type="email" value="${emailVal}" placeholder="email для входу"
+          onblur="${canEdit?`"setMgrEmail('${esc(m.code)}',this.value)"`:'""'}"
           style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px;flex-shrink:0"
-          ${canEdit?'':'disabled'}>
+          ${canEdit?'':'disabled readonly'}>
         <select onchange="setMgrRole('${esc(m.code)}',this.value)" style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 6px;font-family:inherit" ${canEdit?'':'disabled'}>
           <option value='basic' ${(m.role||'basic')==='basic'?'selected':''}>Базовий</option>
           <option value='extended' ${m.role==='extended'?'selected':''}>Розширений</option>
@@ -1619,15 +1711,20 @@ function renderMgrList(){
 }
 function setMgrRole(code,role){
   if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати права.');return;}
-  // prevent SA from accidentally locking themselves out
-  if(isSuperAdmin() && code===curU && role!=='admin'){
+  // No one (including admin) can demote themselves — prevents accidental lockout
+  if(code===curU && role!=='admin'){
+    if(!isSuperAdmin()){alert('Ви не можете знизити власну роль. Попросіть іншого адміна або суперадміна.');return;}
     if(!confirm(`Ви змінюєте власну роль на «${role}». Якщо завершите SA-сесію — втратите права адміна. Продовжити?`)) return;
   }
-  const m=managers.find(x=>x.code===code);
-  if(m){
-    const oldRole=m.role;
-    m.role=role;
-    logEntry('role',null,m.name,'роль',oldRole,role);
+  // Only superAdmin can demote another admin
+  const target=managers.find(x=>x.code===code);
+  if(target && target.role==='admin' && code!==curU && !isSuperAdmin()){
+    alert('Лише суперадмін може знизити роль іншого адміністратора.');return;
+  }
+  if(target){
+    const oldRole=target.role;
+    target.role=role;
+    logEntry('role',null,target.name,'роль',oldRole,role);
     save();renderMgrList();
   }
 }
@@ -1658,6 +1755,10 @@ function addManager(){
 }
 function clearVac(code){const m=managers.find(x=>x.code===code);if(m){m.vacFrom='';m.vacTo='';}save();renderMgrList();renderVacBanner();}
 function delManager(code){
+  if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може видаляти менеджерів.');return;}
+  if(code===curU){alert('Ви не можете видалити власний профіль.');return;}
+  const target=managers.find(m=>m.code===code);
+  if(target&&target.role==='admin'&&!isSuperAdmin()){alert('Лише суперадмін може видалити адміністратора.');return;}
   if(managers.length<=1) return;
   managers=managers.filter(m=>m.code!==code);save();renderMgrList();render();
 }
@@ -1669,18 +1770,14 @@ async function sendInvite(code){
   const btn=document.getElementById('invBtn_'+code);
   if(btn){btn.textContent='⏳ Надсилаємо...';btn.style.pointerEvents='none';}
   try{
-    const {fbAuth, createUserWithEmailAndPassword, sendPasswordResetEmail}=window._fb;
-    // Спроба створити акаунт з тимчасовим паролем
-    const tempPwd='Waymark_'+Math.random().toString(36).slice(2,10)+'!';
-    try{
-      await createUserWithEmailAndPassword(fbAuth, m.email, tempPwd);
-      // Одразу виходимо з щойно створеного акаунту — щоб не зламати сесію поточного адміна
-      // Просто надсилаємо reset без signOut, бо createUser не міняє поточну сесію в тому ж fbAuth
-    }catch(createErr){
-      // Якщо акаунт вже існує — це нормально, йдемо далі
-      if(createErr.code!=='auth/email-already-in-use') throw createErr;
-    }
-    // Надсилаємо лист для встановлення/скидання паролю
+    const {fbAuth, sendPasswordResetEmail}=window._fb;
+    // Send password-reset/set email.
+    // NOTE: We deliberately do NOT call createUserWithEmailAndPassword here because
+    // that call would replace the current admin's Firebase session — a critical bug.
+    // The invited user must first create their own Firebase account via the Firebase
+    // Auth UI or via the registration flow, THEN the admin links their email above.
+    // sendPasswordResetEmail works for existing accounts only; for new users we show
+    // a clear instruction instead.
     await sendPasswordResetEmail(fbAuth, m.email);
     if(btn){btn.textContent='✅ Надіслано!';btn.style.background='#d4edda';btn.style.color='#1a5e30';}
     setTimeout(()=>{if(btn){btn.textContent='✉ Запросити';btn.style.pointerEvents='';btn.style.background='#e8f5ee';btn.style.color='#2e8653';}},4000);
@@ -1689,6 +1786,7 @@ async function sendInvite(code){
     const msgs={
       'auth/invalid-email':'Невірний формат email.',
       'auth/too-many-requests':'Забагато спроб. Зачекайте хвилину.',
+      'auth/user-not-found':`Акаунт ${m.email} ще не існує у Firebase. Попросіть менеджера спочатку зареєструватись через форму входу, потім вкажіть його email тут і повторіть запрошення.`,
     };
     alert('Помилка: '+(msgs[e.code]||e.message));
   }
@@ -1717,9 +1815,11 @@ function avClick(){
 
 /* ── ARCHIVE ── */
 function askDel(id){
-  dId=id;
   const t=tasks.find(t=>t.id===id);
-  const preview=t?(t.title||t.url||t.note||'—'):'—';
+  if(!t){return;}
+  if(!canArchiveTask(t)){alert('Закрити завдання може лише його автор або користувач з розширеним доступом.');return;}
+  dId=id;
+  const preview=t.title||t.url||t.note||'—';
   const el=document.getElementById('delPreview');
   if(el) el.textContent=preview;
   openM('mCf');
@@ -2148,10 +2248,28 @@ function populateTo(){
   const sel=document.getElementById('fTo');
   sel.innerHTML=managers.map(m=>`<option value="${m.code}">${m.name} (${m.code})</option>`).join('');
 }
+function canEditTask(t){
+  // basic: only own tasks (from or to)
+  // extended+: any task
+  if(canDo('extended')||isSuperAdmin()) return true;
+  return t.from===curU||t.to===curU;
+}
+function canArchiveTask(t){
+  // extended+ or the task author
+  if(canDo('extended')||isSuperAdmin()) return true;
+  return t.from===curU;
+}
+function canChangeStatus(t){
+  // basic can change status only on tasks assigned to them
+  if(canDo('extended')||isSuperAdmin()) return true;
+  return t.to===curU||t.from===curU;
+}
+
 function openAdd(id){
   eId=id;populateTo();
   if(id){
     const t=tasks.find(t=>t.id===id);
+    if(!canEditTask(t)){alert('Редагувати можна лише свої завдання. Для редагування чужих потрібен розширений доступ.');return;}
     document.getElementById('mH').textContent='✏ Редагувати';
     document.getElementById('mBtn').textContent='Зберегти';
     document.getElementById('fT').value=t.title;document.getElementById('fU').value=t.url;
@@ -2178,6 +2296,7 @@ function mkT(){
   const today=new Date().toISOString().split('T')[0];
   if(eId){
     const t=tasks.find(t=>t.id===eId);
+    if(!t||!canEditTask(t)){alert('Недостатньо прав для редагування цього завдання.');closeM('mAdd');return;}
     const oldTitle=t.title,oldStatus=t.status,oldTo=t.to,oldDl=t.deadline;
     const newStatus=document.getElementById('fS').value;
     const newTo=document.getElementById('fTo').value;
@@ -2216,9 +2335,14 @@ function mkQ(){
     created:today,deadline:'',forecast:'',from:curU,to:curU,result:'',arch:false,archAt:'',cmts:[]});
   document.getElementById('qI').value='';closeM('mQ');save();rStats();render();
 }
-function openSt(id){eId=id;document.getElementById('nSt').value=tasks.find(t=>t.id===id).status;openM('mSt');}
+function openSt(id){
+  const t=tasks.find(t=>t.id===id);
+  if(!t||!canChangeStatus(t)){alert('Змінити статус може виконавець, автор або користувач з розширеним доступом.');return;}
+  eId=id;document.getElementById('nSt').value=t.status;openM('mSt');
+}
 function apSt(){
   const t=tasks.find(t=>t.id===eId);
+  if(!t||!canChangeStatus(t)){alert('Недостатньо прав.');closeM('mSt');return;}
   const oldStatus=t.status;
   t.status=document.getElementById('nSt').value;
   t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
@@ -2231,6 +2355,7 @@ function doExp(){
   setTimeout(genPDF,400);
 }
 function exportCSV(){
+  if(!canDo('extended')){alert('Доступ до експорту лише для розширених прав.');return;}
   const pF=document.getElementById('pFrom')?.value||'',pT=document.getElementById('pTo')?.value||'';
   const showHrs=document.getElementById('inclHours')?.checked!==false;
   let arch=tasks.filter(t=>t.arch);
@@ -2263,7 +2388,13 @@ function updClk(){
   document.getElementById('clkL').textContent=ok?'Робочий час':'Неробочий час';
   document.getElementById('clk').className='clk'+(ok?' work':'');
 }
-function showSet(){rdDays();renderMgrList();renderColorPicker();openM('mSet');}
+function showSet(){
+  rdDays();renderMgrList();renderColorPicker();
+  // Show Firestore security reminder only to admins
+  const banner=document.getElementById('fsRulesBanner');
+  if(banner) banner.style.display=canDo('admin')||isSuperAdmin()?'':'none';
+  openM('mSet');
+}
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
 function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();}
@@ -2314,7 +2445,7 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
     </div>
     <div class="del-modal-title">Встановіть пароль суперадміна</div>
     <div class="del-modal-sub">Встановіть пароль суперадміна (Міша). Використовується для розширених прав: зміна ролей, делегування, видалення назавжди.</div>
-    <input id="saFirstPwd" type="password" placeholder="Новий пароль (мін. 4 симв.)" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box">
+    <input id="saFirstPwd" type="password" placeholder="Новий пароль (мін. 8 симв.)" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box">
     <input id="saFirstPwd2" type="password" placeholder="Підтвердіть пароль" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:6px;box-sizing:border-box">
     <div id="saFirstErr" style="font-size:11px;color:#c0392b;min-height:16px;margin-bottom:10px"></div>
     <div class="cbtns-v">
