@@ -743,30 +743,34 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 <div class="mbg hide" id="mSet">
   <div class="sbox">
     <h3>⚙ Налаштування</h3>
-    <div class="sec-title" style="border-top:none;padding-top:0;margin-top:0">Менеджери</div>
+    <div class="sec-title" style="border-top:none;padding-top:0;margin-top:0" id="settingsMgrTitle">Менеджери</div>
     <div class="mgr-list" id="mgrList"></div>
-    <p style="font-size:11px;color:#aaa;margin-bottom:6px">Додати менеджера:</p>
-    <div class="mgr-add-row">
-      <input id="mgrName" placeholder="Ім'я" maxlength="20">
-      <input id="mgrCode" placeholder="Код" maxlength="3" style="width:70px;flex:none">
-      <input id="mgrEmail" type="email" placeholder="email для входу" style="flex:1.5">
-      <button onclick="addManager()">+ Додати</button>
+    <div id="settingsAdminOnly" style="display:none">
+      <p style="font-size:11px;color:#aaa;margin-bottom:6px">Додати менеджера:</p>
+      <div class="mgr-add-row">
+        <input id="mgrName" placeholder="Ім'я" maxlength="20">
+        <input id="mgrCode" placeholder="Код" maxlength="3" style="width:70px;flex:none">
+        <input id="mgrEmail" type="email" placeholder="email для входу" style="flex:1.5">
+        <button onclick="addManager()">+ Додати</button>
+      </div>
+      <p style="font-size:11px;color:#aaa;margin-bottom:4px">Колір нового менеджера:</p>
+      <div class="color-dots" id="mgrColorPicker"></div>
     </div>
-    <p style="font-size:11px;color:#aaa;margin-bottom:4px">Колір нового менеджера:</p>
-    <div class="color-dots" id="mgrColorPicker"></div>
     <div class="sec-title">Робочий час</div>
     <div class="dbtns" id="dbtns"></div>
     <div class="srow"><label>Початок</label><input type="time" id="ws" value="09:00"></div>
     <div class="srow"><label>Кінець</label><input type="time" id="we" value="18:00"></div>
     <p style="font-size:11px;color:#bbb;margin:10px 0 5px">Slack Webhook (Beta)</p>
     <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
-    <div class="sec-title">Суперадмін</div>
-    <div style="background:#e8f5ee;border:1px solid #2e8653;border-radius:9px;padding:9px 12px;font-size:11px;color:#1a5e30;margin-bottom:10px;line-height:1.5">
-      <strong>✅ Firestore Rules:</strong> обмежте доступ до бази лише email вашої команди у Firebase Console → Firestore → Rules.
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button onclick="openSALogin()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
-      <button onclick="openSASetPwd()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔐 Змінити пароль</button>
+    <div id="settingsSAOnly" style="display:none">
+      <div class="sec-title">Суперадмін</div>
+      <div style="background:#e8f5ee;border:1px solid #2e8653;border-radius:9px;padding:9px 12px;font-size:11px;color:#1a5e30;margin-bottom:10px;line-height:1.5">
+        <strong>✅ Firestore Rules:</strong> обмежте доступ до бази лише email вашої команди у Firebase Console → Firestore → Rules.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="openSALogin()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
+        <button onclick="openSASetPwd()" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔐 Змінити пароль</button>
+      </div>
     </div>
     <div style="text-align:right;margin-top:14px"><button style="background:#1c1c1c;color:#fff;border:none;border-radius:9px;padding:9px 22px;cursor:pointer;font-size:13px;font-family:inherit" onclick="saveCfg()">Зберегти</button></div>
   </div>
@@ -1669,39 +1673,39 @@ document.addEventListener('click',e=>{if(!e.target.closest('.ment-wrap'))documen
 function renderMgrList(){
   const isSA=isSuperAdmin();
   const isAdm=canDo('admin');
-  document.getElementById('mgrList').innerHTML=managers.map(m=>{
+  // Non-admins see only their own row
+  const visibleMgrs = (isSA||isAdm) ? managers : managers.filter(m=>m.code===curU);
+  document.getElementById('mgrList').innerHTML=visibleMgrs.map(m=>{
     const vac=isOnVacation(m);
-    const canEdit=isSA||isAdm;
-    const canInvite=isSA||isAdm;
-    // Email field: visible only to admins (hides private contact from basic/extended users)
-    const emailVal=canEdit?esc(m.email||''):'••••••••';
+    const isOwn=m.code===curU;
+    const canEditAll=isSA||isAdm;           // admins can edit anyone
+    const canEditVac=canEditAll||isOwn;     // user can only edit own vacation
     return `<div class="mgr-row">
       <div class="mgr-top">
         <div class="mgr-av" style="background:${m.col}">${esc(m.code)}</div>
         <input value="${esc(m.name)}" placeholder="Ім'я"
           onblur="setMgrName('${esc(m.code)}',this.value)"
           style="border:1px solid #e4e0da;border-radius:6px;font-size:13px;font-weight:600;padding:3px 8px;font-family:inherit;width:100px;flex-shrink:0;color:#333"
-          ${canEdit?'':'disabled'}>
+          ${canEditAll?'':'disabled'}>
         ${vac?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px">🏖 відпустка</span>`:''}
-        <input type="email" value="${emailVal}" placeholder="email для входу"
-          onblur="${canEdit?`"setMgrEmail('${esc(m.code)}',this.value)"`:'""'}"
-          style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px;flex-shrink:0"
-          ${canEdit?'':'disabled readonly'}>
-        <select onchange="setMgrRole('${esc(m.code)}',this.value)" style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 6px;font-family:inherit" ${canEdit?'':'disabled'}>
+        ${canEditAll?`<input type="email" value="${esc(m.email||'')}" placeholder="email для входу"
+          onblur="setMgrEmail('${esc(m.code)}',this.value)"
+          style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px;flex-shrink:0">`:''}
+        ${canEditAll?`<select onchange="setMgrRole('${esc(m.code)}',this.value)" style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 6px;font-family:inherit">
           <option value='basic' ${(m.role||'basic')==='basic'?'selected':''}>Базовий</option>
           <option value='extended' ${m.role==='extended'?'selected':''}>Розширений</option>
           <option value='admin' ${m.role==='admin'?'selected':''}>Адмін</option>
-        </select>
+        </select>`:`<span style="font-size:11px;color:#aaa;padding:3px 6px">${{basic:'Базовий',extended:'Розширений',admin:'Адмін'}[m.role||'basic']}</span>`}
         ${isSA?`<button onclick="saDelegateSuper('${esc(m.code)}')" title="Делегувати суперадміна" style="border:none;background:#fef3c7;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e">👑 Делег.</button>`:''}
-        ${canInvite?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати лист для скидання пароля" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">🔑 Скинути пароль</button>`:''}
-        <button class="mgr-del" onclick="delManager('${esc(m.code)}')" ${canEdit?'':'disabled'}>×</button>
+        ${canEditAll?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати лист для скидання пароля" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">🔑 Скинути пароль</button>`:''}
+        ${canEditAll?`<button class="mgr-del" onclick="delManager('${esc(m.code)}')">×</button>`:''}
       </div>
       <div class="vac-row">
         <label>Відпустка з</label>
-        <button class="vac-date-btn" onclick="openCal('vacFrom','${esc(m.code)}|vacFrom')">${m.vacFrom||'Оберіть'}</button>
+        <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacFrom','${esc(m.code)}|vacFrom')`:''}}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacFrom||'Оберіть'}</button>
         <label>по</label>
-        <button class="vac-date-btn" onclick="openCal('vacTo','${esc(m.code)}|vacTo')">${m.vacTo||'Оберіть'}</button>
-        ${m.vacFrom||m.vacTo?`<button class="vac-clear" onclick="clearVac('${esc(m.code)}')" title="Скинути">✕</button>`:''}
+        <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacTo','${esc(m.code)}|vacTo')`:''}}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacTo||'Оберіть'}</button>
+        ${(m.vacFrom||m.vacTo)&&canEditVac?`<button class="vac-clear" onclick="clearVac('${esc(m.code)}')" title="Скинути">✕</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -2401,9 +2405,16 @@ function updClk(){
 }
 function showSet(){
   rdDays();renderMgrList();renderColorPicker();
-  // Show Firestore security reminder only to admins
-  const banner=document.getElementById('fsRulesBanner');
-  if(banner) banner.style.display=canDo('admin')||isSuperAdmin()?'':'none';
+  const isAdm=canDo('admin')||isSuperAdmin();
+  // Admin-only sections: add manager, color picker
+  const adminOnly=document.getElementById('settingsAdminOnly');
+  if(adminOnly) adminOnly.style.display=isAdm?'':'none';
+  // SA-only section: superadmin controls
+  const saOnly=document.getElementById('settingsSAOnly');
+  if(saOnly) saOnly.style.display=isSuperAdmin()?'':'none';
+  // "Менеджери" title — rename for non-admins
+  const mgrTitle=document.getElementById('settingsMgrTitle');
+  if(mgrTitle) mgrTitle.textContent=isAdm?'Менеджери':'Мій профіль';
   openM('mSet');
 }
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
