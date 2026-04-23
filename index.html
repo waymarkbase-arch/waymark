@@ -384,6 +384,19 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
   .tc-preview{gap:7px}
   .tc-preview-title{font-size:12px}
   .tc-preview-meta{gap:4px;flex-wrap:wrap}
+  /* Task card mobile fixes */
+  .tc{overflow:hidden;max-width:100%}
+  .tc-top{flex-wrap:wrap;gap:6px}
+  .tc-r{flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:100%}
+  .tc-tags{flex-wrap:wrap;gap:4px}
+  .tc-dates{flex-wrap:wrap;gap:6px;font-size:10px}
+  .tg{font-size:10px;padding:2px 10px;white-space:nowrap}
+  .tc-avs{flex-shrink:0}
+  .tc-preview{flex-wrap:wrap;gap:5px}
+  .tc-preview-meta{flex-wrap:wrap;gap:4px;max-width:100%;overflow:hidden}
+  .tc-preview-title{min-width:60px;max-width:100%}
+  .tc-preview-meta span,.tc-preview-meta button{flex-shrink:0}
+  .fc-short{display:inline}.fc-full{display:none}
   .arch-w{padding:14px 16px 24px}
   .arch-subtabs{flex-direction:column;align-items:flex-start;gap:10px}
   .arch-period{flex-wrap:wrap;gap:6px}
@@ -405,7 +418,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
   body{padding-bottom:60px}
   .vacation-bar{margin:10px 16px 0}
 }
-@media(min-width:769px){.mobile-nav{display:none}}
+@media(min-width:769px){.mobile-nav{display:none}.fc-short{display:none!important}.fc-full{display:inline!important}}
 @media print{.mobile-nav{display:none!important}}
 </style>
 </head>
@@ -977,61 +990,30 @@ function emailToCode(email){
   return m ? m.code : null; // null = unknown user
 }
 
-// ── IDENTITY PICKER — shown when Google email doesn't match any manager ──
-// Security: only managers whose stored email matches the Google domain are offered.
-// If zero matches — show a "contact admin" message, never let the user self-assign.
+// ── ACCESS DENIED — shown when Google email doesn't match any registered manager ──
+// Security: NEVER allow the user to self-select a profile.
+// Only an exact email match in the managers list grants access.
+// If no match is found — show "request access" screen and sign out.
 function openIdentityPicker(firebaseEmail){
   const el=document.getElementById('identityPicker');
   const list=document.getElementById('identityList');
-  const googleDomain=(firebaseEmail.split('@')[1]||'').toLowerCase();
 
-  // Candidates: managers whose email exactly matches OR whose email is empty
-  // but only when there is exactly ONE admin present (first-run scenario).
-  const exactMatch=managers.filter(m=>m.email&&m.email.toLowerCase()===firebaseEmail.toLowerCase());
-  const domainMatch=managers.filter(m=>m.email&&m.email.toLowerCase().endsWith('@'+googleDomain)&&!exactMatch.includes(m));
-  const noEmailMgrs=managers.filter(m=>!m.email);
-
-  // Determine candidates: exact > domain > (first-run: no-email managers if ≤2 total mgrs and no SA pwd set)
-  const isFirstRun=managers.length<=2&&!localStorage.getItem(SA_KEY);
-  let candidates=[...exactMatch,...domainMatch,...(isFirstRun?noEmailMgrs:[])];
-
-  if(!candidates.length){
-    list.innerHTML=`<div style="text-align:center;padding:20px 0;font-size:13px;color:#888">
-      <div style="font-size:28px;margin-bottom:10px">🔒</div>
-      <div style="font-weight:600;color:#333;margin-bottom:6px">Акаунт не знайдено</div>
-      <div>Ваш Google-акаунт (<strong>${esc(firebaseEmail)}</strong>) не прив'язаний до жодного менеджера.<br>
-      Зверніться до адміністратора Waymark для отримання доступу.</div>
-      <button onclick="doLogout()" style="margin-top:16px;border:1px solid #e4e0da;border-radius:9px;padding:9px 20px;font-size:13px;font-family:inherit;cursor:pointer;background:#fff;color:#b83a2a">Вийти</button>
-    </div>`;
-    el.style.display='flex';
-    return;
-  }
-
-  list.innerHTML=candidates.map(m=>`
-    <button onclick="assignIdentity('${esc(m.code)}','${esc(firebaseEmail)}')"
-      style="display:flex;align-items:center;gap:12px;width:100%;border:1px solid #e4e0da;border-radius:11px;padding:12px 14px;background:#fff;cursor:pointer;font-family:inherit;margin-bottom:8px;transition:background .12s"
-      onmouseover="this.style.background='#f8f6f3'" onmouseout="this.style.background='#fff'">
-      <div style="width:36px;height:36px;border-radius:50%;background:${m.col};color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${esc(m.code)}</div>
-      <div style="text-align:left">
-        <div style="font-size:14px;font-weight:600;color:#333">${esc(m.name)}</div>
-        <div style="font-size:11px;color:#aaa">${m.email?esc(m.email):'email не прив\'язано'}</div>
-      </div>
-    </button>`).join('');
+  // Show "not registered" message — no profile selection allowed
+  list.innerHTML=`<div style="text-align:center;padding:16px 0 8px;font-size:13px;color:#888">
+    <div style="font-size:32px;margin-bottom:12px">🔒</div>
+    <div style="font-weight:700;font-size:15px;color:#1c1c1c;margin-bottom:8px">Доступ не надано</div>
+    <div style="line-height:1.6;margin-bottom:16px">
+      Google-акаунт <strong style="color:#333">${esc(firebaseEmail)}</strong><br>
+      не зареєстрований у системі.<br>
+      <span style="color:#aaa;font-size:12px">Зверніться до адміністратора, щоб отримати доступ.</span>
+    </div>
+    <button onclick="doLogout()" style="width:100%;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;background:#8b1a1a;color:#fff">
+      Вийти
+    </button>
+  </div>`;
   el.style.display='flex';
-}
-
-async function assignIdentity(code, firebaseEmail){
-  const m=managers.find(x=>x.code===code);
-  if(!m) return;
-  // Bind this Google email to the manager so future logins auto-match
-  m.email=firebaseEmail.toLowerCase();
-  await save();
-  curU=code;
-  document.getElementById('identityPicker').style.display='none';
-  bootApp();
-  startRealtimeSync();
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
+  // Auto-sign out from Firebase so the session doesn't persist
+  doLogout();
 }
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
@@ -1210,6 +1192,7 @@ function renderSAIndicator(){
   const el=document.getElementById('saIndicator');
   if(!el) return;
   el.style.display=isSuperAdmin()?'flex':'none';
+  updateAvatarUI();
 }
 async function openSASetPwd(){
   if(!isSuperAdmin()){alert('Потрібен вхід як Суперадмін.');return;}
@@ -1609,7 +1592,7 @@ function render(){
         <div class="tc-preview-meta">
           ${t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label" style="padding:2px 8px;font-size:10px">${esc(g)}</span>`).join('')}
           ${t.deadline?`<span style="font-size:10px;color:${over?'#c0392b':'#b07050'};font-weight:${over?700:400};display:flex;align-items:center;gap:2px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(t.deadline)}</span>`:''}
-          ${t.forecast?`<span style="font-size:10px;color:#2f52cc;display:flex;align-items:center;gap:2px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${esc(t.forecast)}</span>`:''}
+          ${t.forecast?`<span class="fc-preview-badge" style="font-size:10px;color:#2f52cc;display:flex;align-items:center;gap:2px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="fc-full">${esc(t.forecast)}</span><span class="fc-short">${esc(t.forecast.split('/')[0].trim())}</span></span>`:''}
           ${hoursH}
           ${over?`<span style="font-size:10px;background:#fdecea;color:#c0392b;border-radius:10px;padding:1px 8px;font-weight:600">⚠</span>`:''}
           <span class="tg ${SC[t.status]}" style="padding:2px 10px;font-size:10px">${SL[t.status]}</span>
@@ -1792,24 +1775,36 @@ async function sendInvite(code){
   }
 }
 function updateAvatarUI(){
-  const m=mgr(curU);
   const e=document.getElementById('avU');
-  if(e){e.textContent=m.code;e.style.background=m.col;}
   const vacB=document.getElementById('avVacBadge');
-  if(vacB) vacB.style.display=isOnVacation(m)?'flex':'none';
+  if(isSuperAdmin()){
+    if(e){e.textContent='\u2764';e.style.background='#92400e';e.style.fontSize='16px';}
+    if(vacB) vacB.style.display='none';
+  } else {
+    const m=mgr(curU);
+    if(e){e.textContent=m.code;e.style.background=m.col;e.style.fontSize='';}
+    if(vacB) vacB.style.display=isOnVacation(m)?'flex':'none';
+  }
 }
 // avatar click → open profile modal
 function avClick(){
-  const m=mgr(curU);
   const roleLabels={basic:'Базовий доступ',extended:'Розширений доступ',admin:'Адміністратор'};
   const profAv=document.getElementById('profAv');
-  if(profAv){profAv.textContent=m.code;profAv.style.background=m.col;}
   const profName=document.getElementById('profName');
-  if(profName) profName.textContent=m.name;
   const profCode=document.getElementById('profCode');
-  if(profCode) profCode.textContent='Код: '+m.code+(m.email?' · '+m.email:'');
   const profRole=document.getElementById('profRole');
-  if(profRole) profRole.textContent=roleLabels[m.role||'basic']||m.role;
+  if(isSuperAdmin()){
+    if(profAv){profAv.textContent='👑';profAv.style.background='#92400e';profAv.style.fontSize='28px';}
+    if(profName) profName.textContent='Суперадмін';
+    if(profCode) profCode.textContent='Розширені повноваження активні';
+    if(profRole){profRole.textContent='Суперадмін';profRole.style.background='#fef3c7';profRole.style.color='#92400e';}
+  } else {
+    const m=mgr(curU);
+    if(profAv){profAv.textContent=m.code;profAv.style.background=m.col;profAv.style.fontSize='';}
+    if(profName) profName.textContent=m.name;
+    if(profCode) profCode.textContent='Код: '+m.code+(m.email?' · '+m.email:'');
+    if(profRole){profRole.textContent=roleLabels[m.role||'basic']||m.role;profRole.style.background='';profRole.style.color='';}
+  }
   openM('mProfile');
 }
 
@@ -2500,14 +2495,9 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
     </div>
   </div>
 </div>
-<!-- IDENTITY PICKER -->
+<!-- ACCESS DENIED MODAL -->
 <div id="identityPicker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10000;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.15)">
-    <div style="text-align:center;margin-bottom:22px">
-      <div style="font-size:32px;margin-bottom:8px">👋</div>
-      <div style="font-size:16px;font-weight:700;color:#1c1c1c">Хто ви?</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px">Ваш Google-акаунт ще не прив'язаний.<br>Оберіть свій профіль — він збережеться автоматично.</div>
-    </div>
     <div id="identityList"></div>
   </div>
 </div>
