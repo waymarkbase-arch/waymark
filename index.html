@@ -1206,7 +1206,19 @@ function renderSAIndicator(){
   updateAvatarUI();
 }
 async function openSASetPwd(){
-  if(!isSuperAdmin()){alert('Потрібен вхід як Суперадмін.');return;}
+  if(curU!==SA_OWNER_CODE){alert('Зміна пароля суперадміна доступна лише власнику.');return;}
+  if(!isSuperAdmin()){
+    // Allow change even without active session — will verify old password in saveSAPwd
+    const key=_saKey();
+    if(key&&!localStorage.getItem(key)){
+      // No password set yet — just open the form
+    } else {
+      // Has password — need to verify old one first
+      document.getElementById('saSetPwdOldWrap') && (document.getElementById('saSetPwdOldWrap').style.display='');
+    }
+  } else {
+    document.getElementById('saSetPwdOldWrap') && (document.getElementById('saSetPwdOldWrap').style.display='none');
+  }
   openM('mSASetPwd');setTimeout(()=>document.getElementById('saNewPwd').focus(),80);
 }
 async function saveSAPwd(){
@@ -1216,9 +1228,17 @@ async function saveSAPwd(){
   if(p1.length<8){err.textContent='Мінімум 8 символів';return;}
   if(p1!==p2){err.textContent='Паролі не збігаються';return;}
   const key=_saKey();if(!key){err.textContent='Помилка: не знайдено Firebase UID.';return;}
+  // If not in SA session and password exists — verify old password first
+  if(!isSuperAdmin()&&localStorage.getItem(key)){
+    const oldInp=document.getElementById('saOldPwd');
+    if(!oldInp||!oldInp.value){err.textContent='Введіть поточний пароль для підтвердження.';return;}
+    const oldH=await saHash(oldInp.value);
+    if(oldH!==localStorage.getItem(key)){err.textContent='Поточний пароль невірний.';return;}
+  }
   const h=await saHash(p1);
   localStorage.setItem(key,h);
   document.getElementById('saNewPwd').value='';document.getElementById('saNewPwd2').value='';
+  const oldInp2=document.getElementById('saOldPwd');if(oldInp2)oldInp2.value='';
   err.textContent='';closeM('mSASetPwd');alert('✅ Пароль суперадміна збережено');
 }
 const SA_OWNER_CODE='MK'; // єдиний менеджер, якому дозволено бути суперадміном
@@ -1633,6 +1653,7 @@ function render(){
         <div class="tc-foot">
           <button class="comm-btn" onclick="togCmt(${tid})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Додати нотатку</button>
           ${canChangeStatus(t)?`<button class="cst-btn" onclick="event.stopPropagation();openSt(${tid})">Змінити статус</button>`:''}
+          ${t.status==='done'&&canArchiveTask(t)?`<button onclick="event.stopPropagation();askDel(${tid})" style="border:none;background:#edf8f2;color:#1e7040;border-radius:9px;padding:7px 14px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>Архівувати</button>`:''}
           ${isSuperAdmin()?`<button onclick="event.stopPropagation();openSAHardDelete(${tid})" style="border:none;background:#fdecea;color:#b83a2a;border-radius:9px;padding:7px 12px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600">🗑 Видалити назавжди</button>`:''}
         </div>
       </div>
@@ -2415,7 +2436,7 @@ function showSet(){
   const btnSALogin=document.getElementById('btnSALogin');
   if(btnSALogin) btnSALogin.style.display=isSuperAdmin()?'none':'';
   const btnSASetPwd=document.getElementById('btnSASetPwd');
-  if(btnSASetPwd) btnSASetPwd.style.display=isSuperAdmin()?'':'none';
+  if(btnSASetPwd) btnSASetPwd.style.display=(curU===SA_OWNER_CODE)?'':'none';
   const fsRulesBanner=document.getElementById('fsRulesBanner');
   if(fsRulesBanner) fsRulesBanner.style.display=isSuperAdmin()?'':'none';
   // "Менеджери" title — rename for non-admins
@@ -2504,6 +2525,9 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     </div>
     <div class="del-modal-title">Змінити пароль суперадміна</div>
+    <div id="saSetPwdOldWrap">
+      <input id="saOldPwd" type="password" placeholder="Поточний пароль" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box">
+    </div>
     <input id="saNewPwd" type="password" placeholder="Новий пароль" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:8px;box-sizing:border-box">
     <input id="saNewPwd2" type="password" placeholder="Підтвердити пароль" style="width:100%;border:1px solid #e4e0da;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;margin-bottom:6px;box-sizing:border-box">
     <div id="saSetPwdErr" style="font-size:11px;color:#c0392b;min-height:16px;margin-bottom:10px"></div>
