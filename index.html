@@ -84,7 +84,7 @@ async function getPickerOAuthToken(){
     // Use the Google Identity Services tokenClient
     const client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive.readonly',
+      scope: 'https://www.googleapis.com/auth/drive.file',
       callback: resp => {
         if(resp.error){ reject(resp.error); return; }
         pickerOAuthToken = resp.access_token;
@@ -786,10 +786,6 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <label>Результат (зелена смужка)</label><input id="fR" placeholder="Посилання або опис...">
     <label>📎 Файли</label>
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
-      <button type="button" onclick="document.getElementById('filePickerInput').click()" style="border:1px solid #e4e0da;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f8f8f5;color:#555;display:flex;align-items:center;gap:5px;white-space:nowrap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        ⬆ Завантажити файл
-      </button>
       <button type="button" onclick="openGooglePicker()" style="border:1px solid #c8ddf0;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f0f6fc;color:#2a6090;display:flex;align-items:center;gap:5px;white-space:nowrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
         📎 Прикріпити з Drive
