@@ -25,6 +25,9 @@ import { getAuth, signInWithEmailAndPassword, signInWithPopup,
 import { getFirestore, doc, getDoc, setDoc,
          onSnapshot, collection,
          serverTimestamp }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref as storageRef,
+         uploadBytesResumable, getDownloadURL,
+         deleteObject }                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyBoULsZZQT1-ZiKM5YIbB6QFmp9ZSj2jo4",
@@ -38,13 +41,127 @@ const firebaseConfig = {
 const fbApp      = initializeApp(firebaseConfig);
 const fbAuth     = getAuth(fbApp);
 const db         = getFirestore(fbApp);
+const fbStorage  = getStorage(fbApp);
 const googleProv = new GoogleAuthProvider();
 
 // ── expose to global scope so non-module JS can call ──
-window._fb = { fbAuth, db, signInWithEmailAndPassword, signInWithPopup,
+window._fb = { fbAuth, db, fbStorage, signInWithEmailAndPassword, signInWithPopup,
                googleProv, signOut, onAuthStateChanged,
                createUserWithEmailAndPassword, sendPasswordResetEmail,
-               doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp };
+               doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp,
+               storageRef, uploadBytesResumable, getDownloadURL, deleteObject };
+</script>
+<!-- Google API (Picker) -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script>
+// ══════════════════════════════════════════════
+//  GOOGLE PICKER — налаштування
+// ══════════════════════════════════════════════
+// 1. Отримай API Key: Google Cloud Console → APIs & Services → Credentials → Create API Key
+// 2. Вкажи той самий key тут:
+const GOOGLE_API_KEY   = 'AIzaSyAlUA2BXIct8w7lhXoXDf85gc9ZXTbI5II';
+
+// OAuth Client ID (той що вже є для Firebase Google Auth):
+// APIs & Services → Credentials → OAuth 2.0 Client IDs → скопіюй Client ID
+const GOOGLE_CLIENT_ID = '452726505340-9moqgd9op8sht11ft9jh8fe56eg42ko1.apps.googleusercontent.com';
+
+// ── Picker state ──
+let pickerApiLoaded = false;
+let pickerOAuthToken = null;
+
+function loadPickerApi(){
+  return new Promise(resolve => {
+    if(pickerApiLoaded){ resolve(); return; }
+    gapi.load('picker', { callback: () => { pickerApiLoaded = true; resolve(); } });
+  });
+}
+
+async function getPickerOAuthToken(){
+  // Re-use existing token if still valid
+  if(pickerOAuthToken) return pickerOAuthToken;
+
+  return new Promise((resolve, reject) => {
+    // Use the Google Identity Services tokenClient
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.readonly',
+      callback: resp => {
+        if(resp.error){ reject(resp.error); return; }
+        pickerOAuthToken = resp.access_token;
+        // Token expires in ~1h — clear cache on expiry
+        setTimeout(() => { pickerOAuthToken = null; }, (resp.expires_in - 60) * 1000);
+        resolve(pickerOAuthToken);
+      }
+    });
+    client.requestAccessToken({ prompt: '' });
+  });
+}
+
+async function openGooglePicker(){
+  if(GOOGLE_API_KEY === 'ВАШ_API_KEY_ТУТ' || GOOGLE_CLIENT_ID === 'ВАШ_CLIENT_ID_ТУТ'){
+    alert('⚙️ Google Picker не налаштовано.\n\nВкажіть GOOGLE_API_KEY і GOOGLE_CLIENT_ID у коді (пошук за словом «ВАШ_API_KEY_ТУТ»).');
+    return;
+  }
+
+  try {
+    await loadPickerApi();
+    // Load Google Identity Services if not yet present
+    if(!window.google?.accounts?.oauth2){
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+    const token = await getPickerOAuthToken();
+    buildPicker(token);
+  } catch(e){
+    console.error('Picker error:', e);
+    alert('❌ Помилка відкриття Google Drive:\n' + (e.message || e));
+  }
+}
+
+function buildPicker(oauthToken){
+  const view = new google.picker.DocsView()
+    .setIncludeFolders(true)
+    .setSelectFolderEnabled(false);
+
+  const picker = new google.picker.PickerBuilder()
+    .setAppId(GOOGLE_CLIENT_ID.split('-')[0])   // numeric app id
+    .setOAuthToken(oauthToken)
+    .setDeveloperKey(GOOGLE_API_KEY)
+    .addView(view)
+    .addView(new google.picker.DocsUploadView())
+    .setTitle('Вибрати файл з Google Drive')
+    .setCallback(pickerCallback)
+    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+    .build();
+
+  picker.setVisible(true);
+}
+
+function pickerCallback(data){
+  if(data.action !== google.picker.Action.PICKED) return;
+  const docs = data[google.picker.Response.DOCUMENTS];
+  if(!docs || !docs.length) return;
+
+  let fs = JSON.parse(document.getElementById('fDriveFiles').value || '[]');
+  docs.forEach(doc => {
+    const name = doc[google.picker.Document.NAME];
+    const url  = doc[google.picker.Document.URL];
+    const id   = doc[google.picker.Document.ID];
+    // Build a clean Google Drive view link
+    const viewUrl = `https://drive.google.com/file/d/${id}/view`;
+    // Avoid duplicates
+    if(!fs.find(f => f.driveId === id)){
+      fs.push({ name, url: viewUrl, driveId: id });
+    }
+  });
+
+  document.getElementById('fDriveFiles').value = JSON.stringify(fs);
+  renderDriveLinks(fs);
+}
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -667,14 +784,20 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <label>Прогноз виконання</label><input id="fFc" placeholder="15:30 / 2026-04-21">
     <label>Призначено</label><select id="fTo"></select>
     <label>Результат (зелена смужка)</label><input id="fR" placeholder="Посилання або опис...">
-    <label>📎 Файли (посилання на Google Drive)</label>
+    <label>📎 Файли</label>
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
-      <button type="button" onclick="addDriveFile()" style="border:1px solid #e4e0da;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f8f8f5;color:#555;display:flex;align-items:center;gap:5px;white-space:nowrap">
+      <button type="button" onclick="document.getElementById('filePickerInput').click()" style="border:1px solid #e4e0da;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f8f8f5;color:#555;display:flex;align-items:center;gap:5px;white-space:nowrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-        + Додати файл
+        ⬆ Завантажити файл
       </button>
+      <button type="button" onclick="openGooglePicker()" style="border:1px solid #c8ddf0;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f0f6fc;color:#2a6090;display:flex;align-items:center;gap:5px;white-space:nowrap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        📎 Прикріпити з Drive
+      </button>
+      <input type="file" id="filePickerInput" multiple style="display:none" onchange="uploadSelectedFiles(this)">
       <div id="driveLinks" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
     </div>
+    <div id="uploadProgressArea" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
     <input type="hidden" id="fDriveFiles" value="[]">
     <label>⏱ Витрачено годин</label>
     <div style="display:flex;align-items:center;gap:8px">
@@ -756,12 +879,21 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <p style="font-size:11px;color:#aaa;margin-bottom:4px">Колір нового менеджера:</p>
       <div class="color-dots" id="mgrColorPicker"></div>
     </div>
-    <div class="sec-title">Робочий час</div>
-    <div class="dbtns" id="dbtns"></div>
-    <div class="srow"><label>Початок</label><input type="time" id="ws" value="09:00"></div>
-    <div class="srow"><label>Кінець</label><input type="time" id="we" value="18:00"></div>
-    <p style="font-size:11px;color:#bbb;margin:10px 0 5px">Slack Webhook (Beta)</p>
-    <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
+    <div id="settingsWorkHours">
+      <div class="sec-title">Робочий час</div>
+      <div class="dbtns" id="dbtns"></div>
+      <div class="srow"><label>Початок</label><input type="time" id="ws" value="09:00"></div>
+      <div class="srow"><label>Кінець</label><input type="time" id="we" value="18:00"></div>
+      <p style="font-size:11px;color:#bbb;margin:10px 0 5px">Slack Webhook (Beta)</p>
+      <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
+    </div>
+    <div id="settingsMyName" style="display:none">
+      <div class="sec-title" style="margin-top:12px">Моє ім'я</div>
+      <div class="srow" style="gap:10px">
+        <input id="myNameInput" type="text" maxlength="20" placeholder="Ваше ім'я..." style="flex:1;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;color:#333">
+        <button onclick="saveMyName()" style="background:#1c1c1c;color:#fff;border:none;border-radius:9px;padding:8px 18px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap">Зберегти ім'я</button>
+      </div>
+    </div>
     <div id="settingsSAOnly" style="display:none">
       <div class="sec-title">Суперадмін</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2047,29 +2179,125 @@ function renderAnalytics(){
   }
 }
 
-/* ── DRIVE FILES ── */
+/* ── FILE UPLOAD (Firebase Storage) ── */
+// Storage path: tasks/{taskId or "new"}/{timestamp}_{filename}
+// Files are stored under the task ID so they can be cleaned up if needed.
+
+function fileIcon(name){
+  const ext=(name||'').split('.').pop().toLowerCase();
+  if(['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return '🖼';
+  if(['pdf'].includes(ext)) return '📄';
+  if(['doc','docx'].includes(ext)) return '📝';
+  if(['xls','xlsx','csv'].includes(ext)) return '📊';
+  if(['zip','rar','7z'].includes(ext)) return '🗜';
+  if(['mp4','mov','avi','mkv'].includes(ext)) return '🎬';
+  if(['mp3','wav','ogg'].includes(ext)) return '🎵';
+  return '📎';
+}
 function renderDriveLinks(files){
   const el=document.getElementById('driveLinks');if(!el)return;
-  el.innerHTML=(files||[]).map((f,i)=>
-    `<a href="${f.url}" target="_blank" rel="noopener" style="font-size:11px;background:#eaf3fb;color:#2a6090;border-radius:20px;padding:3px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-      📎 ${f.name}
-      <span onclick="event.preventDefault();removeDriveFile(${i})" style="opacity:.5;cursor:pointer">✕</span></a>`
-  ).join('');
+  el.innerHTML=(files||[]).map((f,i)=>{
+    const ic=fileIcon(f.name);
+    // Drive-picker file has driveId; Firebase Storage file has storagePath
+    const badge = f.driveId
+      ? '<span title="Google Drive" style="font-size:9px;opacity:.65">🔗 Drive</span>'
+      : (f.storagePath ? '' : '<span title="Зовнішнє посилання" style="opacity:.5;font-size:9px">🔗</span>');
+    return `<span style="font-size:11px;background:#eaf3fb;color:#2a6090;border-radius:20px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px;max-width:220px">
+      <a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(f.name)}">${ic} ${esc(f.name)}</a>
+      ${badge}
+      <span onclick="removeUploadedFile(${i})" style="opacity:.4;cursor:pointer;line-height:1;flex-shrink:0;font-size:13px" title="Видалити">✕</span>
+    </span>`;
+  }).join('');
 }
-function removeDriveFile(i){
+
+async function removeUploadedFile(i){
   let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
-  fs.splice(i,1);document.getElementById('fDriveFiles').value=JSON.stringify(fs);renderDriveLinks(fs);
+  const f=fs[i];
+  // Attempt to delete from Storage if it's a Firebase Storage URL
+  if(f && f.storagePath){
+    try{
+      const {fbStorage, storageRef: sRef, deleteObject}=window._fb;
+      await deleteObject(sRef(fbStorage, f.storagePath));
+    }catch(e){ console.warn('Storage delete skipped:',e.message); }
+  }
+  fs.splice(i,1);
+  document.getElementById('fDriveFiles').value=JSON.stringify(fs);
+  renderDriveLinks(fs);
 }
+
+// Legacy: keep addDriveFile as fallback (not shown in UI anymore but harmless)
 function addDriveFile(){
-  const url=prompt('Посилання на Google Drive файл:');if(!url)return;
-  const name=decodeURIComponent(url.split('/').slice(-2,-1)[0]||'Файл').slice(0,40);
+  const url=prompt('Посилання на файл:');if(!url)return;
+  const name=decodeURIComponent(url.split('/').slice(-1)[0]||'Файл').slice(0,40);
   let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
   fs.push({name,url});document.getElementById('fDriveFiles').value=JSON.stringify(fs);renderDriveLinks(fs);
 }
+
+function uploadSelectedFiles(input){
+  const files=Array.from(input.files);
+  if(!files.length) return;
+  const taskId = eId || ('new_'+Date.now());
+  files.forEach(file=>uploadOneFile(file, taskId));
+  input.value=''; // reset so same file can be picked again
+}
+
+function uploadOneFile(file, taskId){
+  const {fbStorage, storageRef: sRef, uploadBytesResumable, getDownloadURL}=window._fb||{};
+  if(!fbStorage){alert('Firebase Storage не підключено.');return;}
+
+  const MAX_MB=20;
+  if(file.size > MAX_MB*1024*1024){
+    alert(`❌ Файл "${file.name}" перевищує ${MAX_MB} МБ. Оберіть менший файл.`);
+    return;
+  }
+
+  const safeName=file.name.replace(/[^a-zA-Z0-9._\-]/g,'_');
+  const path=`tasks/${taskId}/${Date.now()}_${safeName}`;
+  const ref=sRef(fbStorage, path);
+  const uploadTask=uploadBytesResumable(ref, file);
+
+  // Create progress pill
+  const progArea=document.getElementById('uploadProgressArea');
+  const pillId='up_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  const pill=document.createElement('div');
+  pill.id=pillId;
+  pill.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:#666;background:#f5f3ee;border-radius:8px;padding:5px 10px';
+  pill.innerHTML=`<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⬆ ${esc(file.name)}</span>
+    <div style="width:80px;height:4px;background:#e0dcd6;border-radius:4px;overflow:hidden;flex-shrink:0">
+      <div id="${pillId}_bar" style="height:100%;background:#2f52cc;width:0%;transition:width .2s;border-radius:4px"></div>
+    </div>
+    <span id="${pillId}_pct" style="width:28px;text-align:right;flex-shrink:0">0%</span>`;
+  progArea.appendChild(pill);
+
+  uploadTask.on('state_changed',
+    snap=>{
+      const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);
+      const bar=document.getElementById(pillId+'_bar');
+      const pctEl=document.getElementById(pillId+'_pct');
+      if(bar) bar.style.width=pct+'%';
+      if(pctEl) pctEl.textContent=pct+'%';
+    },
+    err=>{
+      const p=document.getElementById(pillId);
+      if(p) p.innerHTML=`<span style="color:#b83a2a">❌ ${esc(file.name)}: ${esc(err.message)}</span>`;
+      setTimeout(()=>p&&p.remove(), 4000);
+    },
+    async ()=>{
+      const url=await getDownloadURL(uploadTask.snapshot.ref);
+      let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
+      fs.push({name:file.name.slice(0,60), url, storagePath:path});
+      document.getElementById('fDriveFiles').value=JSON.stringify(fs);
+      renderDriveLinks(fs);
+      const p=document.getElementById(pillId);
+      if(p) p.remove();
+    }
+  );
+}
+
 function driveFilesH(files){
   if(!files||!files.length)return '';
   return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+
-    files.map(f=>`<a href="${f.url}" target="_blank" style="font-size:11px;background:#eaf3fb;color:#2a6090;border-radius:20px;padding:3px 10px;text-decoration:none">📎 ${f.name}</a>`).join('')+'</div>';
+    files.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noopener" style="font-size:11px;background:#eaf3fb;color:#2a6090;border-radius:20px;padding:3px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${fileIcon(f.name)} ${esc(f.name)}</a>`).join('')+'</div>';
 }
 
 /* ── JOURNAL / AUDIT LOG ── */
@@ -2427,6 +2655,7 @@ function updClk(){
 function showSet(){
   rdDays();renderMgrList();renderColorPicker();
   const isAdm=canDo('admin')||isSuperAdmin();
+  const isBasic=!canDo('extended')&&!isSuperAdmin();
   // Admin-only sections: add manager, color picker
   const adminOnly=document.getElementById('settingsAdminOnly');
   if(adminOnly) adminOnly.style.display=isAdm?'':'none';
@@ -2442,7 +2671,33 @@ function showSet(){
   // "Менеджери" title — rename for non-admins
   const mgrTitle=document.getElementById('settingsMgrTitle');
   if(mgrTitle) mgrTitle.textContent=isAdm?'Менеджери':'Мій профіль';
+  // Working hours — hidden for basic users (admin/extended only)
+  const workHours=document.getElementById('settingsWorkHours');
+  if(workHours) workHours.style.display=isBasic?'none':'';
+  // Name editor — visible only for basic users
+  const myName=document.getElementById('settingsMyName');
+  if(myName){
+    myName.style.display=isBasic?'':'none';
+    if(isBasic){
+      const m=curMgr();
+      const inp=document.getElementById('myNameInput');
+      if(inp) inp.value=m.name||'';
+    }
+  }
   openM('mSet');
+}
+function saveMyName(){
+  const inp=document.getElementById('myNameInput');
+  if(!inp) return;
+  const newName=inp.value.trim();
+  if(!newName){alert('Ім\'я не може бути порожнім.');return;}
+  const m=managers.find(x=>x.code===curU);
+  if(!m){alert('Менеджера не знайдено.');return;}
+  const oldName=m.name;
+  m.name=newName;
+  save();updateAvatarUI();renderVacBanner();
+  logEntry('edit',null,null,'ім\'я',oldName,newName);
+  alert('✅ Ім\'я оновлено: '+newName);
 }
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
