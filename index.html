@@ -50,8 +50,6 @@ window._fb = { fbAuth, db, fbStorage, signInWithEmailAndPassword, signInWithPopu
                createUserWithEmailAndPassword, sendPasswordResetEmail,
                doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp,
                storageRef, uploadBytesResumable, getDownloadURL, deleteObject };
-// Signal that _fb is ready (resolves the Promise used by non-module scripts)
-if(typeof window._fbResolve === 'function') window._fbResolve(window._fb);
 </script>
 <!-- Google API (Picker) -->
 <script src="https://apis.google.com/js/api.js"></script>
@@ -66,9 +64,6 @@ const GOOGLE_API_KEY   = 'AIzaSyAlUA2BXIct8w7lhXoXDf85gc9ZXTbI5II';
 // OAuth Client ID (той що вже є для Firebase Google Auth):
 // APIs & Services → Credentials → OAuth 2.0 Client IDs → скопіюй Client ID
 const GOOGLE_CLIENT_ID = '452726505340-9moqgd9op8sht11ft9jh8fe56eg42ko1.apps.googleusercontent.com';
-
-// ── Папка адміна на waymark.base@gmail.com — всі файли завантажуються сюди ──
-const ADMIN_FOLDER_ID = '1RFEFqSd2qfZkx7tck5Z1JHqfkN_BxOQ_';
 
 // ── Picker state ──
 let pickerApiLoaded = false;
@@ -89,7 +84,7 @@ async function getPickerOAuthToken(){
     // Use the Google Identity Services tokenClient
     const client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive',
+      scope: 'https://www.googleapis.com/auth/drive.file',
       callback: resp => {
         if(resp.error){ reject(resp.error); return; }
         pickerOAuthToken = resp.access_token;
@@ -132,17 +127,13 @@ function buildPicker(oauthToken){
     .setIncludeFolders(true)
     .setSelectFolderEnabled(false);
 
-  // Upload view — прямо в папку адміна
-  const uploadView = new google.picker.DocsUploadView()
-    .setParent(ADMIN_FOLDER_ID);
-
   const picker = new google.picker.PickerBuilder()
     .setAppId(GOOGLE_CLIENT_ID.split('-')[0])   // numeric app id
     .setOAuthToken(oauthToken)
     .setDeveloperKey(GOOGLE_API_KEY)
-    .addView(uploadView)
     .addView(view)
-    .setTitle('Завантажити або вибрати файл')
+    .addView(new google.picker.DocsUploadView())
+    .setTitle('Вибрати файл з Google Drive')
     .setCallback(pickerCallback)
     .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
     .build();
@@ -639,7 +630,6 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
-    <div class="frow" id="mgrFilterWrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
   </div>
   <div class="sa">
     <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="render()"></div>
@@ -798,17 +788,17 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
       <button type="button" onclick="openGooglePicker()" style="border:1px solid #c8ddf0;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f0f6fc;color:#2a6090;display:flex;align-items:center;gap:5px;white-space:nowrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        ⬆ Завантажити файл
+        📎 Прикріпити з Drive
       </button>
+      <input type="file" id="filePickerInput" multiple style="display:none" onchange="uploadSelectedFiles(this)">
       <div id="driveLinks" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
     </div>
+    <div id="uploadProgressArea" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
     <input type="hidden" id="fDriveFiles" value="[]">
-    <div id="hoursFieldWrap">
     <label>⏱ Витрачено годин</label>
     <div style="display:flex;align-items:center;gap:8px">
       <input type="number" id="fHours" placeholder="0.00" min="0" max="999" step="0.25" style="width:110px">
       <span style="font-size:12px;color:#aaa">год. (буде у звіті)</span>
-    </div>
     </div>
     <div class="mbtns"><button onclick="closeM('mAdd')">Скасувати</button><button class="mprim" id="mBtn" onclick="mkT()">Створити</button></div>
   </div>
@@ -937,16 +927,6 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 </div>
 
 <script>
-// ── Firebase readiness gate ──
-// The module script (type="module") loads asynchronously. This Promise resolves
-// the moment window._fb is populated, so every function below can safely await it
-// instead of accessing window._fb directly and getting undefined.
-window._fbReady = new Promise(resolve => { window._fbResolve = resolve; });
-// If the module already ran before this script (rare but possible), resolve now.
-if(window._fb) window._fbResolve(window._fb);
-// Convenience: waitForFb() returns the populated _fb object
-async function waitForFb(){ return window._fbReady; }
-
 const SL={new:'Нові',work:'В роботі',clarify:'Уточнення',done:'Виконано',urgent:'Терміново',test:'Тестування'};
 const SC={new:'tg-new',work:'tg-work',clarify:'tg-clarify',done:'tg-done',urgent:'tg-urgent',test:'tg-test'};
 const STCOL={new:'#c8cdd6',work:'#dfc9b0',clarify:'#d5d4b8',done:'#c4d8c8',urgent:'#d4c4bc',test:'#c6c6d6'};
@@ -970,7 +950,7 @@ async function doLogin(){
   if(!email||!pwd){errEl.textContent='Введіть email і пароль';return;}
   spin.style.display='block';
   try{
-    const {fbAuth, signInWithEmailAndPassword} = await waitForFb();
+    const {fbAuth, signInWithEmailAndPassword} = window._fb;
     await signInWithEmailAndPassword(fbAuth, email, pwd);
     // onAuthStateChanged handles the rest
   } catch(e){
@@ -993,7 +973,7 @@ async function doForgotPassword(){
   errEl.textContent=''; msg.style.display='none';
   if(!email){errEl.textContent='Введіть email вище, потім натисніть «Забули пароль?»';return;}
   try{
-    const {fbAuth} = await waitForFb();
+    const {fbAuth} = window._fb;
     const {sendPasswordResetEmail} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
     await sendPasswordResetEmail(fbAuth, email);
     msg.textContent=`✅ Лист для скидання паролю надіслано на ${email}`;
@@ -1012,7 +992,7 @@ async function doGoogleLogin(){
   const spin=document.getElementById('loginSpinner');
   errEl.textContent=''; spin.style.display='block';
   try{
-    const {fbAuth, signInWithPopup, googleProv}=await waitForFb();
+    const {fbAuth, signInWithPopup, googleProv}=window._fb;
     await signInWithPopup(fbAuth, googleProv);
     // onAuthStateChanged handles the rest
   } catch(e){
@@ -1030,7 +1010,7 @@ async function doLogout(){
   window._accessDeniedShown = false;
   const picker = document.getElementById('identityPicker');
   if(picker) picker.style.display='none';
-  const {fbAuth, signOut} = await waitForFb();
+  const {fbAuth, signOut} = window._fb;
   if(_unsubSnapshot){_unsubSnapshot();_unsubSnapshot=null;}
   superAdminSession=false;_saUid=null;
   await signOut(fbAuth);
@@ -1062,7 +1042,7 @@ async function save(){
   // Role-level access control lives here in the client, but network-level auth
   // is enforced by Firestore Rules on the server.
   try{
-    const {db, doc, setDoc, serverTimestamp} = await waitForFb();
+    const {db, doc, setDoc, serverTimestamp} = window._fb;
     await setDoc(doc(db, 'waymark','main'), {
       tasks, managers, customLabels, cfg,
       auditLog: auditLog.slice(0,500), // cap at 500 entries
@@ -1075,7 +1055,7 @@ async function save(){
 // ── LOAD from Firestore (one-time) ──
 async function loadFromFirestore(){
   try{
-    const {db, doc, getDoc} = await waitForFb();
+    const {db, doc, getDoc} = window._fb;
     const snap = await getDoc(doc(db,'waymark','main'));
     if(snap.exists()){
       const d = snap.data();
@@ -1104,32 +1084,21 @@ function loadFromLocalStorage(){
 }
 
 // ── REAL-TIME LISTENER ──
-async function startRealtimeSync(){
-  const {db, doc, onSnapshot} = await waitForFb();
+function startRealtimeSync(){
+  const {db, doc, onSnapshot} = window._fb;
   if(_unsubSnapshot) _unsubSnapshot();
   _unsubSnapshot = onSnapshot(doc(db,'waymark','main'), snap=>{
     if(!snap.exists()) return;
     const d=snap.data();
     // only apply if another user changed it (not our own save)
     if(d.updatedBy && d.updatedBy !== curU){
-      // ── перевіряємо зміни статусу ДО оновлення локального стану ──
-      if(d.tasks){
-        d.tasks.forEach(newT=>{
-          const oldT=tasks.find(t=>t.id===newT.id);
-          if(!oldT) return;
-          if(newT.status!==oldT.status && newT.statusChangedBy && newT.statusChangedBy!==curU){
-            const isConcerned=newT.from===curU||newT.to===curU;
-            if(isConcerned) showStatusChangeNotif(newT, oldT.status, newT.status, newT.statusChangedBy);
-          }
-        });
-      }
       if(d.tasks)        tasks        = d.tasks;
-      // never overwrite managers during SA or admin session — prevents race condition on add/edit
-      if(d.managers && !isSuperAdmin() && !canDo('admin')) managers = d.managers;
+      // never overwrite managers during SA session or right after a role change
+      if(d.managers && !isSuperAdmin() && !_roleChangeLock) managers = d.managers;
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
-      rStats(); render(); renderVacBanner(); renderLabelPills(); renderMgrFilter();
+      rStats(); render(); renderVacBanner(); renderLabelPills();
       showSyncToast(d.updatedBy);
     }
   }, err=>console.error('Snapshot error:',err));
@@ -1147,59 +1116,6 @@ function showSyncToast(byCode){
   t.style.opacity='1';
   clearTimeout(t._hide);
   t._hide=setTimeout(()=>t.style.opacity='0',3000);
-}
-
-function showStatusChangeNotif(task, oldSt, newSt, byCode){
-  const changer=managers.find(x=>x.code===byCode)||{name:byCode,col:'#888'};
-  const taskName=task.title||task.url||task.note||'Завдання';
-  const oldLabel=SL[oldSt]||oldSt;
-  const newLabel=SL[newSt]||newSt;
-  const stColors={new:'#6b8cda',work:'#e09020',clarify:'#c07858',done:'#2e8653',urgent:'#c0392b',test:'#7b5ea7'};
-  const col=stColors[newSt]||'#888';
-
-  // browser push
-  if('Notification' in window && Notification.permission==='granted'){
-    new Notification('Waymark — зміна статусу',{
-      body:`${changer.name}: «${taskName}» → ${newLabel}`,
-      tag:'st_'+task.id
-    });
-  }
-
-  // in-app банер
-  const existing=document.getElementById('stNotifBanner');
-  if(existing) existing.remove();
-
-  if(!document.getElementById('stNotifStyle')){
-    const st=document.createElement('style');
-    st.id='stNotifStyle';
-    st.textContent=`@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}`;
-    document.head.appendChild(st);
-  }
-
-  const banner=document.createElement('div');
-  banner.id='stNotifBanner';
-  banner.style.cssText='position:fixed;top:18px;right:18px;z-index:10000;background:#fff;border:1px solid #e0dcd6;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.13);padding:14px 18px 12px;max-width:320px;font-family:inherit;animation:slideInRight .3s ease';
-  banner.innerHTML=`
-    <div style="display:flex;align-items:flex-start;gap:10px">
-      <div style="width:36px;height:36px;border-radius:50%;background:${changer.col||'#888'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${esc(changer.name.charAt(0))}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:3px">${esc(changer.name)} змінив статус</div>
-        <div style="font-size:11px;color:#666;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(taskName)}">«${esc(taskName)}»</div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px">
-          <span style="background:#f0f0ee;color:#888;border-radius:20px;padding:2px 8px">${esc(oldLabel)}</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          <span style="background:${col}22;color:${col};border-radius:20px;padding:2px 8px;font-weight:600">${esc(newLabel)}</span>
-        </div>
-      </div>
-      <span onclick="document.getElementById('stNotifBanner').remove()" style="color:#bbb;cursor:pointer;font-size:18px;line-height:1;flex-shrink:0;margin-top:-2px">✕</span>
-    </div>`;
-  document.body.appendChild(banner);
-  clearTimeout(banner._hide);
-  banner._hide=setTimeout(()=>{
-    banner.style.transition='opacity .5s';
-    banner.style.opacity='0';
-    setTimeout(()=>{if(banner.parentNode)banner.remove();},500);
-  },6000);
 }
 
 // ── MATCH firebase email → manager code ──
@@ -1235,9 +1151,15 @@ function openIdentityPicker(firebaseEmail){
 }
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
-window.addEventListener('load', async ()=>{
-  const {fbAuth, onAuthStateChanged} = await waitForFb();
-  onAuthStateChanged(fbAuth, async user=>{
+window.addEventListener('load', ()=>{
+  // poll until _fb is populated by the module script (max 3s)
+  let attempts=0;
+  const waitForFb=setInterval(()=>{
+    attempts++;
+    if(window._fb){
+      clearInterval(waitForFb);
+      const {fbAuth, onAuthStateChanged} = window._fb;
+      onAuthStateChanged(fbAuth, async user=>{
         if(user){
           document.getElementById('loginSpinner').style.display='none';
           await loadFromFirestore();
@@ -1248,7 +1170,6 @@ window.addEventListener('load', async ()=>{
             openIdentityPicker(user.email);
           } else {
             curU = code;
-            mgrFilter = 'all';
             bootApp();
             startRealtimeSync();
             document.getElementById('loginScreen').style.display='none';
@@ -1263,6 +1184,11 @@ window.addEventListener('load', async ()=>{
           setTimeout(()=>document.getElementById('loginEmail').focus(),100);
         }
       });
+    } else if(attempts>60){
+      clearInterval(waitForFb);
+      document.getElementById('loginErr').textContent='Помилка завантаження Firebase. Перевірте з\'єднання.';
+    }
+  }, 50); // check every 50ms, up to 3s
 });
 
 
@@ -1299,7 +1225,6 @@ let tasks=[
 ];
 let customLabels=["Об'єкти",'Розсилка'];
 let flt='all',curU='MK',eId=null,dId=null,aMode='week';
-let mgrFilter='all'; // 'all' | 'mine' | manager code (admin/SA only)
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -1324,7 +1249,7 @@ function bootApp(){
   migrateMgrRoles();
   updateAvatarUI();
   updateRoleUI();
-  reqNotifPerm();initTheme();renderLabelPills();renderMgrFilter();rStats();render();updClk();renderVacBanner();renderSAIndicator();
+  reqNotifPerm();initTheme();renderLabelPills();rStats();render();updClk();renderVacBanner();renderSAIndicator();
   setInterval(updClk,20000);
   setInterval(checkDeadlines,3600000);
   setTimeout(checkDeadlines,3000);
@@ -1347,12 +1272,6 @@ function canDo(minRole){
   if(isSuperAdmin()) return true;
   const order={basic:0,extended:1,admin:2};
   return (order[curMgr().role||'basic']||0)>=(order[minRole]||0);
-}
-function canViewHours(){
-  if(isSuperAdmin()) return true;
-  const m=curMgr();
-  if((m.role||'basic')==='admin') return true;
-  return !!(m.canViewHours);
 }
 
 // ── SUPERADMIN AUTH ──
@@ -1386,7 +1305,7 @@ async function trySALogin(){
   const h=await saHash(pwd);
   if(h===stored){
     superAdminSession=true;
-    _saUid=(window._fb&&window._fb.fbAuth&&window._fb.fbAuth.currentUser&&window._fb.fbAuth.currentUser.uid)||null;
+    _saUid=window._fb.fbAuth.currentUser.uid;
     document.getElementById('saLoginPwd').value='';
     closeM('mSALogin');
     renderSAIndicator();
@@ -1473,7 +1392,7 @@ async function saveFirstSAPwd(){
   const h=await saHash(p1);
   localStorage.setItem(key,h);
   superAdminSession=true;
-  _saUid=(window._fb&&window._fb.fbAuth&&window._fb.fbAuth.currentUser&&window._fb.fbAuth.currentUser.uid)||null;
+  _saUid=window._fb.fbAuth.currentUser.uid;
   document.getElementById('saFirstPwd').value='';document.getElementById('saFirstPwd2').value='';
   closeM('mSAFirstSetup');
   renderSAIndicator();renderMgrList();
@@ -1485,13 +1404,13 @@ function saHardDelete(id){
 }
 let saDelId=null;
 function openSAHardDelete(id){
-  const t=tasks.find(t=>t.id===id);if(!t)return;
-  saDelId=id;
+  const t=findTask(id);if(!t)return;
+  saDelId=t.id;
   document.getElementById('saDelPreview').textContent=t.title||t.url||t.note||'—';
   openM('mSAHardDel');
 }
 function confirmSAHardDelete(){
-  const t=tasks.find(t=>t.id===saDelId);
+  const t=findTask(saDelId);
   if(t) logEntry('hard_delete',saDelId,t.title||t.url||t.note||'—');
   tasks=tasks.filter(t=>t.id!==saDelId);
   saDelId=null;closeM('mSAHardDel');save();rStats();render();
@@ -1724,32 +1643,6 @@ function sf(f,el){
   render();
 }
 
-function setMgrFilter(val){
-  mgrFilter=val;
-  document.querySelectorAll('.mgrf-pill').forEach(p=>{
-    p.classList.toggle('on', p.dataset.mgrf===val);
-  });
-  render();
-}
-
-function renderMgrFilter(){
-  const wrap=document.getElementById('mgrFilterWrap');
-  if(!wrap) return;
-  const isAdmin=canDo('admin')||isSuperAdmin();
-  if(isAdmin){
-    const pills=[
-      `<button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі учасники</button>`,
-      `<button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`,
-      ...managers.map(m=>`<button class="mgrf-pill fp${mgrFilter===m.code?' on':''}" data-mgrf="${m.code}" onclick="setMgrFilter('${m.code}')" style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${m.col||'#888'};flex-shrink:0;display:inline-block"></span>${esc(m.name)}</button>`)
-    ];
-    wrap.innerHTML=pills.join('');
-  } else {
-    wrap.innerHTML=`
-      <button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі учасники</button>
-      <button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`;
-  }
-}
-
 /* ── XSS ESCAPE ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
 
@@ -1793,7 +1686,7 @@ function tcExpand(e,id){
   if(btn) btn.textContent=isCollapsed?'▴':'▾';
   // mark as seen
   if(isCollapsed){
-    const t=tasks.find(t=>t.id===id);
+    const t=findTask(id);
     if(t){t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);save();}
     // remove badge
     const badge=card.querySelector('.unseen-badge');
@@ -1807,13 +1700,6 @@ function render(){
   if(flt.startsWith('label:')){const lb=flt.slice(6);list=list.filter(t=>t.tags.includes(lb));}
   else if(flt!=='all') list=list.filter(t=>t.status===flt);
   if(q) list=list.filter(t=>(t.title+t.note+t.url+t.tags.join(' ')).toLowerCase().includes(q));
-
-  // ── manager filter ──
-  if(mgrFilter==='mine'){
-    list=list.filter(t=>t.from===curU||t.to===curU);
-  } else if(mgrFilter!=='all'){
-    list=list.filter(t=>t.from===mgrFilter||t.to===mgrFilter);
-  }
 
   // ── sorting ──
   const statusOrder={urgent:0,work:1,clarify:2,new:3,test:4,done:5};
@@ -1835,7 +1721,7 @@ function render(){
     return;
   }
   ta.innerHTML=list.map(t=>{
-    const tid=`'${String(t.id).replace(/'/g,"\\'")}'`; // safe id ref for inline handlers
+    const tid=JSON.stringify(t.id); // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const stH=`<span class="tg ${SC[t.status]}">${SL[t.status]}</span>`;
@@ -1858,7 +1744,7 @@ function render(){
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>`<div class="tc-cmt"><span class="tc-cmt-by">${esc(c.by)} · ${esc(c.t)}</span><br>${esc(c.tx)}</div>`).join('')}</div>`:'';
     const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
     function fmtHrs(h){if(!h)return '';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
-    const hoursH=(t.hours&&canViewHours())?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
+    const hoursH=t.hours?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
     const _seenByMe=(t.seenBy||[]).includes(curU);
     const _isUnseen=!_seenByMe&&(t.cmts.length>0||t.from!==curU);
     const _unseenCnt=t.cmts.filter(c=>c.by!==curU).length||0;
@@ -1891,9 +1777,9 @@ function render(){
           </div>
         </div>
         ${ttH}${urlH}${noteH}${dtH}${overdueH}${fcH}${resH}${driveFilesH(t.driveFiles)}${cmtsH}
-        <div class="tc-cmt-box" id="cb${t.id}"><textarea id="ct${t.id}" placeholder="Нотатка або коментар..."></textarea><button onclick="addCmt(${tid})">Зберегти</button></div>
+        <div class="tc-cmt-box" id="cb${t.id}" onclick="event.stopPropagation()"><textarea id="ct${t.id}" placeholder="Нотатка або коментар..." onclick="event.stopPropagation()"></textarea><button onclick="event.stopPropagation();addCmt(${tid},event)">Зберегти</button></div>
         <div class="tc-foot">
-          <button class="comm-btn" onclick="togCmt(${tid})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Додати нотатку</button>
+          <button class="comm-btn" onclick="event.stopPropagation();togCmt(${tid},event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Додати нотатку</button>
           ${canChangeStatus(t)?`<button class="cst-btn" onclick="event.stopPropagation();openSt(${tid})">Змінити статус</button>`:''}
           ${t.status==='done'&&canArchiveTask(t)?`<button onclick="event.stopPropagation();askDel(${tid})" style="border:none;background:#edf8f2;color:#1e7040;border-radius:9px;padding:7px 14px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>Архівувати</button>`:''}
           ${isSuperAdmin()?`<button onclick="event.stopPropagation();openSAHardDelete(${tid})" style="border:none;background:#fdecea;color:#b83a2a;border-radius:9px;padding:7px 12px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600">🗑 Видалити назавжди</button>`:''}
@@ -1903,10 +1789,11 @@ function render(){
   }).join('');
 }
 
-function togCmt(id){const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
-function addCmt(id){
+function togCmt(id,ev){if(ev)ev.stopPropagation();const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
+function addCmt(id,ev){
+  if(ev)ev.stopPropagation();
   const tx=document.getElementById('ct'+id).value.trim();if(!tx)return;
-  const t=tasks.find(t=>t.id===id),n=new Date();
+  const t=findTask(id),n=new Date();
   t.cmts.push({by:curU,t:n.getHours()+':'+String(n.getMinutes()).padStart(2,'0'),tx});
   logEntry('comment',id,t.title||t.url||t.note||'—',null,null,tx.slice(0,60)+(tx.length>60?'…':''));
   document.getElementById('ct'+id).value='';document.getElementById('cb'+id).classList.remove('show');
@@ -1951,17 +1838,14 @@ function renderMgrList(){
           style="border:1px solid #e4e0da;border-radius:6px;font-size:13px;font-weight:600;padding:3px 8px;font-family:inherit;width:100px;flex-shrink:0;color:#333"
           ${canEditAll?'':'disabled'}>
         ${vac?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px">🏖 відпустка</span>`:''}
-        ${canEditAll?`<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <input type="email" id="emailInp_${esc(m.code)}" value="${esc(m.email||'')}" placeholder="email для входу"
-            style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px">
-          <button onclick="saveMgrEmail('${esc(m.code)}')" style="border:none;background:#2f52cc;color:#fff;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:inherit">💾</button>
-        </div>`:''}
+        ${canEditAll?`<input type="email" value="${esc(m.email||'')}" placeholder="email для входу"
+          onblur="setMgrEmail('${esc(m.code)}',this.value)"
+          style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px;flex-shrink:0">`:''}
         ${canEditAll?`<select onchange="setMgrRole('${esc(m.code)}',this.value)" style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 6px;font-family:inherit">
           <option value='basic' ${(m.role||'basic')==='basic'?'selected':''}>Базовий</option>
           <option value='extended' ${m.role==='extended'?'selected':''}>Розширений</option>
           <option value='admin' ${m.role==='admin'?'selected':''}>Адмін</option>
         </select>`:`<span style="font-size:11px;color:#aaa;padding:3px 6px">${{basic:'Базовий',extended:'Розширений',admin:'Адмін'}[m.role||'basic']}</span>`}
-        ${canEditAll&&(m.role||'basic')!=='admin'?`<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap" title="Дозволити бачити та редагувати поле «Витрачено годин»"><input type="checkbox" ${m.canViewHours?'checked':''} onchange="setMgrCanViewHours('${esc(m.code)}',this.checked)" style="accent-color:#2f52cc">⏱ Бачить години</label>`:''}
         ${isSA?`<button onclick="saDelegateSuper('${esc(m.code)}')" title="Делегувати суперадміна" style="border:none;background:#fef3c7;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e">👑 Делег.</button>`:''}
         ${canEditAll?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати лист для скидання пароля" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">🔑 Скинути пароль</button>`:''}
         ${canEditAll?`<button class="mgr-del" onclick="delManager('${esc(m.code)}')">×</button>`:''}
@@ -1978,7 +1862,9 @@ function renderMgrList(){
   const sel=document.getElementById('fTo');
   if(sel) sel.innerHTML=managers.map(m=>`<option value="${esc(m.code)}">${esc(m.name)} (${esc(m.code)})</option>`).join('');
 }
-function setMgrRole(code,role){
+let _roleChangeLock=false; // prevents realtime sync overwriting managers right after role change
+
+async function setMgrRole(code,role){
   if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати права.');return;}
   // No one (including admin) can demote themselves — prevents accidental lockout
   if(code===curU && role!=='admin'){
@@ -1994,7 +1880,11 @@ function setMgrRole(code,role){
     const oldRole=target.role;
     target.role=role;
     logEntry('role',null,target.name,'роль',oldRole,role);
-    save();renderMgrList();
+    _roleChangeLock=true;
+    await save();
+    setTimeout(()=>{_roleChangeLock=false;},2000);
+    renderMgrList();
+    alert('✅ Роль збережено: '+target.name+' → '+{basic:'Базовий',extended:'Розширений',admin:'Адмін'}[role]);
   }
 }
 function setMgrName(code,name){
@@ -2006,33 +1896,6 @@ function setMgrEmail(code,email){
   const m=managers.find(x=>x.code===code);
   if(m){m.email=email.trim().toLowerCase();save();}
 }
-async function saveMgrEmail(code){
-  const inp=document.getElementById('emailInp_'+code);
-  if(!inp) return;
-  const email=inp.value.trim().toLowerCase();
-  const m=managers.find(x=>x.code===code);
-  if(!m) return;
-  m.email=email;
-  inp.style.border='1px solid #f59e0b';
-  try{
-    await save();
-    inp.style.border='1px solid #2e8653';
-    inp.style.background='#edfaf3';
-    setTimeout(()=>{inp.style.border='1px solid #e4e0da';inp.style.background='';},2000);
-  } catch(e){
-    inp.style.border='1px solid #c0392b';
-    alert('❌ Помилка збереження: '+e.message);
-  }
-}
-function setMgrCanViewHours(code,val){
-  if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати цей дозвіл.');return;}
-  const m=managers.find(x=>x.code===code);
-  if(m){
-    m.canViewHours=!!val;
-    logEntry('edit',null,m.name,'canViewHours',String(!val),String(!!val));
-    save();
-  }
-}
 function renderColorPicker(){
   document.getElementById('mgrColorPicker').innerHTML=MGR_COLORS.map(c=>`<div class="color-dot${c===selectedMgrColor?' sel':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
 }
@@ -2041,24 +1904,13 @@ function addManager(){
   const name=document.getElementById('mgrName').value.trim();
   let code=document.getElementById('mgrCode').value.trim().toUpperCase().slice(0,3);
   const email=(document.getElementById('mgrEmail')||{}).value||'';
-  if(!name||!code){alert('Введіть ім\'я та код менеджера.');return;}
+  if(!name||!code) return;
   if(managers.find(m=>m.code===code)) code=code+managers.length;
   managers.push({code,name,col:selectedMgrColor,vacFrom:'',vacTo:'',role:'basic',email:email.trim().toLowerCase()});
   document.getElementById('mgrName').value='';
   document.getElementById('mgrCode').value='';
   if(document.getElementById('mgrEmail')) document.getElementById('mgrEmail').value='';
-  save().then(()=>{
-    renderMgrList();render();
-    // small toast instead of blocking alert
-    const t=document.createElement('div');
-    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2e8653;color:#fff;font-size:13px;padding:10px 20px;border-radius:20px;z-index:9999;pointer-events:none';
-    t.textContent='✅ Менеджера додано та збережено в базі';
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(),3000);
-  }).catch(e=>{
-    renderMgrList();render();
-    alert('⚠️ Менеджера додано локально, але помилка збереження в Firestore:\n'+e.message+'\nПеревірте з\'єднання і натисніть Зберегти ще раз.');
-  });
+  save();renderMgrList();render();
 }
 function clearVac(code){const m=managers.find(x=>x.code===code);if(m){m.vacFrom='';m.vacTo='';}save();renderMgrList();renderVacBanner();}
 function delManager(code){
@@ -2077,7 +1929,7 @@ async function sendInvite(code){
   const btn=document.getElementById('invBtn_'+code);
   if(btn){btn.textContent='⏳ Надсилаємо...';btn.style.pointerEvents='none';}
   try{
-    const {fbAuth, sendPasswordResetEmail}=await waitForFb();
+    const {fbAuth, sendPasswordResetEmail}=window._fb;
     // Send password-reset/set email.
     // NOTE: We deliberately do NOT call createUserWithEmailAndPassword here because
     // that call would replace the current admin's Firebase session — a critical bug.
@@ -2134,17 +1986,17 @@ function avClick(){
 
 /* ── ARCHIVE ── */
 function askDel(id){
-  const t=tasks.find(t=>t.id===id);
+  const t=findTask(id);
   if(!t){return;}
   if(!canArchiveTask(t)){alert('Закрити завдання може лише його автор або користувач з розширеним доступом.');return;}
-  dId=id;
+  dId=t.id;
   const preview=t.title||t.url||t.note||'—';
   const el=document.getElementById('delPreview');
   if(el) el.textContent=preview;
   openM('mCf');
 }
 function doDel(){
-  const t=tasks.find(t=>t.id===dId);
+  const t=findTask(dId);
   logEntry('archive',dId,t.title||t.url||t.note||'—');
   t.arch=true;t.archAt=new Date().toISOString().split('T')[0];
   closeM('mCf');save();rStats();render();rArch();
@@ -2214,6 +2066,7 @@ function resetPeriod(){
 function genPDF(){
   if(!canDo('extended')){alert('Доступ заборонено.');return;}
   const showHrs=document.getElementById('inclHours')?.checked!==false;
+  const pF=document.getElementById('pFrom').value,pT=document.getElementById('pTo').value;
   let arch=tasks.filter(t=>t.arch);
   if(pF) arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT) arch=arch.filter(t=>(t.archAt||t.created)<=pT);
@@ -2232,8 +2085,7 @@ function genPDF(){
       +hrsCell
       +'<td>'+(t.archAt||t.created)+'</td></tr>';
   }).join('');
-  const w=window.open('','_blank');
-  w.document.write(
+  const htmlContent=
     '<html><head><title>Waymark \u0417\u0432\u0456\u0442</title>'
     +'<style>'
     +'body{font-family:sans-serif;padding:40px;color:#333;max-width:860px;margin:0 auto}'
@@ -2252,10 +2104,21 @@ function genPDF(){
     +rows
     +'</table>'
     +'<div class="total">\u0412\u0441\u044c\u043e\u0433\u043e: '+arch.length+' \u0437\u0430\u0432\u0434\u0430\u043d\u044c'+totalHrs+'</div>'
-    +'<\/body><\/html>'
-  );
-  w.document.close();
-  setTimeout(()=>w.print(),500);
+    +'<script>window.onload=function(){window.print();}<\/script>'
+    +'<\/body><\/html>';
+  const blob=new Blob([htmlContent],{type:'text/html;charset=utf-8'});
+  const blobUrl=URL.createObjectURL(blob);
+  const w=window.open(blobUrl,'_blank');
+  if(!w){
+    // Popup blocked — fallback: download as HTML file
+    const a=document.createElement('a');
+    a.href=blobUrl;
+    a.download='waymark-report-'+(new Date().toISOString().slice(0,10))+'.html';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(blobUrl),5000);
+  } else {
+    setTimeout(()=>URL.revokeObjectURL(blobUrl),10000);
+  }
 }
 
 /* ── ANALYTICS ── */
@@ -2314,11 +2177,11 @@ function renderAnalytics(){
     labels:['Виконано','В процесі'],
     datasets:[{data:[doneN,notDone],backgroundColor:['#70b890','#d0a870'],borderWidth:2,borderColor:'#fff'}]
   });
-  // 6) hours per executor — only for users with canViewHours permission
+  // 6) hours per executor
   const hrsC={};ts.forEach(t=>{if(t.hours>0) hrsC[t.to]=(hrsC[t.to]||0)+t.hours;});
   const hKeys=Object.keys(hrsC);
   renderGanttView();
-  if(hKeys.length&&canViewHours()){
+  if(hKeys.length){
     mkChart('chHours','bar',{
       labels:hKeys.map(k=>mgr(k).name),
       datasets:[{label:'Годин',data:hKeys.map(k=>hrsC[k]),backgroundColor:hKeys.map(k=>mgr(k).col),borderRadius:6}]
@@ -2348,7 +2211,10 @@ function renderDriveLinks(files){
   const el=document.getElementById('driveLinks');if(!el)return;
   el.innerHTML=(files||[]).map((f,i)=>{
     const ic=fileIcon(f.name);
-    const badge='<span title="Google Drive" style="font-size:9px;opacity:.65">🔗 Drive</span>';
+    // Drive-picker file has driveId; Firebase Storage file has storagePath
+    const badge = f.driveId
+      ? '<span title="Google Drive" style="font-size:9px;opacity:.65">🔗 Drive</span>'
+      : (f.storagePath ? '' : '<span title="Зовнішнє посилання" style="opacity:.5;font-size:9px">🔗</span>');
     return `<span style="font-size:11px;background:#eaf3fb;color:#2a6090;border-radius:20px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px;max-width:220px">
       <a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(f.name)}">${ic} ${esc(f.name)}</a>
       ${badge}
@@ -2359,6 +2225,14 @@ function renderDriveLinks(files){
 
 async function removeUploadedFile(i){
   let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
+  const f=fs[i];
+  // Attempt to delete from Storage if it's a Firebase Storage URL
+  if(f && f.storagePath){
+    try{
+      const {fbStorage, storageRef: sRef, deleteObject}=window._fb;
+      await deleteObject(sRef(fbStorage, f.storagePath));
+    }catch(e){ console.warn('Storage delete skipped:',e.message); }
+  }
   fs.splice(i,1);
   document.getElementById('fDriveFiles').value=JSON.stringify(fs);
   renderDriveLinks(fs);
@@ -2372,10 +2246,66 @@ function addDriveFile(){
   fs.push({name,url});document.getElementById('fDriveFiles').value=JSON.stringify(fs);renderDriveLinks(fs);
 }
 
-// uploadSelectedFiles залишається як fallback (input hidden, не використовується в UI)
-function uploadSelectedFiles(input){ input.value=''; }
+function uploadSelectedFiles(input){
+  const files=Array.from(input.files);
+  if(!files.length) return;
+  const taskId = eId || ('new_'+Date.now());
+  files.forEach(file=>uploadOneFile(file, taskId));
+  input.value=''; // reset so same file can be picked again
+}
 
-// uploadOneFile більше не використовується — завантаження через Google Picker → папка адміна
+function uploadOneFile(file, taskId){
+  const {fbStorage, storageRef: sRef, uploadBytesResumable, getDownloadURL}=window._fb||{};
+  if(!fbStorage){alert('Firebase Storage не підключено.');return;}
+
+  const MAX_MB=20;
+  if(file.size > MAX_MB*1024*1024){
+    alert(`❌ Файл "${file.name}" перевищує ${MAX_MB} МБ. Оберіть менший файл.`);
+    return;
+  }
+
+  const safeName=file.name.replace(/[^a-zA-Z0-9._\-]/g,'_');
+  const path=`tasks/${taskId}/${Date.now()}_${safeName}`;
+  const ref=sRef(fbStorage, path);
+  const uploadTask=uploadBytesResumable(ref, file);
+
+  // Create progress pill
+  const progArea=document.getElementById('uploadProgressArea');
+  const pillId='up_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+  const pill=document.createElement('div');
+  pill.id=pillId;
+  pill.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:#666;background:#f5f3ee;border-radius:8px;padding:5px 10px';
+  pill.innerHTML=`<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⬆ ${esc(file.name)}</span>
+    <div style="width:80px;height:4px;background:#e0dcd6;border-radius:4px;overflow:hidden;flex-shrink:0">
+      <div id="${pillId}_bar" style="height:100%;background:#2f52cc;width:0%;transition:width .2s;border-radius:4px"></div>
+    </div>
+    <span id="${pillId}_pct" style="width:28px;text-align:right;flex-shrink:0">0%</span>`;
+  progArea.appendChild(pill);
+
+  uploadTask.on('state_changed',
+    snap=>{
+      const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);
+      const bar=document.getElementById(pillId+'_bar');
+      const pctEl=document.getElementById(pillId+'_pct');
+      if(bar) bar.style.width=pct+'%';
+      if(pctEl) pctEl.textContent=pct+'%';
+    },
+    err=>{
+      const p=document.getElementById(pillId);
+      if(p) p.innerHTML=`<span style="color:#b83a2a">❌ ${esc(file.name)}: ${esc(err.message)}</span>`;
+      setTimeout(()=>p&&p.remove(), 4000);
+    },
+    async ()=>{
+      const url=await getDownloadURL(uploadTask.snapshot.ref);
+      let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
+      fs.push({name:file.name.slice(0,60), url, storagePath:path});
+      document.getElementById('fDriveFiles').value=JSON.stringify(fs);
+      renderDriveLinks(fs);
+      const p=document.getElementById(pillId);
+      if(p) p.remove();
+    }
+  );
+}
 
 function driveFilesH(files){
   if(!files||!files.length)return '';
@@ -2615,7 +2545,7 @@ function canChangeStatus(t){
 function openAdd(id){
   eId=id;populateTo();
   if(id){
-    const t=tasks.find(t=>t.id===id);
+    const t=findTask(id);
     if(!canEditTask(t)){alert('Редагувати можна лише свої завдання. Для редагування чужих потрібен розширений доступ.');return;}
     document.getElementById('mH').textContent='✏ Редагувати';
     document.getElementById('mBtn').textContent='Зберегти';
@@ -2636,27 +2566,23 @@ function openAdd(id){
     document.getElementById('fDriveFiles').value='[]';renderDriveLinks([]);
   }
   openM('mAdd');
-  // show/hide hours field based on permission
-  const hwrap=document.getElementById('hoursFieldWrap');
-  if(hwrap) hwrap.style.display=canViewHours()?'':'none';
 }
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
   if(!T&&!U&&!N)return;
   const today=new Date().toISOString().split('T')[0];
   if(eId){
-    const t=tasks.find(t=>t.id===eId);
+    const t=findTask(eId);
     if(!t||!canEditTask(t)){alert('Недостатньо прав для редагування цього завдання.');closeM('mAdd');return;}
     const oldTitle=t.title,oldStatus=t.status,oldTo=t.to,oldDl=t.deadline;
     const newStatus=document.getElementById('fS').value;
     const newTo=document.getElementById('fTo').value;
     const newDl=document.getElementById('fDl').value;
-    const newHours=canViewHours()?parseFloat(document.getElementById('fHours').value)||0:(t.hours||0);
     Object.assign(t,{title:T,url:U.replace(/^https?:\/\//,''),note:N,status:newStatus,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       deadline:newDl,forecast:document.getElementById('fFc').value,
       to:newTo,result:document.getElementById('fR').value,
-      hours:newHours,
+      hours:parseFloat(document.getElementById('fHours').value)||0,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]')});
     const label=T||U||N||'—';
     if(oldStatus!==newStatus) logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]);
@@ -2670,7 +2596,7 @@ function mkT(){
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       created:today,deadline:document.getElementById('fDl').value,forecast:document.getElementById('fFc').value,
       from:curU,to:document.getElementById('fTo').value,result:document.getElementById('fR').value,
-      hours:canViewHours()?(parseFloat(document.getElementById('fHours').value)||0):0,
+      hours:parseFloat(document.getElementById('fHours').value)||0,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]'),
       arch:false,archAt:'',cmts:[]});
     logEntry('create',newId,T||U||N||'—');
@@ -2686,23 +2612,18 @@ function mkQ(){
     created:today,deadline:'',forecast:'',from:curU,to:curU,result:'',arch:false,archAt:'',cmts:[]});
   document.getElementById('qI').value='';closeM('mQ');save();rStats();render();
 }
+function findTask(id){return tasks.find(t=>t.id===id||String(t.id)===String(id));}
 function openSt(id){
-  const t=tasks.find(t=>t.id===id);
+  const t=findTask(id);
   if(!t||!canChangeStatus(t)){alert('Змінити статус може виконавець, автор або користувач з розширеним доступом.');return;}
-  eId=id;document.getElementById('nSt').value=t.status;openM('mSt');
+  eId=t.id;document.getElementById('nSt').value=t.status;openM('mSt');
 }
 function apSt(){
-  const t=tasks.find(t=>t.id===eId);
+  const t=findTask(eId);
   if(!t||!canChangeStatus(t)){alert('Недостатньо прав.');closeM('mSt');return;}
   const oldStatus=t.status;
-  const newStatus=document.getElementById('nSt').value;
-  if(oldStatus===newStatus){closeM('mSt');eId=null;return;}
-  t.status=newStatus;
-  t.statusChangedBy=curU;
-  t.statusChangedAt=new Date().toISOString();
-  t.prevStatus=oldStatus;
-  // скидаємо seenBy — причетні побачать зміну як непрочитану
-  t.seenBy=[curU];
+  t.status=document.getElementById('nSt').value;
+  t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
   closeM('mSt');eId=null;save();rStats();render();
 }
@@ -2715,6 +2636,7 @@ function exportCSV(){
   if(!canDo('extended')){alert('Доступ до експорту лише для розширених прав.');return;}
   const pF=document.getElementById('pFrom')?.value||'',pT=document.getElementById('pTo')?.value||'';
   const showHrs=document.getElementById('inclHours')?.checked!==false;
+  let arch=tasks.filter(t=>t.arch);
   if(pF)arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT)arch=arch.filter(t=>(t.archAt||t.created)<=pT);
   const hdr=['#','Назва','Теги','Статус','Поставив','Виконував',...(showHrs?['Години']:[]),'Дата'];
@@ -2793,9 +2715,7 @@ function saveMyName(){
 }
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
-function saveCfg(){
-  cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();
-}
+function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();}
 
 /* ── INIT ── */
 (()=>{const m={name:'Waymark',short_name:'Waymark',start_url:location.href,display:'standalone',
