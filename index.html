@@ -1951,9 +1951,11 @@ function renderMgrList(){
           style="border:1px solid #e4e0da;border-radius:6px;font-size:13px;font-weight:600;padding:3px 8px;font-family:inherit;width:100px;flex-shrink:0;color:#333"
           ${canEditAll?'':'disabled'}>
         ${vac?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:10px;padding:1px 7px">🏖 відпустка</span>`:''}
-        ${canEditAll?`<input type="email" value="${esc(m.email||'')}" placeholder="email для входу"
-          onblur="setMgrEmail('${esc(m.code)}',this.value)"
-          style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px;flex-shrink:0">`:''}
+        ${canEditAll?`<div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <input type="email" id="emailInp_${esc(m.code)}" value="${esc(m.email||'')}" placeholder="email для входу"
+            style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:160px">
+          <button onclick="saveMgrEmail('${esc(m.code)}')" style="border:none;background:#2f52cc;color:#fff;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:inherit">💾</button>
+        </div>`:''}
         ${canEditAll?`<select onchange="setMgrRole('${esc(m.code)}',this.value)" style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 6px;font-family:inherit">
           <option value='basic' ${(m.role||'basic')==='basic'?'selected':''}>Базовий</option>
           <option value='extended' ${m.role==='extended'?'selected':''}>Розширений</option>
@@ -2003,6 +2005,24 @@ function setMgrName(code,name){
 function setMgrEmail(code,email){
   const m=managers.find(x=>x.code===code);
   if(m){m.email=email.trim().toLowerCase();save();}
+}
+async function saveMgrEmail(code){
+  const inp=document.getElementById('emailInp_'+code);
+  if(!inp) return;
+  const email=inp.value.trim().toLowerCase();
+  const m=managers.find(x=>x.code===code);
+  if(!m) return;
+  m.email=email;
+  inp.style.border='1px solid #f59e0b';
+  try{
+    await save();
+    inp.style.border='1px solid #2e8653';
+    inp.style.background='#edfaf3';
+    setTimeout(()=>{inp.style.border='1px solid #e4e0da';inp.style.background='';},2000);
+  } catch(e){
+    inp.style.border='1px solid #c0392b';
+    alert('❌ Помилка збереження: '+e.message);
+  }
 }
 function setMgrCanViewHours(code,val){
   if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати цей дозвіл.');return;}
@@ -2774,13 +2794,6 @@ function saveMyName(){
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
 function saveCfg(){
-  // flush any email inputs that may not have triggered onblur yet
-  document.querySelectorAll('#mgrList input[type="email"]').forEach(inp=>{
-    const row=inp.closest('.mgr-row');
-    if(!row) return;
-    const code=inp.getAttribute('onblur')?.match(/setMgrEmail\('([^']+)'/)?.[1];
-    if(code) setMgrEmail(code, inp.value);
-  });
   cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();
 }
 
