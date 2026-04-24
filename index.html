@@ -50,6 +50,8 @@ window._fb = { fbAuth, db, fbStorage, signInWithEmailAndPassword, signInWithPopu
                createUserWithEmailAndPassword, sendPasswordResetEmail,
                doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp,
                storageRef, uploadBytesResumable, getDownloadURL, deleteObject };
+// Signal that _fb is ready (resolves the Promise used by non-module scripts)
+if(typeof window._fbResolve === 'function') window._fbResolve(window._fb);
 </script>
 <!-- Google API (Picker) -->
 <script src="https://apis.google.com/js/api.js"></script>
@@ -927,6 +929,16 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 </div>
 
 <script>
+// ── Firebase readiness gate ──
+// The module script (type="module") loads asynchronously. This Promise resolves
+// the moment window._fb is populated, so every function below can safely await it
+// instead of accessing window._fb directly and getting undefined.
+window._fbReady = new Promise(resolve => { window._fbResolve = resolve; });
+// If the module already ran before this script (rare but possible), resolve now.
+if(window._fb) window._fbResolve(window._fb);
+// Convenience: waitForFb() returns the populated _fb object
+async function waitForFb(){ return window._fbReady; }
+
 const SL={new:'Нові',work:'В роботі',clarify:'Уточнення',done:'Виконано',urgent:'Терміново',test:'Тестування'};
 const SC={new:'tg-new',work:'tg-work',clarify:'tg-clarify',done:'tg-done',urgent:'tg-urgent',test:'tg-test'};
 const STCOL={new:'#c8cdd6',work:'#dfc9b0',clarify:'#d5d4b8',done:'#c4d8c8',urgent:'#d4c4bc',test:'#c6c6d6'};
@@ -950,7 +962,7 @@ async function doLogin(){
   if(!email||!pwd){errEl.textContent='Введіть email і пароль';return;}
   spin.style.display='block';
   try{
-    const {fbAuth, signInWithEmailAndPassword} = window._fb;
+    const {fbAuth, signInWithEmailAndPassword} = await waitForFb();
     await signInWithEmailAndPassword(fbAuth, email, pwd);
     // onAuthStateChanged handles the rest
   } catch(e){
@@ -973,7 +985,7 @@ async function doForgotPassword(){
   errEl.textContent=''; msg.style.display='none';
   if(!email){errEl.textContent='Введіть email вище, потім натисніть «Забули пароль?»';return;}
   try{
-    const {fbAuth} = window._fb;
+    const {fbAuth} = await waitForFb();
     const {sendPasswordResetEmail} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
     await sendPasswordResetEmail(fbAuth, email);
     msg.textContent=`✅ Лист для скидання паролю надіслано на ${email}`;
@@ -992,7 +1004,7 @@ async function doGoogleLogin(){
   const spin=document.getElementById('loginSpinner');
   errEl.textContent=''; spin.style.display='block';
   try{
-    const {fbAuth, signInWithPopup, googleProv}=window._fb;
+    const {fbAuth, signInWithPopup, googleProv}=await waitForFb();
     await signInWithPopup(fbAuth, googleProv);
     // onAuthStateChanged handles the rest
   } catch(e){
@@ -1010,7 +1022,7 @@ async function doLogout(){
   window._accessDeniedShown = false;
   const picker = document.getElementById('identityPicker');
   if(picker) picker.style.display='none';
-  const {fbAuth, signOut} = window._fb;
+  const {fbAuth, signOut} = await waitForFb();
   if(_unsubSnapshot){_unsubSnapshot();_unsubSnapshot=null;}
   superAdminSession=false;_saUid=null;
   await signOut(fbAuth);
@@ -1042,7 +1054,7 @@ async function save(){
   // Role-level access control lives here in the client, but network-level auth
   // is enforced by Firestore Rules on the server.
   try{
-    const {db, doc, setDoc, serverTimestamp} = window._fb;
+    const {db, doc, setDoc, serverTimestamp} = await waitForFb();
     await setDoc(doc(db, 'waymark','main'), {
       tasks, managers, customLabels, cfg,
       auditLog: auditLog.slice(0,500), // cap at 500 entries
@@ -1055,7 +1067,7 @@ async function save(){
 // ── LOAD from Firestore (one-time) ──
 async function loadFromFirestore(){
   try{
-    const {db, doc, getDoc} = window._fb;
+    const {db, doc, getDoc} = await waitForFb();
     const snap = await getDoc(doc(db,'waymark','main'));
     if(snap.exists()){
       const d = snap.data();
@@ -1084,8 +1096,8 @@ function loadFromLocalStorage(){
 }
 
 // ── REAL-TIME LISTENER ──
-function startRealtimeSync(){
-  const {db, doc, onSnapshot} = window._fb;
+async function startRealtimeSync(){
+  const {db, doc, onSnapshot} = await waitForFb();
   if(_unsubSnapshot) _unsubSnapshot();
   _unsubSnapshot = onSnapshot(doc(db,'waymark','main'), snap=>{
     if(!snap.exists()) return;
@@ -1151,15 +1163,9 @@ function openIdentityPicker(firebaseEmail){
 }
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
-window.addEventListener('load', ()=>{
-  // poll until _fb is populated by the module script (max 3s)
-  let attempts=0;
-  const waitForFb=setInterval(()=>{
-    attempts++;
-    if(window._fb){
-      clearInterval(waitForFb);
-      const {fbAuth, onAuthStateChanged} = window._fb;
-      onAuthStateChanged(fbAuth, async user=>{
+window.addEventListener('load', async ()=>{
+  const {fbAuth, onAuthStateChanged} = await waitForFb();
+  onAuthStateChanged(fbAuth, async user=>{
         if(user){
           document.getElementById('loginSpinner').style.display='none';
           await loadFromFirestore();
@@ -1184,11 +1190,6 @@ window.addEventListener('load', ()=>{
           setTimeout(()=>document.getElementById('loginEmail').focus(),100);
         }
       });
-    } else if(attempts>60){
-      clearInterval(waitForFb);
-      document.getElementById('loginErr').textContent='Помилка завантаження Firebase. Перевірте з\'єднання.';
-    }
-  }, 50); // check every 50ms, up to 3s
 });
 
 
@@ -1305,7 +1306,7 @@ async function trySALogin(){
   const h=await saHash(pwd);
   if(h===stored){
     superAdminSession=true;
-    _saUid=window._fb.fbAuth.currentUser.uid;
+    _saUid=(window._fb&&window._fb.fbAuth&&window._fb.fbAuth.currentUser&&window._fb.fbAuth.currentUser.uid)||null;
     document.getElementById('saLoginPwd').value='';
     closeM('mSALogin');
     renderSAIndicator();
@@ -1392,7 +1393,7 @@ async function saveFirstSAPwd(){
   const h=await saHash(p1);
   localStorage.setItem(key,h);
   superAdminSession=true;
-  _saUid=window._fb.fbAuth.currentUser.uid;
+  _saUid=(window._fb&&window._fb.fbAuth&&window._fb.fbAuth.currentUser&&window._fb.fbAuth.currentUser.uid)||null;
   document.getElementById('saFirstPwd').value='';document.getElementById('saFirstPwd2').value='';
   closeM('mSAFirstSetup');
   renderSAIndicator();renderMgrList();
@@ -1922,7 +1923,7 @@ async function sendInvite(code){
   const btn=document.getElementById('invBtn_'+code);
   if(btn){btn.textContent='⏳ Надсилаємо...';btn.style.pointerEvents='none';}
   try{
-    const {fbAuth, sendPasswordResetEmail}=window._fb;
+    const {fbAuth, sendPasswordResetEmail}=await waitForFb();
     // Send password-reset/set email.
     // NOTE: We deliberately do NOT call createUserWithEmailAndPassword here because
     // that call would replace the current admin's Firebase session — a critical bug.
@@ -2212,7 +2213,7 @@ async function removeUploadedFile(i){
   // Attempt to delete from Storage if it's a Firebase Storage URL
   if(f && f.storagePath){
     try{
-      const {fbStorage, storageRef: sRef, deleteObject}=window._fb;
+      const {fbStorage, storageRef: sRef, deleteObject}=await waitForFb();
       await deleteObject(sRef(fbStorage, f.storagePath));
     }catch(e){ console.warn('Storage delete skipped:',e.message); }
   }
@@ -2237,8 +2238,8 @@ function uploadSelectedFiles(input){
   input.value=''; // reset so same file can be picked again
 }
 
-function uploadOneFile(file, taskId){
-  const {fbStorage, storageRef: sRef, uploadBytesResumable, getDownloadURL}=window._fb||{};
+async function uploadOneFile(file, taskId){
+  const {fbStorage, storageRef: sRef, uploadBytesResumable, getDownloadURL}=await waitForFb();
   if(!fbStorage){alert('Firebase Storage не підключено.');return;}
 
   const MAX_MB=20;
