@@ -67,6 +67,9 @@ const GOOGLE_API_KEY   = 'AIzaSyAlUA2BXIct8w7lhXoXDf85gc9ZXTbI5II';
 // APIs & Services → Credentials → OAuth 2.0 Client IDs → скопіюй Client ID
 const GOOGLE_CLIENT_ID = '452726505340-9moqgd9op8sht11ft9jh8fe56eg42ko1.apps.googleusercontent.com';
 
+// ── Папка адміна на waymark.base@gmail.com — всі файли завантажуються сюди ──
+const ADMIN_FOLDER_ID = '1RFEFqSd2qfZkx7tck5Z1JHqfkN_BxOQ_';
+
 // ── Picker state ──
 let pickerApiLoaded = false;
 let pickerOAuthToken = null;
@@ -86,7 +89,7 @@ async function getPickerOAuthToken(){
     // Use the Google Identity Services tokenClient
     const client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive.file',
+      scope: 'https://www.googleapis.com/auth/drive',
       callback: resp => {
         if(resp.error){ reject(resp.error); return; }
         pickerOAuthToken = resp.access_token;
@@ -129,13 +132,17 @@ function buildPicker(oauthToken){
     .setIncludeFolders(true)
     .setSelectFolderEnabled(false);
 
+  // Upload view — прямо в папку адміна
+  const uploadView = new google.picker.DocsUploadView()
+    .setParent(ADMIN_FOLDER_ID);
+
   const picker = new google.picker.PickerBuilder()
     .setAppId(GOOGLE_CLIENT_ID.split('-')[0])   // numeric app id
     .setOAuthToken(oauthToken)
     .setDeveloperKey(GOOGLE_API_KEY)
+    .addView(uploadView)
     .addView(view)
-    .addView(new google.picker.DocsUploadView())
-    .setTitle('Вибрати файл з Google Drive')
+    .setTitle('Завантажити або вибрати файл')
     .setCallback(pickerCallback)
     .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
     .build();
@@ -790,12 +797,10 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
       <button type="button" onclick="openGooglePicker()" style="border:1px solid #c8ddf0;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f0f6fc;color:#2a6090;display:flex;align-items:center;gap:5px;white-space:nowrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        📎 Прикріпити з Drive
+        ⬆ Завантажити файл
       </button>
-      <input type="file" id="filePickerInput" multiple style="display:none" onchange="uploadSelectedFiles(this)">
       <div id="driveLinks" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
     </div>
-    <div id="uploadProgressArea" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
     <input type="hidden" id="fDriveFiles" value="[]">
     <label>⏱ Витрачено годин</label>
     <div style="display:flex;align-items:center;gap:8px">
@@ -1722,7 +1727,7 @@ function render(){
     return;
   }
   ta.innerHTML=list.map(t=>{
-    const tid=`'${String(t.id).replace(/'/g,"\\'")}'`; // safe id ref for inline handlers
+    const tid=JSON.stringify(t.id); // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const stH=`<span class="tg ${SC[t.status]}">${SL[t.status]}</span>`;
@@ -2195,10 +2200,7 @@ function renderDriveLinks(files){
   const el=document.getElementById('driveLinks');if(!el)return;
   el.innerHTML=(files||[]).map((f,i)=>{
     const ic=fileIcon(f.name);
-    // Drive-picker file has driveId; Firebase Storage file has storagePath
-    const badge = f.driveId
-      ? '<span title="Google Drive" style="font-size:9px;opacity:.65">🔗 Drive</span>'
-      : (f.storagePath ? '' : '<span title="Зовнішнє посилання" style="opacity:.5;font-size:9px">🔗</span>');
+    const badge='<span title="Google Drive" style="font-size:9px;opacity:.65">🔗 Drive</span>';
     return `<span style="font-size:11px;background:#eaf3fb;color:#2a6090;border-radius:20px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px;max-width:220px">
       <a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${esc(f.name)}">${ic} ${esc(f.name)}</a>
       ${badge}
@@ -2209,14 +2211,6 @@ function renderDriveLinks(files){
 
 async function removeUploadedFile(i){
   let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
-  const f=fs[i];
-  // Attempt to delete from Storage if it's a Firebase Storage URL
-  if(f && f.storagePath){
-    try{
-      const {fbStorage, storageRef: sRef, deleteObject}=await waitForFb();
-      await deleteObject(sRef(fbStorage, f.storagePath));
-    }catch(e){ console.warn('Storage delete skipped:',e.message); }
-  }
   fs.splice(i,1);
   document.getElementById('fDriveFiles').value=JSON.stringify(fs);
   renderDriveLinks(fs);
@@ -2230,66 +2224,10 @@ function addDriveFile(){
   fs.push({name,url});document.getElementById('fDriveFiles').value=JSON.stringify(fs);renderDriveLinks(fs);
 }
 
-function uploadSelectedFiles(input){
-  const files=Array.from(input.files);
-  if(!files.length) return;
-  const taskId = eId || ('new_'+Date.now());
-  files.forEach(file=>uploadOneFile(file, taskId));
-  input.value=''; // reset so same file can be picked again
-}
+// uploadSelectedFiles залишається як fallback (input hidden, не використовується в UI)
+function uploadSelectedFiles(input){ input.value=''; }
 
-async function uploadOneFile(file, taskId){
-  const {fbStorage, storageRef: sRef, uploadBytesResumable, getDownloadURL}=await waitForFb();
-  if(!fbStorage){alert('Firebase Storage не підключено.');return;}
-
-  const MAX_MB=20;
-  if(file.size > MAX_MB*1024*1024){
-    alert(`❌ Файл "${file.name}" перевищує ${MAX_MB} МБ. Оберіть менший файл.`);
-    return;
-  }
-
-  const safeName=file.name.replace(/[^a-zA-Z0-9._\-]/g,'_');
-  const path=`tasks/${taskId}/${Date.now()}_${safeName}`;
-  const ref=sRef(fbStorage, path);
-  const uploadTask=uploadBytesResumable(ref, file);
-
-  // Create progress pill
-  const progArea=document.getElementById('uploadProgressArea');
-  const pillId='up_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-  const pill=document.createElement('div');
-  pill.id=pillId;
-  pill.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:#666;background:#f5f3ee;border-radius:8px;padding:5px 10px';
-  pill.innerHTML=`<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⬆ ${esc(file.name)}</span>
-    <div style="width:80px;height:4px;background:#e0dcd6;border-radius:4px;overflow:hidden;flex-shrink:0">
-      <div id="${pillId}_bar" style="height:100%;background:#2f52cc;width:0%;transition:width .2s;border-radius:4px"></div>
-    </div>
-    <span id="${pillId}_pct" style="width:28px;text-align:right;flex-shrink:0">0%</span>`;
-  progArea.appendChild(pill);
-
-  uploadTask.on('state_changed',
-    snap=>{
-      const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);
-      const bar=document.getElementById(pillId+'_bar');
-      const pctEl=document.getElementById(pillId+'_pct');
-      if(bar) bar.style.width=pct+'%';
-      if(pctEl) pctEl.textContent=pct+'%';
-    },
-    err=>{
-      const p=document.getElementById(pillId);
-      if(p) p.innerHTML=`<span style="color:#b83a2a">❌ ${esc(file.name)}: ${esc(err.message)}</span>`;
-      setTimeout(()=>p&&p.remove(), 4000);
-    },
-    async ()=>{
-      const url=await getDownloadURL(uploadTask.snapshot.ref);
-      let fs=JSON.parse(document.getElementById('fDriveFiles').value||'[]');
-      fs.push({name:file.name.slice(0,60), url, storagePath:path});
-      document.getElementById('fDriveFiles').value=JSON.stringify(fs);
-      renderDriveLinks(fs);
-      const p=document.getElementById(pillId);
-      if(p) p.remove();
-    }
-  );
-}
+// uploadOneFile більше не використовується — завантаження через Google Picker → папка адміна
 
 function driveFilesH(files){
   if(!files||!files.length)return '';
