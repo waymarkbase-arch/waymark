@@ -1124,8 +1124,8 @@ async function startRealtimeSync(){
         });
       }
       if(d.tasks)        tasks        = d.tasks;
-      // never overwrite managers during SA session — prevents role lockout
-      if(d.managers && !isSuperAdmin()) managers = d.managers;
+      // never overwrite managers during SA or admin session — prevents race condition on add/edit
+      if(d.managers && !isSuperAdmin() && !canDo('admin')) managers = d.managers;
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
@@ -1244,8 +1244,6 @@ window.addEventListener('load', async ()=>{
           migrateMgrRoles();
           const code = emailToCode(user.email);
           if(!code){
-            // DEBUG: show exact email from Firebase
-            alert('DEBUG: Firebase email = [' + user.email + ']\nManagers emails: ' + managers.map(m=>m.email||'(empty)').join(', '));
             // Google email not matched — ask user who they are
             openIdentityPicker(user.email);
           } else {
@@ -2023,13 +2021,24 @@ function addManager(){
   const name=document.getElementById('mgrName').value.trim();
   let code=document.getElementById('mgrCode').value.trim().toUpperCase().slice(0,3);
   const email=(document.getElementById('mgrEmail')||{}).value||'';
-  if(!name||!code) return;
+  if(!name||!code){alert('Введіть ім\'я та код менеджера.');return;}
   if(managers.find(m=>m.code===code)) code=code+managers.length;
   managers.push({code,name,col:selectedMgrColor,vacFrom:'',vacTo:'',role:'basic',email:email.trim().toLowerCase()});
   document.getElementById('mgrName').value='';
   document.getElementById('mgrCode').value='';
   if(document.getElementById('mgrEmail')) document.getElementById('mgrEmail').value='';
-  save();renderMgrList();render();
+  save().then(()=>{
+    renderMgrList();render();
+    // small toast instead of blocking alert
+    const t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#2e8653;color:#fff;font-size:13px;padding:10px 20px;border-radius:20px;z-index:9999;pointer-events:none';
+    t.textContent='✅ Менеджера додано та збережено в базі';
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),3000);
+  }).catch(e=>{
+    renderMgrList();render();
+    alert('⚠️ Менеджера додано локально, але помилка збереження в Firestore:\n'+e.message+'\nПеревірте з\'єднання і натисніть Зберегти ще раз.');
+  });
 }
 function clearVac(code){const m=managers.find(x=>x.code===code);if(m){m.vacFrom='';m.vacTo='';}save();renderMgrList();renderVacBanner();}
 function delManager(code){
