@@ -1722,7 +1722,7 @@ function render(){
     return;
   }
   ta.innerHTML=list.map(t=>{
-    const tid=JSON.stringify(t.id); // safe id ref for inline handlers
+    const tid=`'${String(t.id).replace(/'/g,"\\'")}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const stH=`<span class="tg ${SC[t.status]}">${SL[t.status]}</span>`;
