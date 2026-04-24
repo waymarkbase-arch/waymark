@@ -1244,6 +1244,8 @@ window.addEventListener('load', async ()=>{
           migrateMgrRoles();
           const code = emailToCode(user.email);
           if(!code){
+            // DEBUG: show exact email from Firebase
+            alert('DEBUG: Firebase email = [' + user.email + ']\nManagers emails: ' + managers.map(m=>m.email||'(empty)').join(', '));
             // Google email not matched — ask user who they are
             openIdentityPicker(user.email);
           } else {
@@ -2762,7 +2764,16 @@ function saveMyName(){
 }
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
-function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();}
+function saveCfg(){
+  // flush any email inputs that may not have triggered onblur yet
+  document.querySelectorAll('#mgrList input[type="email"]').forEach(inp=>{
+    const row=inp.closest('.mgr-row');
+    if(!row) return;
+    const code=inp.getAttribute('onblur')?.match(/setMgrEmail\('([^']+)'/)?.[1];
+    if(code) setMgrEmail(code, inp.value);
+  });
+  cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();
+}
 
 /* ── INIT ── */
 (()=>{const m={name:'Waymark',short_name:'Waymark',start_url:location.href,display:'standalone',
