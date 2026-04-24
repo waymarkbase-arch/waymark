@@ -639,6 +639,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
+    <div class="frow" id="mgrFilterWrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
   </div>
   <div class="sa">
     <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="render()"></div>
@@ -1109,18 +1110,14 @@ async function startRealtimeSync(){
     const d=snap.data();
     // only apply if another user changed it (not our own save)
     if(d.updatedBy && d.updatedBy !== curU){
-      // ── перевіряємо зміни статусу до оновлення локального стану ──
+      // ── перевіряємо зміни статусу ДО оновлення локального стану ──
       if(d.tasks){
         d.tasks.forEach(newT=>{
           const oldT=tasks.find(t=>t.id===newT.id);
           if(!oldT) return;
-          // статус змінився і змінив не я
           if(newT.status!==oldT.status && newT.statusChangedBy && newT.statusChangedBy!==curU){
-            // я причетний (автор або виконавець)
             const isConcerned=newT.from===curU||newT.to===curU;
-            if(isConcerned){
-              showStatusChangeNotif(newT, oldT.status, newT.status, newT.statusChangedBy);
-            }
+            if(isConcerned) showStatusChangeNotif(newT, oldT.status, newT.status, newT.statusChangedBy);
           }
         });
       }
@@ -1130,7 +1127,7 @@ async function startRealtimeSync(){
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
-      rStats(); render(); renderVacBanner(); renderLabelPills();
+      rStats(); render(); renderVacBanner(); renderLabelPills(); renderMgrFilter();
       showSyncToast(d.updatedBy);
     }
   }, err=>console.error('Snapshot error:',err));
@@ -1155,34 +1152,31 @@ function showStatusChangeNotif(task, oldSt, newSt, byCode){
   const taskName=task.title||task.url||task.note||'Завдання';
   const oldLabel=SL[oldSt]||oldSt;
   const newLabel=SL[newSt]||newSt;
+  const stColors={new:'#6b8cda',work:'#e09020',clarify:'#c07858',done:'#2e8653',urgent:'#c0392b',test:'#7b5ea7'};
+  const col=stColors[newSt]||'#888';
 
-  // ── browser push notification ──
+  // browser push
   if('Notification' in window && Notification.permission==='granted'){
-    new Notification(`Waymark — зміна статусу`, {
+    new Notification('Waymark — зміна статусу',{
       body:`${changer.name}: «${taskName}» → ${newLabel}`,
       tag:'st_'+task.id
     });
   }
 
-  // ── in-app банер ──
+  // in-app банер
   const existing=document.getElementById('stNotifBanner');
   if(existing) existing.remove();
 
-  const banner=document.createElement('div');
-  banner.id='stNotifBanner';
-  banner.style.cssText=`position:fixed;top:18px;right:18px;z-index:10000;background:#fff;border:1px solid #e0dcd6;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.13);padding:14px 18px 12px;max-width:320px;font-family:inherit;animation:slideInRight .3s ease`;
-
-  // додаємо анімацію якщо нема
   if(!document.getElementById('stNotifStyle')){
-    const style=document.createElement('style');
-    style.id='stNotifStyle';
-    style.textContent=`@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}`;
-    document.head.appendChild(style);
+    const st=document.createElement('style');
+    st.id='stNotifStyle';
+    st.textContent=`@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}`;
+    document.head.appendChild(st);
   }
 
-  const stColors={new:'#6b8cda',work:'#e09020',clarify:'#c07858',done:'#2e8653',urgent:'#c0392b',test:'#7b5ea7'};
-  const col=stColors[newSt]||'#888';
-
+  const banner=document.createElement('div');
+  banner.id='stNotifBanner';
+  banner.style.cssText='position:fixed;top:18px;right:18px;z-index:10000;background:#fff;border:1px solid #e0dcd6;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.13);padding:14px 18px 12px;max-width:320px;font-family:inherit;animation:slideInRight .3s ease';
   banner.innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:10px">
       <div style="width:36px;height:36px;border-radius:50%;background:${changer.col||'#888'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${esc(changer.name.charAt(0))}</div>
@@ -1192,18 +1186,17 @@ function showStatusChangeNotif(task, oldSt, newSt, byCode){
         <div style="display:flex;align-items:center;gap:6px;font-size:11px">
           <span style="background:#f0f0ee;color:#888;border-radius:20px;padding:2px 8px">${esc(oldLabel)}</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-          <span style="background:${col}18;color:${col};border-radius:20px;padding:2px 8px;font-weight:600">${esc(newLabel)}</span>
+          <span style="background:${col}22;color:${col};border-radius:20px;padding:2px 8px;font-weight:600">${esc(newLabel)}</span>
         </div>
       </div>
-      <span onclick="document.getElementById('stNotifBanner').remove()" style="color:#bbb;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;margin-top:-2px">✕</span>
+      <span onclick="document.getElementById('stNotifBanner').remove()" style="color:#bbb;cursor:pointer;font-size:18px;line-height:1;flex-shrink:0;margin-top:-2px">✕</span>
     </div>`;
-
   document.body.appendChild(banner);
   clearTimeout(banner._hide);
   banner._hide=setTimeout(()=>{
-    banner.style.transition='opacity .4s';
+    banner.style.transition='opacity .5s';
     banner.style.opacity='0';
-    setTimeout(()=>banner.remove(),400);
+    setTimeout(()=>{if(banner.parentNode)banner.remove();},500);
   },6000);
 }
 
@@ -1253,6 +1246,7 @@ window.addEventListener('load', async ()=>{
             openIdentityPicker(user.email);
           } else {
             curU = code;
+            mgrFilter = 'all';
             bootApp();
             startRealtimeSync();
             document.getElementById('loginScreen').style.display='none';
@@ -1303,6 +1297,7 @@ let tasks=[
 ];
 let customLabels=["Об'єкти",'Розсилка'];
 let flt='all',curU='MK',eId=null,dId=null,aMode='week';
+let mgrFilter='all'; // 'all' | 'mine' | manager code (admin/SA only)
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -1327,7 +1322,7 @@ function bootApp(){
   migrateMgrRoles();
   updateAvatarUI();
   updateRoleUI();
-  reqNotifPerm();initTheme();renderLabelPills();rStats();render();updClk();renderVacBanner();renderSAIndicator();
+  reqNotifPerm();initTheme();renderLabelPills();renderMgrFilter();rStats();render();updClk();renderVacBanner();renderSAIndicator();
   setInterval(updClk,20000);
   setInterval(checkDeadlines,3600000);
   setTimeout(checkDeadlines,3000);
@@ -1721,6 +1716,32 @@ function sf(f,el){
   render();
 }
 
+function setMgrFilter(val){
+  mgrFilter=val;
+  document.querySelectorAll('.mgrf-pill').forEach(p=>{
+    p.classList.toggle('on', p.dataset.mgrf===val);
+  });
+  render();
+}
+
+function renderMgrFilter(){
+  const wrap=document.getElementById('mgrFilterWrap');
+  if(!wrap) return;
+  const isAdmin=canDo('admin')||isSuperAdmin();
+  if(isAdmin){
+    const pills=[
+      `<button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі учасники</button>`,
+      `<button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`,
+      ...managers.map(m=>`<button class="mgrf-pill fp${mgrFilter===m.code?' on':''}" data-mgrf="${m.code}" onclick="setMgrFilter('${m.code}')" style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${m.col||'#888'};flex-shrink:0;display:inline-block"></span>${esc(m.name)}</button>`)
+    ];
+    wrap.innerHTML=pills.join('');
+  } else {
+    wrap.innerHTML=`
+      <button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі учасники</button>
+      <button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`;
+  }
+}
+
 /* ── XSS ESCAPE ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
 
@@ -1778,6 +1799,13 @@ function render(){
   if(flt.startsWith('label:')){const lb=flt.slice(6);list=list.filter(t=>t.tags.includes(lb));}
   else if(flt!=='all') list=list.filter(t=>t.status===flt);
   if(q) list=list.filter(t=>(t.title+t.note+t.url+t.tags.join(' ')).toLowerCase().includes(q));
+
+  // ── manager filter ──
+  if(mgrFilter==='mine'){
+    list=list.filter(t=>t.from===curU||t.to===curU);
+  } else if(mgrFilter!=='all'){
+    list=list.filter(t=>t.from===mgrFilter||t.to===mgrFilter);
+  }
 
   // ── sorting ──
   const statusOrder={urgent:0,work:1,clarify:2,new:3,test:4,done:5};
@@ -2618,13 +2646,11 @@ function apSt(){
   const newStatus=document.getElementById('nSt').value;
   if(oldStatus===newStatus){closeM('mSt');eId=null;return;}
   t.status=newStatus;
-  // зберігаємо метадані зміни статусу для сповіщень
   t.statusChangedBy=curU;
   t.statusChangedAt=new Date().toISOString();
   t.prevStatus=oldStatus;
-  // скидаємо seenBy — всі причетні мають побачити зміну
-  t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
-  t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
+  // скидаємо seenBy — причетні побачать зміну як непрочитану
+  t.seenBy=[curU];
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
   closeM('mSt');eId=null;save();rStats();render();
 }
