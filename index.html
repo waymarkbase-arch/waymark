@@ -639,6 +639,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
+    <div class="frow" id="mgrFilterWrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    </div>
   </div>
   <div class="sa">
     <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="render()"></div>
@@ -1115,7 +1117,7 @@ async function startRealtimeSync(){
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
-      rStats(); render(); renderVacBanner(); renderLabelPills();
+      rStats(); render(); renderVacBanner(); renderLabelPills(); renderMgrFilter();
       showSyncToast(d.updatedBy);
     }
   }, err=>console.error('Snapshot error:',err));
@@ -1181,6 +1183,7 @@ window.addEventListener('load', async ()=>{
             openIdentityPicker(user.email);
           } else {
             curU = code;
+            mgrFilter = 'all'; // скидаємо фільтр менеджера при новому логіні
             bootApp();
             startRealtimeSync();
             document.getElementById('loginScreen').style.display='none';
@@ -1231,6 +1234,7 @@ let tasks=[
 ];
 let customLabels=["Об'єкти",'Розсилка'];
 let flt='all',curU='MK',eId=null,dId=null,aMode='week';
+let mgrFilter='all'; // 'all' | 'mine' | manager code (admin/SA only)
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -1255,7 +1259,7 @@ function bootApp(){
   migrateMgrRoles();
   updateAvatarUI();
   updateRoleUI();
-  reqNotifPerm();initTheme();renderLabelPills();rStats();render();updClk();renderVacBanner();renderSAIndicator();
+  reqNotifPerm();initTheme();renderLabelPills();renderMgrFilter();rStats();render();updClk();renderVacBanner();renderSAIndicator();
   setInterval(updClk,20000);
   setInterval(checkDeadlines,3600000);
   setTimeout(checkDeadlines,3000);
@@ -1649,6 +1653,35 @@ function sf(f,el){
   render();
 }
 
+function setMgrFilter(val){
+  mgrFilter=val;
+  // update active state on pills
+  document.querySelectorAll('.mgrf-pill').forEach(p=>{
+    p.classList.toggle('on', p.dataset.mgrf===val);
+  });
+  render();
+}
+
+function renderMgrFilter(){
+  const wrap=document.getElementById('mgrFilterWrap');
+  if(!wrap) return;
+  const isAdmin=canDo('admin')||isSuperAdmin();
+  if(isAdmin){
+    // admin/SA: "Всі" + "Мої" + кожен менеджер
+    const pills=[
+      `<button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі</button>`,
+      `<button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`,
+      ...managers.map(m=>`<button class="mgrf-pill fp${mgrFilter===m.code?' on':''}" data-mgrf="${m.code}" onclick="setMgrFilter('${m.code}')" style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${m.col||'#888'};flex-shrink:0"></span>${esc(m.name)}</button>`)
+    ];
+    wrap.innerHTML=pills.join('');
+  } else {
+    // basic/extended: тільки "Всі" і "Мої"
+    wrap.innerHTML=`
+      <button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі</button>
+      <button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`;
+  }
+}
+
 /* ── XSS ESCAPE ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
 
@@ -1707,6 +1740,13 @@ function render(){
   else if(flt!=='all') list=list.filter(t=>t.status===flt);
   if(q) list=list.filter(t=>(t.title+t.note+t.url+t.tags.join(' ')).toLowerCase().includes(q));
 
+  // ── manager filter ──
+  if(mgrFilter==='mine'){
+    list=list.filter(t=>t.from===curU||t.to===curU);
+  } else if(mgrFilter!=='all'){
+    list=list.filter(t=>t.from===mgrFilter||t.to===mgrFilter);
+  }
+
   // ── sorting ──
   const statusOrder={urgent:0,work:1,clarify:2,new:3,test:4,done:5};
   if(sortBy==='deadline') list=list.filter(t=>t.deadline).sort((a,b)=>sortDir.deadline==='asc'?a.deadline.localeCompare(b.deadline):b.deadline.localeCompare(a.deadline));
@@ -1727,7 +1767,7 @@ function render(){
     return;
   }
   ta.innerHTML=list.map(t=>{
-    const tid=JSON.stringify(t.id); // safe id ref for inline handlers
+    const tid=`'${String(t.id).replace(/'/g,"\\'")}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const stH=`<span class="tg ${SC[t.status]}">${SL[t.status]}</span>`;
