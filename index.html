@@ -1851,9 +1851,9 @@ function renderMgrList(){
       </div>
       <div class="vac-row">
         <label>Відпустка з</label>
-        <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacFrom','${esc(m.code)}|vacFrom')`:''}}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacFrom||'Оберіть'}</button>
+        <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacFrom','${esc(m.code)}|vacFrom')`:''}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacFrom||'Оберіть'}</button>
         <label>по</label>
-        <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacTo','${esc(m.code)}|vacTo')`:''}}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacTo||'Оберіть'}</button>
+        <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacTo','${esc(m.code)}|vacTo')`:''}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacTo||'Оберіть'}</button>
         ${(m.vacFrom||m.vacTo)&&canEditVac?`<button class="vac-clear" onclick="clearVac('${esc(m.code)}')" title="Скинути">✕</button>`:''}
       </div>
     </div>`;
