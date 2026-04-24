@@ -639,6 +639,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
+    <div class="frow" id="mgrFilterWrap" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
   </div>
   <div class="sa">
     <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="render()"></div>
@@ -802,10 +803,12 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <div id="driveLinks" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
     </div>
     <input type="hidden" id="fDriveFiles" value="[]">
+    <div id="hoursFieldWrap">
     <label>⏱ Витрачено годин</label>
     <div style="display:flex;align-items:center;gap:8px">
       <input type="number" id="fHours" placeholder="0.00" min="0" max="999" step="0.25" style="width:110px">
       <span style="font-size:12px;color:#aaa">год. (буде у звіті)</span>
+    </div>
     </div>
     <div class="mbtns"><button onclick="closeM('mAdd')">Скасувати</button><button class="mprim" id="mBtn" onclick="mkT()">Створити</button></div>
   </div>
@@ -1109,13 +1112,24 @@ async function startRealtimeSync(){
     const d=snap.data();
     // only apply if another user changed it (not our own save)
     if(d.updatedBy && d.updatedBy !== curU){
+      // ── перевіряємо зміни статусу ДО оновлення локального стану ──
+      if(d.tasks){
+        d.tasks.forEach(newT=>{
+          const oldT=tasks.find(t=>t.id===newT.id);
+          if(!oldT) return;
+          if(newT.status!==oldT.status && newT.statusChangedBy && newT.statusChangedBy!==curU){
+            const isConcerned=newT.from===curU||newT.to===curU;
+            if(isConcerned) showStatusChangeNotif(newT, oldT.status, newT.status, newT.statusChangedBy);
+          }
+        });
+      }
       if(d.tasks)        tasks        = d.tasks;
       // never overwrite managers during SA session — prevents role lockout
       if(d.managers && !isSuperAdmin()) managers = d.managers;
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
-      rStats(); render(); renderVacBanner(); renderLabelPills();
+      rStats(); render(); renderVacBanner(); renderLabelPills(); renderMgrFilter();
       showSyncToast(d.updatedBy);
     }
   }, err=>console.error('Snapshot error:',err));
@@ -1133,6 +1147,59 @@ function showSyncToast(byCode){
   t.style.opacity='1';
   clearTimeout(t._hide);
   t._hide=setTimeout(()=>t.style.opacity='0',3000);
+}
+
+function showStatusChangeNotif(task, oldSt, newSt, byCode){
+  const changer=managers.find(x=>x.code===byCode)||{name:byCode,col:'#888'};
+  const taskName=task.title||task.url||task.note||'Завдання';
+  const oldLabel=SL[oldSt]||oldSt;
+  const newLabel=SL[newSt]||newSt;
+  const stColors={new:'#6b8cda',work:'#e09020',clarify:'#c07858',done:'#2e8653',urgent:'#c0392b',test:'#7b5ea7'};
+  const col=stColors[newSt]||'#888';
+
+  // browser push
+  if('Notification' in window && Notification.permission==='granted'){
+    new Notification('Waymark — зміна статусу',{
+      body:`${changer.name}: «${taskName}» → ${newLabel}`,
+      tag:'st_'+task.id
+    });
+  }
+
+  // in-app банер
+  const existing=document.getElementById('stNotifBanner');
+  if(existing) existing.remove();
+
+  if(!document.getElementById('stNotifStyle')){
+    const st=document.createElement('style');
+    st.id='stNotifStyle';
+    st.textContent=`@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}`;
+    document.head.appendChild(st);
+  }
+
+  const banner=document.createElement('div');
+  banner.id='stNotifBanner';
+  banner.style.cssText='position:fixed;top:18px;right:18px;z-index:10000;background:#fff;border:1px solid #e0dcd6;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.13);padding:14px 18px 12px;max-width:320px;font-family:inherit;animation:slideInRight .3s ease';
+  banner.innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="width:36px;height:36px;border-radius:50%;background:${changer.col||'#888'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${esc(changer.name.charAt(0))}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:3px">${esc(changer.name)} змінив статус</div>
+        <div style="font-size:11px;color:#666;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(taskName)}">«${esc(taskName)}»</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+          <span style="background:#f0f0ee;color:#888;border-radius:20px;padding:2px 8px">${esc(oldLabel)}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <span style="background:${col}22;color:${col};border-radius:20px;padding:2px 8px;font-weight:600">${esc(newLabel)}</span>
+        </div>
+      </div>
+      <span onclick="document.getElementById('stNotifBanner').remove()" style="color:#bbb;cursor:pointer;font-size:18px;line-height:1;flex-shrink:0;margin-top:-2px">✕</span>
+    </div>`;
+  document.body.appendChild(banner);
+  clearTimeout(banner._hide);
+  banner._hide=setTimeout(()=>{
+    banner.style.transition='opacity .5s';
+    banner.style.opacity='0';
+    setTimeout(()=>{if(banner.parentNode)banner.remove();},500);
+  },6000);
 }
 
 // ── MATCH firebase email → manager code ──
@@ -1181,6 +1248,7 @@ window.addEventListener('load', async ()=>{
             openIdentityPicker(user.email);
           } else {
             curU = code;
+            mgrFilter = 'all';
             bootApp();
             startRealtimeSync();
             document.getElementById('loginScreen').style.display='none';
@@ -1231,6 +1299,7 @@ let tasks=[
 ];
 let customLabels=["Об'єкти",'Розсилка'];
 let flt='all',curU='MK',eId=null,dId=null,aMode='week';
+let mgrFilter='all'; // 'all' | 'mine' | manager code (admin/SA only)
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -1255,7 +1324,7 @@ function bootApp(){
   migrateMgrRoles();
   updateAvatarUI();
   updateRoleUI();
-  reqNotifPerm();initTheme();renderLabelPills();rStats();render();updClk();renderVacBanner();renderSAIndicator();
+  reqNotifPerm();initTheme();renderLabelPills();renderMgrFilter();rStats();render();updClk();renderVacBanner();renderSAIndicator();
   setInterval(updClk,20000);
   setInterval(checkDeadlines,3600000);
   setTimeout(checkDeadlines,3000);
@@ -1278,6 +1347,12 @@ function canDo(minRole){
   if(isSuperAdmin()) return true;
   const order={basic:0,extended:1,admin:2};
   return (order[curMgr().role||'basic']||0)>=(order[minRole]||0);
+}
+function canViewHours(){
+  if(isSuperAdmin()) return true;
+  const m=curMgr();
+  if((m.role||'basic')==='admin') return true;
+  return !!(m.canViewHours);
 }
 
 // ── SUPERADMIN AUTH ──
@@ -1649,6 +1724,32 @@ function sf(f,el){
   render();
 }
 
+function setMgrFilter(val){
+  mgrFilter=val;
+  document.querySelectorAll('.mgrf-pill').forEach(p=>{
+    p.classList.toggle('on', p.dataset.mgrf===val);
+  });
+  render();
+}
+
+function renderMgrFilter(){
+  const wrap=document.getElementById('mgrFilterWrap');
+  if(!wrap) return;
+  const isAdmin=canDo('admin')||isSuperAdmin();
+  if(isAdmin){
+    const pills=[
+      `<button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі учасники</button>`,
+      `<button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`,
+      ...managers.map(m=>`<button class="mgrf-pill fp${mgrFilter===m.code?' on':''}" data-mgrf="${m.code}" onclick="setMgrFilter('${m.code}')" style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${m.col||'#888'};flex-shrink:0;display:inline-block"></span>${esc(m.name)}</button>`)
+    ];
+    wrap.innerHTML=pills.join('');
+  } else {
+    wrap.innerHTML=`
+      <button class="mgrf-pill fp${mgrFilter==='all'?' on':''}" data-mgrf="all" onclick="setMgrFilter('all')">Всі учасники</button>
+      <button class="mgrf-pill fp${mgrFilter==='mine'?' on':''}" data-mgrf="mine" onclick="setMgrFilter('mine')">Мої</button>`;
+  }
+}
+
 /* ── XSS ESCAPE ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
 
@@ -1707,6 +1808,13 @@ function render(){
   else if(flt!=='all') list=list.filter(t=>t.status===flt);
   if(q) list=list.filter(t=>(t.title+t.note+t.url+t.tags.join(' ')).toLowerCase().includes(q));
 
+  // ── manager filter ──
+  if(mgrFilter==='mine'){
+    list=list.filter(t=>t.from===curU||t.to===curU);
+  } else if(mgrFilter!=='all'){
+    list=list.filter(t=>t.from===mgrFilter||t.to===mgrFilter);
+  }
+
   // ── sorting ──
   const statusOrder={urgent:0,work:1,clarify:2,new:3,test:4,done:5};
   if(sortBy==='deadline') list=list.filter(t=>t.deadline).sort((a,b)=>sortDir.deadline==='asc'?a.deadline.localeCompare(b.deadline):b.deadline.localeCompare(a.deadline));
@@ -1750,8 +1858,7 @@ function render(){
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>`<div class="tc-cmt"><span class="tc-cmt-by">${esc(c.by)} · ${esc(c.t)}</span><br>${esc(c.tx)}</div>`).join('')}</div>`:'';
     const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
     function fmtHrs(h){if(!h)return '';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
-    const _canSeeHours=t.to===curU||canDo('admin')||isSuperAdmin();
-    const hoursH=t.hours&&_canSeeHours?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
+    const hoursH=(t.hours&&canViewHours())?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
     const _seenByMe=(t.seenBy||[]).includes(curU);
     const _isUnseen=!_seenByMe&&(t.cmts.length>0||t.from!==curU);
     const _unseenCnt=t.cmts.filter(c=>c.by!==curU).length||0;
@@ -1852,6 +1959,7 @@ function renderMgrList(){
           <option value='extended' ${m.role==='extended'?'selected':''}>Розширений</option>
           <option value='admin' ${m.role==='admin'?'selected':''}>Адмін</option>
         </select>`:`<span style="font-size:11px;color:#aaa;padding:3px 6px">${{basic:'Базовий',extended:'Розширений',admin:'Адмін'}[m.role||'basic']}</span>`}
+        ${canEditAll&&(m.role||'basic')!=='admin'?`<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555;cursor:pointer;white-space:nowrap" title="Дозволити бачити та редагувати поле «Витрачено годин»"><input type="checkbox" ${m.canViewHours?'checked':''} onchange="setMgrCanViewHours('${esc(m.code)}',this.checked)" style="accent-color:#2f52cc">⏱ Бачить години</label>`:''}
         ${isSA?`<button onclick="saDelegateSuper('${esc(m.code)}')" title="Делегувати суперадміна" style="border:none;background:#fef3c7;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#92400e">👑 Делег.</button>`:''}
         ${canEditAll?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати лист для скидання пароля" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">🔑 Скинути пароль</button>`:''}
         ${canEditAll?`<button class="mgr-del" onclick="delManager('${esc(m.code)}')">×</button>`:''}
@@ -1895,6 +2003,15 @@ function setMgrName(code,name){
 function setMgrEmail(code,email){
   const m=managers.find(x=>x.code===code);
   if(m){m.email=email.trim().toLowerCase();save();}
+}
+function setMgrCanViewHours(code,val){
+  if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати цей дозвіл.');return;}
+  const m=managers.find(x=>x.code===code);
+  if(m){
+    m.canViewHours=!!val;
+    logEntry('edit',null,m.name,'canViewHours',String(!val),String(!!val));
+    save();
+  }
 }
 function renderColorPicker(){
   document.getElementById('mgrColorPicker').innerHTML=MGR_COLORS.map(c=>`<div class="color-dot${c===selectedMgrColor?' sel':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
@@ -2066,7 +2183,6 @@ function resetPeriod(){
 function genPDF(){
   if(!canDo('extended')){alert('Доступ заборонено.');return;}
   const showHrs=document.getElementById('inclHours')?.checked!==false;
-  const pF=document.getElementById('pFrom').value,pT=document.getElementById('pTo').value;
   let arch=tasks.filter(t=>t.arch);
   if(pF) arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT) arch=arch.filter(t=>(t.archAt||t.created)<=pT);
@@ -2167,11 +2283,11 @@ function renderAnalytics(){
     labels:['Виконано','В процесі'],
     datasets:[{data:[doneN,notDone],backgroundColor:['#70b890','#d0a870'],borderWidth:2,borderColor:'#fff'}]
   });
-  // 6) hours per executor
+  // 6) hours per executor — only for users with canViewHours permission
   const hrsC={};ts.forEach(t=>{if(t.hours>0) hrsC[t.to]=(hrsC[t.to]||0)+t.hours;});
   const hKeys=Object.keys(hrsC);
   renderGanttView();
-  if(hKeys.length){
+  if(hKeys.length&&canViewHours()){
     mkChart('chHours','bar',{
       labels:hKeys.map(k=>mgr(k).name),
       datasets:[{label:'Годин',data:hKeys.map(k=>hrsC[k]),backgroundColor:hKeys.map(k=>mgr(k).col),borderRadius:6}]
@@ -2489,6 +2605,9 @@ function openAdd(id){
     document.getElementById('fDriveFiles').value='[]';renderDriveLinks([]);
   }
   openM('mAdd');
+  // show/hide hours field based on permission
+  const hwrap=document.getElementById('hoursFieldWrap');
+  if(hwrap) hwrap.style.display=canViewHours()?'':'none';
 }
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
@@ -2501,11 +2620,12 @@ function mkT(){
     const newStatus=document.getElementById('fS').value;
     const newTo=document.getElementById('fTo').value;
     const newDl=document.getElementById('fDl').value;
+    const newHours=canViewHours()?parseFloat(document.getElementById('fHours').value)||0:(t.hours||0);
     Object.assign(t,{title:T,url:U.replace(/^https?:\/\//,''),note:N,status:newStatus,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       deadline:newDl,forecast:document.getElementById('fFc').value,
       to:newTo,result:document.getElementById('fR').value,
-      hours:parseFloat(document.getElementById('fHours').value)||0,
+      hours:newHours,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]')});
     const label=T||U||N||'—';
     if(oldStatus!==newStatus) logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]);
@@ -2519,7 +2639,7 @@ function mkT(){
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       created:today,deadline:document.getElementById('fDl').value,forecast:document.getElementById('fFc').value,
       from:curU,to:document.getElementById('fTo').value,result:document.getElementById('fR').value,
-      hours:parseFloat(document.getElementById('fHours').value)||0,
+      hours:canViewHours()?(parseFloat(document.getElementById('fHours').value)||0):0,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]'),
       arch:false,archAt:'',cmts:[]});
     logEntry('create',newId,T||U||N||'—');
@@ -2544,8 +2664,14 @@ function apSt(){
   const t=tasks.find(t=>t.id===eId);
   if(!t||!canChangeStatus(t)){alert('Недостатньо прав.');closeM('mSt');return;}
   const oldStatus=t.status;
-  t.status=document.getElementById('nSt').value;
-  t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
+  const newStatus=document.getElementById('nSt').value;
+  if(oldStatus===newStatus){closeM('mSt');eId=null;return;}
+  t.status=newStatus;
+  t.statusChangedBy=curU;
+  t.statusChangedAt=new Date().toISOString();
+  t.prevStatus=oldStatus;
+  // скидаємо seenBy — причетні побачать зміну як непрочитану
+  t.seenBy=[curU];
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
   closeM('mSt');eId=null;save();rStats();render();
 }
@@ -2558,7 +2684,6 @@ function exportCSV(){
   if(!canDo('extended')){alert('Доступ до експорту лише для розширених прав.');return;}
   const pF=document.getElementById('pFrom')?.value||'',pT=document.getElementById('pTo')?.value||'';
   const showHrs=document.getElementById('inclHours')?.checked!==false;
-  let arch=tasks.filter(t=>t.arch);
   if(pF)arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT)arch=arch.filter(t=>(t.archAt||t.created)<=pT);
   const hdr=['#','Назва','Теги','Статус','Поставив','Виконував',...(showHrs?['Години']:[]),'Дата'];
