@@ -224,7 +224,16 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .batch-bar .batch-cancel{background:transparent;opacity:.7}
 .tc-check{width:16px;height:16px;cursor:pointer;accent-color:#2f52cc;display:none}
 .batch-mode .tc-check{display:inline-block}
-.unseen-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;background:#e06030;color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #f2f1ec;z-index:2;pointer-events:none}
+.unseen-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;background:#e06030;color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #f2f1ec;z-index:2;pointer-events:auto;cursor:default}
+/* ── Стилізований tooltip ── */
+#wm-tooltip{position:fixed;z-index:9999;pointer-events:none;opacity:0;transition:opacity .15s ease;max-width:260px}
+#wm-tooltip.visible{opacity:1}
+.wm-tip-inner{background:#1c1c1c;color:#fff;border-radius:10px;padding:8px 12px;font-size:11px;line-height:1.5;box-shadow:0 4px 18px rgba(0,0,0,.25);font-family:'Inter',sans-serif}
+.wm-tip-inner .tip-by{font-weight:700;color:#f0a070;margin-bottom:3px}
+.wm-tip-inner .tip-row{color:#ddd}
+.wm-tip-inner .tip-row b{color:#fff}
+.wm-tip-arrow{width:10px;height:6px;overflow:visible;display:block;margin:0 auto}
+.wm-tip-arrow polygon{fill:#1c1c1c}
 .tc-collapsed .tc-body{display:none}
 .tc-collapsed .tc-foot{display:none}
 .tc-preview{display:flex;align-items:center;gap:10px;min-height:0}
@@ -1866,7 +1875,9 @@ function render(){
     const _hasChange=t.lastChange&&t.lastChange.by!==curU;
     const _isUnseen=!_seenByMe&&_isParticipant&&(t.cmts.length>0||t.from!==curU||_hasChange);
     const _unseenCnt=t.cmts.filter(c=>c.by!==curU).length||0;
-    const unseenBadge=_isUnseen?`<div class="unseen-badge" title="${t.lastChange?esc(t.lastChange.by+': '+t.lastChange.summary):''}">${_unseenCnt>0?_unseenCnt:'!'}</div>`:'';
+    const _tipBy=t.lastChange?mgr(t.lastChange.by).name:'';
+    const _tipSum=t.lastChange?esc(t.lastChange.summary):'';
+    const unseenBadge=_isUnseen?`<div class="unseen-badge" data-tip="1" data-tip-by="${esc(_tipBy)}" data-tip-sum="${_tipSum}">${_unseenCnt>0?_unseenCnt:'!'}</div>`:'';
     const changeHint=(_isParticipant&&_hasChange&&!_seenByMe)?`<div style="font-size:10px;color:#b05a20;background:#fff4ee;border-radius:6px;padding:2px 8px;margin-top:4px;display:inline-flex;align-items:center;gap:4px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${esc(t.lastChange.by)}: ${esc(t.lastChange.summary)}</div>`:'';
     const previewTitle=esc(t.title||t.url||t.note||'—');
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}" onclick="tcExpand(event,${tid})">
@@ -2767,7 +2778,7 @@ function mkT(){
     if(oldStatus!==newStatus){ logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]); changes.push(`статус: ${SL[oldStatus]} → ${SL[newStatus]}`); }
     if(oldTo!==newTo){ logEntry('edit',eId,label,'виконавець',mgr(oldTo).name,mgr(newTo).name); changes.push(`виконавець: ${mgr(oldTo).name} → ${mgr(newTo).name}`); }
     if(oldDl!==newDl){ logEntry('edit',eId,label,'дедлайн',oldDl||'—',newDl||'—'); changes.push(`дедлайн: ${oldDl||'—'} → ${newDl||'—'}`); }
-    if(oldTitle!==T&&T){ logEntry('edit',eId,label,'назва',oldTitle||'—',T); changes.push(`назва змінена`); }
+    if(oldTitle!==T&&T){ logEntry('edit',eId,label,'назва',oldTitle||'—',T); changes.push(`назва: «${(oldTitle||'—').slice(0,25)+(oldTitle&&oldTitle.length>25?'…':'')}» → «${T.slice(0,25)+(T.length>25?'…':'')}»`); }
     if(changes.length>0){
       t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
       t.lastChange={by:curU,summary:changes.join('; '),ts:new Date().toISOString()};
@@ -3011,5 +3022,103 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
   </div>
 </div>
 </div><!-- /appShell -->
+
+<!-- ── STYLED TOOLTIP ── -->
+<div id="wm-tooltip">
+  <div class="wm-tip-inner">
+    <div class="tip-by" id="wm-tip-by"></div>
+    <div class="tip-row" id="wm-tip-sum"></div>
+  </div>
+  <svg class="wm-tip-arrow" viewBox="0 0 10 6"><polygon points="0,0 10,0 5,6"/></svg>
+</div>
+<script>
+(function(){
+  const tip=document.getElementById('wm-tooltip');
+  const tipBy=document.getElementById('wm-tip-by');
+  const tipSum=document.getElementById('wm-tip-sum');
+  let hideTimer=null;
+
+  function formatSum(raw){
+    // Format each change chunk with arrow styling
+    return raw.split('; ').map(part=>{
+      const arrowIdx=part.indexOf(' → ');
+      if(arrowIdx>-1){
+        const label=part.slice(0,arrowIdx);
+        // find the arrow
+        const afterColon=label.indexOf(': ');
+        if(afterColon>-1){
+          const key=label.slice(0,afterColon);
+          const from=label.slice(afterColon+2);
+          const to=part.slice(arrowIdx+3);
+          return `<span class="tip-row"><b>${key}:</b> ${from} <span style="color:#f0a070">→</span> <b>${to}</b></span>`;
+        }
+        return `<span class="tip-row">${part.replace(' → ','<span style="color:#f0a070"> → </span>')}</span>`;
+      }
+      return `<span class="tip-row">${part}</span>`;
+    }).join('<br>');
+  }
+
+  function show(el){
+    const by=el.dataset.tipBy||'';
+    const sum=el.dataset.tipSum||'';
+    if(!by&&!sum) return;
+    tipBy.textContent=by?by+' змінив:':'';
+    tipSum.innerHTML=formatSum(sum);
+
+    tip.classList.remove('visible');
+    tip.style.display='block';
+
+    const rect=el.getBoundingClientRect();
+    const tw=tip.offsetWidth||200;
+    const th=tip.offsetHeight||60;
+
+    let left=rect.left+rect.width/2-tw/2;
+    let top=rect.top-th-8;
+    let arrowBelow=false;
+
+    // Keep within viewport horizontally
+    if(left<8) left=8;
+    if(left+tw>window.innerWidth-8) left=window.innerWidth-tw-8;
+
+    // Flip below if not enough room above
+    if(top<8){
+      top=rect.bottom+8;
+      arrowBelow=true;
+      tip.querySelector('.wm-tip-arrow').style.transform='rotate(180deg)';
+      tip.querySelector('.wm-tip-arrow').style.marginTop='-1px';
+    } else {
+      tip.querySelector('.wm-tip-arrow').style.transform='none';
+      tip.querySelector('.wm-tip-arrow').style.marginTop='0';
+    }
+
+    tip.style.left=left+'px';
+    tip.style.top=top+'px';
+
+    // Arrow horizontal alignment
+    const arrowEl=tip.querySelector('.wm-tip-arrow');
+    const arrowCenter=rect.left+rect.width/2-left;
+    arrowEl.style.marginLeft=(arrowBelow?0:arrowCenter-5)+'px';
+
+    requestAnimationFrame(()=>tip.classList.add('visible'));
+  }
+
+  function hide(){
+    tip.classList.remove('visible');
+    hideTimer=setTimeout(()=>{ tip.style.display='none'; },160);
+  }
+
+  document.addEventListener('mouseover',e=>{
+    const badge=e.target.closest('[data-tip="1"]');
+    if(badge){ clearTimeout(hideTimer); show(badge); }
+  });
+  document.addEventListener('mouseout',e=>{
+    const badge=e.target.closest('[data-tip="1"]');
+    if(badge) hide();
+  });
+  // Hide on scroll/resize
+  document.addEventListener('scroll',hide,true);
+  window.addEventListener('resize',hide);
+})();
+</script>
 </body>
 </html>
