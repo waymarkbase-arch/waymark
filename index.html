@@ -1129,6 +1129,9 @@ function startRealtimeSync(){
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
       rStats(); render(); renderVacBanner(); renderLabelPills();
+      if(currentTab==='arch') rArch();
+      if(currentTab==='anlyt') renderAnalytics();
+      if(currentTab==='log') renderLog();
       showSyncToast(d.updatedBy);
     }
   }, err=>console.error('Snapshot error:',err));
@@ -1254,7 +1257,7 @@ let tasks=[
   {id:'6ba7b812-9dad-11d1-80b4-00c04fd430ca',title:'Звіт по бронюванням за квітень',url:'',note:'',status:'done',tags:["Об'єкти"],created:'2026-04-10',deadline:'2026-04-15',forecast:'',from:'TD',to:'TD',result:'PDF надіслано. 14 бронювань.',hours:3,arch:true,archAt:'2026-04-15',cmts:[],seenBy:[]}
 ];
 let customLabels=["Об'єкти",'Розсилка','Документи'];
-let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week';
+let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week',currentTab='main';
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -2087,6 +2090,7 @@ function goTab(tab,el){
   document.getElementById('vArch').style.display=tab==='arch'?'':'none';
   document.getElementById('vAnlyt').style.display=tab==='anlyt'?'':'none';
   document.getElementById('vLog').style.display=tab==='log'?'':'none';
+  currentTab=tab;
   if(tab==='arch') rArch();
   if(tab==='anlyt') renderAnalytics();
   if(tab==='log') renderLog();
