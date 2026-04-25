@@ -276,8 +276,9 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .tc-cmt-box textarea{width:100%;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:50px;color:#333}
 .tc-cmt-box button{margin-top:5px;background:#2f52cc;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:11px;cursor:pointer;font-family:inherit}
 .tc-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f0ede8;padding-top:11px;margin-top:4px}
-.comm-btn{display:flex;align-items:center;gap:5px;font-size:12px;color:#aaa;cursor:pointer;border:none;background:none;font-family:inherit;padding:0}
-.comm-btn:hover{color:#666}
+.comm-btn{display:flex;align-items:center;gap:5px;font-size:12px;color:#666;cursor:pointer;border:1px solid #e0dcd6;background:#fafaf8;font-family:inherit;padding:6px 13px;border-radius:20px;font-weight:500;transition:background .15s,border-color .15s}
+.comm-btn:hover{background:#f0ede8;border-color:#ccc;color:#333}
+.comm-btn svg{stroke:#888}
 .cst-btn{background:#1c1c1c;color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-weight:500;font-family:inherit;cursor:pointer}
 /* MENTION */
 .ment-wrap{position:relative}
@@ -440,6 +441,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 [data-theme="dark"] .tg-label{background:#1a2838;border-color:#2a4860;color:#6090c0}
 [data-theme="dark"] .tc-foot{border-top-color:var(--border)}
 [data-theme="dark"] .cst-btn{background:var(--text);color:var(--bg)}
+[data-theme="dark"] .comm-btn{background:var(--card);border-color:var(--border);color:var(--sub)}
+[data-theme="dark"] .comm-btn:hover{background:var(--border);color:var(--text)}
 [data-theme="dark"] .tc-res{background:#1a2e1a;color:#6bc88a}
 [data-theme="dark"] .tc-forecast{background:#1a1e38;color:#6890e0}
 [data-theme="dark"] .tc-cmt-box textarea{background:var(--surface2);border-color:var(--border);color:var(--text)}
@@ -627,6 +630,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     </div>
     <div class="frow">
       <button class="fp on" data-f="all" onclick="sf('all',this)">Всі</button>
+      <button class="fp" data-f="mine" id="fpMine" onclick="sfMine(this)">Мої</button>
       <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
@@ -795,8 +799,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     </div>
     <div id="uploadProgressArea" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
     <input type="hidden" id="fDriveFiles" value="[]">
-    <label>⏱ Витрачено годин</label>
-    <div style="display:flex;align-items:center;gap:8px">
+    <label id="fHoursLabel">⏱ Витрачено годин</label>
+    <div style="display:flex;align-items:center;gap:8px" id="fHoursWrap">
       <input type="number" id="fHours" placeholder="0.00" min="0" max="999" step="0.25" style="width:110px">
       <span style="font-size:12px;color:#aaa">год. (буде у звіті)</span>
     </div>
@@ -1211,20 +1215,19 @@ function logEntry(action, taskId, taskTitle, field, from, to){
 }
 
 let managers=[
-  {code:'TD',name:'Таня', col:'#e06030',vacFrom:'',vacTo:'',role:'admin',   email:'tanya@waymark.app'},
-  {code:'MK',name:'Міша', col:'#3a9e6a',vacFrom:'',vacTo:'',role:'admin',   email:'misha@waymark.app'} // суперадмін
+  {code:'TD',name:'Таня', col:'#e06030',vacFrom:'',vacTo:'',role:'admin',   email:'tanya@waymark.app', canSeeHours:true},
+  {code:'MK',name:'Міша', col:'#3a9e6a',vacFrom:'',vacTo:'',role:'admin',   email:'misha@waymark.app', canSeeHours:true} // суперадмін
 ];
 let selectedMgrColor=MGR_COLORS[2];
 let tasks=[
-  {id:1,title:'Bell Raco Apartments — La Pineda',url:'www.planetcostadorada.com',note:'Ціна 3100 євро нетто',status:'work',tags:["Об'єкти"],created:'2026-04-20',deadline:'2026-04-21',forecast:'15:30 / 2026-04-21',from:'TD',to:'MK',result:'https://lux.floriantravel.com',arch:false,archAt:'',cmts:[]},
-  {id:2,title:'Розсилка Іспанія — травень',url:'',note:'Підготувати шаблон листа',status:'clarify',tags:['Розсилка','@Таня'],created:'2026-04-19',deadline:'2026-04-22',forecast:'',from:'MK',to:'TD',result:'',arch:false,archAt:'',cmts:[]},
-  {id:3,title:'Перевірити бронювання Costa Brava',url:'booking.com/costa-brava',note:'',status:'new',tags:["Об'єкти"],created:'2026-04-18',deadline:'',forecast:'',from:'MK',to:'MK',result:'',arch:false,archAt:'',cmts:[]},
-  {id:4,title:'Оновити прайс-лист',url:'lux.floriantravel.com/prices',note:'Ціни змінились з 1 травня',status:'urgent',tags:["Об'єкти"],created:'2026-04-17',deadline:'2026-04-20',forecast:'',from:'TD',to:'MK',result:'',arch:false,archAt:'',cmts:[]},
-  {id:5,title:'',url:'drive.google.com/contract-template',note:"Шаблон договору для нових об'єктів",status:'test',tags:['Розсилка'],created:'2026-04-16',deadline:'',forecast:'',from:'MK',to:'TD',result:'',arch:false,archAt:'',cmts:[]},
-  {id:6,title:'Звіт по бронюванням за квітень',url:'',note:'',status:'done',tags:["Об'єкти"],created:'2026-04-10',deadline:'2026-04-15',forecast:'',from:'TD',to:'TD',result:'PDF надіслано. 14 бронювань.',arch:true,archAt:'2026-04-15',cmts:[]}
+  {id:'f47ac10b-58cc-4372-a567-0e02b2c3d479',title:'Bell Raco Apartments — La Pineda',url:'lux.floriantravel.com',note:'Ціна 3100 євро нетто. Уточнити наявність на червень.',status:'work',tags:["Об'єкти"],created:'2026-04-20',deadline:'2026-04-28',forecast:'15:30 / 2026-04-28',from:'TD',to:'MK',result:'',hours:2,arch:false,archAt:'',cmts:[],seenBy:[]},
+  {id:'550e8400-e29b-41d4-a716-446655440001',title:'Розсилка Іспанія — травень',url:'',note:'Підготувати шаблон листа для клієнтів бази.',status:'clarify',tags:['Розсилка'],created:'2026-04-19',deadline:'2026-04-30',forecast:'',from:'MK',to:'TD',result:'',hours:0,arch:false,archAt:'',cmts:[],seenBy:[]},
+  {id:'6ba7b810-9dad-11d1-80b4-00c04fd430c8',title:'Оновити прайс-лист на сайті',url:'lux.floriantravel.com/prices',note:"Ціни змінились з 1 травня. Оновити всі об'єкти.",status:'urgent',tags:["Об'єкти"],created:'2026-04-17',deadline:'2026-04-26',forecast:'',from:'TD',to:'MK',result:'',hours:0,arch:false,archAt:'',cmts:[],seenBy:[]},
+  {id:'6ba7b811-9dad-11d1-80b4-00c04fd430c9',title:'Шаблон договору оренди',url:'',note:"Шаблон договору для нових об'єктів. Перевірити юридично.",status:'test',tags:['Документи'],created:'2026-04-16',deadline:'',forecast:'',from:'MK',to:'TD',result:'',hours:1.5,arch:false,archAt:'',cmts:[],seenBy:[]},
+  {id:'6ba7b812-9dad-11d1-80b4-00c04fd430ca',title:'Звіт по бронюванням за квітень',url:'',note:'',status:'done',tags:["Об'єкти"],created:'2026-04-10',deadline:'2026-04-15',forecast:'',from:'TD',to:'TD',result:'PDF надіслано. 14 бронювань.',hours:3,arch:true,archAt:'2026-04-15',cmts:[],seenBy:[]}
 ];
-let customLabels=["Об'єкти",'Розсилка'];
-let flt='all',curU='MK',eId=null,dId=null,aMode='week';
+let customLabels=["Об'єкти",'Розсилка','Документи'];
+let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week';
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -1236,7 +1239,12 @@ let charts={};
 
 function migrateMgrRoles(){
   // Assign 'basic' to any manager missing a role field
-  managers.forEach(m=>{if(!m.role) m.role='basic';});
+  managers.forEach(m=>{
+    if(!m.role) m.role='basic';
+    // admins always have hours access; others default to false if not set
+    if(m.role==='admin'&&m.canSeeHours===undefined) m.canSeeHours=true;
+    else if(m.canSeeHours===undefined) m.canSeeHours=false;
+  });
   // Ensure the two founding managers keep admin if they were basic/extended
   // — search by code, not by array index, to survive Firestore reordering
   const td=managers.find(m=>m.code==='TD');
@@ -1272,6 +1280,11 @@ function canDo(minRole){
   if(isSuperAdmin()) return true;
   const order={basic:0,extended:1,admin:2};
   return (order[curMgr().role||'basic']||0)>=(order[minRole]||0);
+}
+function canAccessHours(){
+  if(isSuperAdmin()||canDo('admin')) return true;
+  const m=curMgr();
+  return !!(m.canSeeHours);
 }
 
 // ── SUPERADMIN AUTH ──
@@ -1636,10 +1649,27 @@ function addLabel(){
 
 /* ── FILTER ── */
 function sf(f,el){
-  flt=f;
+  flt=f; fltMine=false;
   document.querySelectorAll('.fp,.fp-label').forEach(p=>p.classList.remove('on'));
   if(el) el.classList.add('on');
   else{const x=document.querySelector(`[data-f="${f}"]`);if(x)x.classList.add('on');}
+  // keep Мої button un-highlighted when switching status filters
+  const fpMine=document.getElementById('fpMine');
+  if(fpMine) fpMine.classList.remove('on');
+  render();
+}
+function sfMine(el){
+  fltMine=!fltMine;
+  if(fltMine){
+    // deactivate status filter buttons but keep flt for combined filtering
+    document.querySelectorAll('.fp:not(#fpMine),.fp-label').forEach(p=>p.classList.remove('on'));
+    el.classList.add('on');
+  } else {
+    el.classList.remove('on');
+    // re-highlight "Всі"
+    const allBtn=document.querySelector('.fp[data-f="all"]');
+    if(allBtn) allBtn.classList.add('on');
+  }
   render();
 }
 
@@ -1699,6 +1729,7 @@ function render(){
   let list=tasks.filter(t=>!t.arch);
   if(flt.startsWith('label:')){const lb=flt.slice(6);list=list.filter(t=>t.tags.includes(lb));}
   else if(flt!=='all') list=list.filter(t=>t.status===flt);
+  if(fltMine) list=list.filter(t=>t.from===curU||t.to===curU);
   if(q) list=list.filter(t=>(t.title+t.note+t.url+t.tags.join(' ')).toLowerCase().includes(q));
 
   // ── sorting ──
@@ -1721,7 +1752,7 @@ function render(){
     return;
   }
   ta.innerHTML=list.map(t=>{
-    const tid=JSON.stringify(t.id); // safe id ref for inline handlers
+    const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const stH=`<span class="tg ${SC[t.status]}">${SL[t.status]}</span>`;
@@ -1744,7 +1775,7 @@ function render(){
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>`<div class="tc-cmt"><span class="tc-cmt-by">${esc(c.by)} · ${esc(c.t)}</span><br>${esc(c.tx)}</div>`).join('')}</div>`:'';
     const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
     function fmtHrs(h){if(!h)return '';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
-    const hoursH=t.hours?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
+    const hoursH=t.hours&&canAccessHours()?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
     const _seenByMe=(t.seenBy||[]).includes(curU);
     const _isUnseen=!_seenByMe&&(t.cmts.length>0||t.from!==curU);
     const _unseenCnt=t.cmts.filter(c=>c.by!==curU).length||0;
@@ -1850,6 +1881,13 @@ function renderMgrList(){
         ${canEditAll?`<button onclick="sendInvite('${esc(m.code)}')" title="Надіслати лист для скидання пароля" style="border:none;background:#e8f5ee;border-radius:6px;padding:3px 7px;font-size:11px;cursor:pointer;color:#2e8653;white-space:nowrap" id="invBtn_${esc(m.code)}">🔑 Скинути пароль</button>`:''}
         ${canEditAll?`<button class="mgr-del" onclick="delManager('${esc(m.code)}')">×</button>`:''}
       </div>
+      ${canEditAll?`<div style="display:flex;align-items:center;gap:8px;padding:4px 0 2px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;cursor:${m.role==='admin'?'default':'pointer'}" title="${m.role==='admin'?'Адміни завжди мають доступ до годин':'Дозволити бачити і редагувати поле «Години»'}">
+          <input type="checkbox" ${m.canSeeHours?'checked':''} ${m.role==='admin'?'disabled':''} onchange="setMgrHours('${esc(m.code)}',this.checked)"
+            style="accent-color:#2f52cc;width:13px;height:13px;cursor:${m.role==='admin'?'default':'pointer'}">
+          <span>⏱ Доступ до годин${m.role==='admin'?'<span style="color:#bbb;font-size:10px"> (адмін — завжди)</span>':''}</span>
+        </label>
+      </div>`:''}
       <div class="vac-row">
         <label>Відпустка з</label>
         <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacFrom','${esc(m.code)}|vacFrom')`:''}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacFrom||'Оберіть'}</button>
@@ -1895,6 +1933,11 @@ function setMgrName(code,name){
 function setMgrEmail(code,email){
   const m=managers.find(x=>x.code===code);
   if(m){m.email=email.trim().toLowerCase();save();}
+}
+function setMgrHours(code,val){
+  if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати цей дозвіл.');return;}
+  const m=managers.find(x=>x.code===code);
+  if(m){m.canSeeHours=val;save();renderMgrList();}
 }
 function renderColorPicker(){
   document.getElementById('mgrColorPicker').innerHTML=MGR_COLORS.map(c=>`<div class="color-dot${c===selectedMgrColor?' sel':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
@@ -2566,6 +2609,13 @@ function openAdd(id){
     document.getElementById('fDriveFiles').value='[]';renderDriveLinks([]);
   }
   openM('mAdd');
+  // show hours field only to those with access
+  const showH=canAccessHours();
+  const hl=document.getElementById('fHoursLabel');
+  const hw=document.getElementById('fHoursWrap');
+  if(hl) hl.style.display=showH?'':'none';
+  if(hw) hw.style.display=showH?'flex':'none';
+  if(!showH) document.getElementById('fHours').value=0;
 }
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
