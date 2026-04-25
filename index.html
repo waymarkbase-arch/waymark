@@ -700,6 +700,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
         <button onclick="exportCSV()" style="border:1px solid #d2d0c8;background:#fff;border-radius:10px;padding:9px 14px;font-size:12px;font-family:inherit;color:#666;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg>CSV</button>
         <button class="btn-pdf" onclick="genPDF()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF звіт</button>
         <button onclick="resetPeriod()" style="border:1px solid #d2d0c8;background:#fff;border-radius:10px;padding:7px 12px;font-size:12px;font-family:inherit;color:#888;cursor:pointer">Скинути</button>
+        <button onclick="confirmClearArchive()" style="border:1px solid #e8a8a0;background:#fff5f5;border-radius:10px;padding:7px 14px;font-size:12px;font-family:inherit;color:#b83a2a;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Очистити архів</button>
       </div>
     </div>
     <div id="archC"></div>
@@ -2244,6 +2245,30 @@ function resetPeriod(){
   document.getElementById('pToTxt').textContent='Кінець...';document.getElementById('pToTxt').className='placeholder';
   rArch();
 }
+function confirmClearArchive(){
+  const archTasks=tasks.filter(t=>t.arch);
+  if(!archTasks.length){alert('Архів вже порожній.');return;}
+  const countEl=document.getElementById('mClearArchiveCount');
+  if(countEl) countEl.textContent='Буде видалено: '+archTasks.length+' завдань'+( archTasks.length===1?'о':archTasks.length<5?'я':'');
+  openM('mClearArchive');
+}
+function doClearArchive(){
+  const before=tasks.filter(t=>t.arch).length;
+  tasks=tasks.filter(t=>!t.arch);
+  logEntry('hard_delete',null,'Очищення архіву','','','Видалено '+before+' завдань');
+  save();
+  rArch();
+  closeM('mClearArchive');
+  // Show quick feedback toast
+  const t=document.createElement('div');
+  t.textContent='🗑 Архів очищено ('+before+' завдань видалено)';
+  Object.assign(t.style,{position:'fixed',bottom:'90px',left:'50%',transform:'translateX(-50%)',
+    background:'#1c1c1c',color:'#fff',borderRadius:'12px',padding:'10px 20px',fontSize:'13px',
+    fontFamily:'inherit',zIndex:'9998',whiteSpace:'nowrap',boxShadow:'0 4px 18px rgba(0,0,0,.25)',
+    opacity:'1',transition:'opacity .4s ease'});
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},3000);
+}
 function genPDF(){
   if(!canDo('extended')){alert('Доступ заборонено.');return;}
   const showHrs=document.getElementById('inclHours')?.checked!==false;
@@ -3022,6 +3047,22 @@ function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getE
   </div>
 </div>
 </div><!-- /appShell -->
+
+<!-- ── CLEAR ARCHIVE CONFIRM MODAL ── -->
+<div class="mbg hide" id="mClearArchive">
+  <div class="cbox" style="padding:32px 28px 26px;max-width:360px">
+    <div class="del-modal-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b83a2a" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+    <div class="del-modal-title">Очистити весь архів?</div>
+    <div class="del-modal-sub" id="mClearArchiveSub">Це видалить усі завдання з архіву назавжди.<br>Дію неможливо скасувати.</div>
+    <div class="del-modal-preview" id="mClearArchiveCount" style="background:#fef2f2;border-color:#fca5a5;color:#991b1b;font-weight:600"></div>
+    <div class="cbtns-v">
+      <button class="cyes-v" onclick="doClearArchive()" style="background:#b83a2a!important;border-color:#b83a2a!important">🗑 Так, видалити все</button>
+      <button onclick="closeM('mClearArchive')">Скасувати</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── STYLED TOOLTIP ── -->
 <div id="wm-tooltip">
