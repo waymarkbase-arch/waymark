@@ -915,9 +915,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
         <button onclick="openSALogin()" id="btnSALogin" style="border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔑 Увійти як суперадмін</button>
         <button onclick="openSASetPwd()" id="btnSASetPwd" style="display:none;border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;color:#555">🔐 Змінити пароль</button>
       </div>
-      <div id="fsRulesBanner" style="display:none;background:#e8f5ee;border:1px solid #2e8653;border-radius:9px;padding:9px 12px;font-size:11px;color:#1a5e30;margin-top:10px;line-height:1.5">
-        <strong>✅ Firestore Rules:</strong> обмежте доступ до бази лише email вашої команди у Firebase Console → Firestore → Rules.
-      </div>
+
     </div>
     <div style="text-align:right;margin-top:14px"><button style="background:#1c1c1c;color:#fff;border:none;border-radius:9px;padding:9px 22px;cursor:pointer;font-size:13px;font-family:inherit" onclick="saveCfg()">Зберегти</button></div>
   </div>
@@ -1140,16 +1138,24 @@ function startRealtimeSync(){
 
 function showSyncToast(byCode){
   const m=managers.find(x=>x.code===byCode)||{name:byCode,col:'#888'};
+  // Find what was changed — look at the most recent lastChange from this user
+  const changedTask=tasks.filter(t=>t.lastChange&&t.lastChange.by===byCode)
+    .sort((a,b)=>new Date(b.lastChange.ts)-new Date(a.lastChange.ts))[0];
+  let msg=`🔄 ${m.name} оновив дані`;
+  if(changedTask){
+    const title=changedTask.title||changedTask.url||changedTask.note||'завдання';
+    msg=`🔄 ${m.name}: «${title.slice(0,30)+(title.length>30?'…':'')}» — ${changedTask.lastChange.summary}`;
+  }
   let t=document.getElementById('syncToast');
   if(!t){
     t=document.createElement('div');t.id='syncToast';
-    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;font-size:12px;padding:9px 18px;border-radius:20px;z-index:9999;transition:opacity .4s;pointer-events:none';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;font-size:12px;padding:9px 18px;border-radius:20px;z-index:9999;transition:opacity .4s;pointer-events:none;max-width:90vw;text-align:center';
     document.body.appendChild(t);
   }
-  t.textContent=`🔄 ${m.name} щойно оновив дані`;
+  t.textContent=msg;
   t.style.opacity='1';
   clearTimeout(t._hide);
-  t._hide=setTimeout(()=>t.style.opacity='0',3000);
+  t._hide=setTimeout(()=>t.style.opacity='0',4000);
 }
 
 // ── MATCH firebase email → manager code ──
@@ -1854,9 +1860,14 @@ function render(){
     function fmtHrs(h){if(!h)return '';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
     const hoursH=t.hours&&canAccessHours()?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
     const _seenByMe=(t.seenBy||[]).includes(curU);
-    const _isUnseen=!_seenByMe&&(t.cmts.length>0||t.from!==curU);
+    // Badge visible only to task participants (author, assignee, or @mentioned)
+    const _isMentioned=(t.tags||[]).some(g=>g.startsWith('@')&&managers.find(m=>m.code===curU&&g.slice(1).toLowerCase()===m.name.toLowerCase()));
+    const _isParticipant=(t.from===curU||t.to===curU||_isMentioned);
+    const _hasChange=t.lastChange&&t.lastChange.by!==curU;
+    const _isUnseen=!_seenByMe&&_isParticipant&&(t.cmts.length>0||t.from!==curU||_hasChange);
     const _unseenCnt=t.cmts.filter(c=>c.by!==curU).length||0;
-    const unseenBadge=_isUnseen?`<div class="unseen-badge">${_unseenCnt>0?_unseenCnt:'!'}</div>`:'';
+    const unseenBadge=_isUnseen?`<div class="unseen-badge" title="${t.lastChange?esc(t.lastChange.by+': '+t.lastChange.summary):''}">${_unseenCnt>0?_unseenCnt:'!'}</div>`:'';
+    const changeHint=(_isParticipant&&_hasChange&&!_seenByMe)?`<div style="font-size:10px;color:#b05a20;background:#fff4ee;border-radius:6px;padding:2px 8px;margin-top:4px;display:inline-flex;align-items:center;gap:4px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${esc(t.lastChange.by)}: ${esc(t.lastChange.summary)}</div>`:'';
     const previewTitle=esc(t.title||t.url||t.note||'—');
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}" onclick="tcExpand(event,${tid})">
       ${unseenBadge}
@@ -1884,7 +1895,7 @@ function render(){
             ${canArchiveTask(t)?`<span class="x-btn" onclick="event.stopPropagation();askDel(${tid})"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d4a0a0" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>`:''}
           </div>
         </div>
-        ${ttH}${urlH}${noteH}${dtH}${overdueH}${fcH}${resH}${driveFilesH(t.driveFiles)}${cmtsH}
+        ${ttH}${urlH}${noteH}${changeHint}${dtH}${overdueH}${fcH}${resH}${driveFilesH(t.driveFiles)}${cmtsH}
         <div class="tc-cmt-box" id="cb${t.id}" onclick="event.stopPropagation()"><textarea id="ct${t.id}" placeholder="Нотатка або коментар..." onclick="event.stopPropagation()"></textarea><button onclick="event.stopPropagation();addCmt(${tid},event)">Зберегти</button></div>
         <div class="tc-foot">
           <button class="comm-btn" onclick="event.stopPropagation();togCmt(${tid},event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Додати нотатку</button>
@@ -1905,7 +1916,8 @@ function addCmt(id,ev){
   t.cmts.push({by:curU,t:n.getHours()+':'+String(n.getMinutes()).padStart(2,'0'),tx});
   logEntry('comment',id,t.title||t.url||t.note||'—',null,null,tx.slice(0,60)+(tx.length>60?'…':''));
   document.getElementById('ct'+id).value='';document.getElementById('cb'+id).classList.remove('show');
-  t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
+  t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
+  t.lastChange={by:curU,summary:`коментар: ${tx.slice(0,60)+(tx.length>60?'…':'')}`,ts:new Date().toISOString()};
   save();render();
 }
 
@@ -2750,10 +2762,16 @@ function mkT(){
       hours:parseFloat(document.getElementById('fHours').value)||0,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]')});
     const label=T||U||N||'—';
-    if(oldStatus!==newStatus) logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]);
-    if(oldTo!==newTo) logEntry('edit',eId,label,'виконавець',mgr(oldTo).name,mgr(newTo).name);
-    if(oldDl!==newDl) logEntry('edit',eId,label,'дедлайн',oldDl||'—',newDl||'—');
-    if(oldTitle!==T&&T) logEntry('edit',eId,label,'назва',oldTitle||'—',T);
+    // Collect what changed for lastChange summary
+    const changes=[];
+    if(oldStatus!==newStatus){ logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]); changes.push(`статус: ${SL[oldStatus]} → ${SL[newStatus]}`); }
+    if(oldTo!==newTo){ logEntry('edit',eId,label,'виконавець',mgr(oldTo).name,mgr(newTo).name); changes.push(`виконавець: ${mgr(oldTo).name} → ${mgr(newTo).name}`); }
+    if(oldDl!==newDl){ logEntry('edit',eId,label,'дедлайн',oldDl||'—',newDl||'—'); changes.push(`дедлайн: ${oldDl||'—'} → ${newDl||'—'}`); }
+    if(oldTitle!==T&&T){ logEntry('edit',eId,label,'назва',oldTitle||'—',T); changes.push(`назва змінена`); }
+    if(changes.length>0){
+      t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
+      t.lastChange={by:curU,summary:changes.join('; '),ts:new Date().toISOString()};
+    }
   } else {
     const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
     tasks.unshift({id:newId,title:T,url:U.replace(/^https?:\/\//,''),note:N,
@@ -2789,6 +2807,8 @@ function apSt(){
   const oldStatus=t.status;
   t.status=document.getElementById('nSt').value;
   t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
+  t.seenBy=t.seenBy.filter(c=>c===curU);
+  t.lastChange={by:curU,summary:`статус: ${SL[oldStatus]} → ${SL[t.status]}`,ts:new Date().toISOString()};
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
   closeM('mSt');eId=null;save();rStats();render();
 }
@@ -2845,8 +2865,6 @@ function showSet(){
   if(btnSALogin) btnSALogin.style.display=isSuperAdmin()?'none':'';
   const btnSASetPwd=document.getElementById('btnSASetPwd');
   if(btnSASetPwd) btnSASetPwd.style.display=(curU===SA_OWNER_CODE)?'':'none';
-  const fsRulesBanner=document.getElementById('fsRulesBanner');
-  if(fsRulesBanner) fsRulesBanner.style.display=isSuperAdmin()?'':'none';
   // "Менеджери" title — rename for non-admins
   const mgrTitle=document.getElementById('settingsMgrTitle');
   if(mgrTitle) mgrTitle.textContent=isAdm?'Менеджери':'Мій профіль';
