@@ -597,7 +597,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <div style="text-align:center;margin-top:14px">
       <span onclick="doForgotPassword()" style="font-size:12px;color:#bbb;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Забули пароль?</span>
     </div>
-    <div id="loginSpinner" style="display:block;text-align:center;margin-top:14px;font-size:12px;color:#aaa">Ініціалізація...</div>
+    <div id="loginSpinner" style="display:none;text-align:center;margin-top:14px;font-size:12px;color:#aaa">Завантаження...</div>
     <div id="resetMsg" style="display:none;text-align:center;margin-top:12px;font-size:12px;color:#2e8653;background:#e8f5ee;border-radius:9px;padding:9px 14px"></div>
   </div>
 </div>
@@ -967,6 +967,7 @@ async function doLogin(){
   const spin  = document.getElementById('loginSpinner');
   errEl.textContent = '';
   if(!email||!pwd){errEl.textContent='Введіть email і пароль';return;}
+  if(!window._fb){errEl.textContent='Сервіс ще завантажується, зачекайте секунду...';return;}
   spin.style.display='block';
   try{
     const {fbAuth, signInWithEmailAndPassword} = window._fb;
@@ -1009,7 +1010,9 @@ async function doForgotPassword(){
 async function doGoogleLogin(){
   const errEl=document.getElementById('loginErr');
   const spin=document.getElementById('loginSpinner');
-  errEl.textContent=''; spin.style.display='block';
+  errEl.textContent='';
+  if(!window._fb){errEl.textContent='Сервіс ще завантажується, зачекайте секунду...';return;}
+  spin.style.display='block';
   try{
     const {fbAuth, signInWithPopup, googleProv}=window._fb;
     // iOS Safari blocks popups — use redirect on mobile
@@ -1206,7 +1209,6 @@ window.addEventListener('load', ()=>{
         } else {
           if(window._accessDeniedShown) return;
           document.getElementById('loginSpinner').style.display='none';
-          document.getElementById('loginErr').textContent='';
           document.getElementById('appShell').style.display='none';
           document.getElementById('loginScreen').style.display='flex';
           setTimeout(()=>document.getElementById('loginEmail').focus(),100);
@@ -1216,12 +1218,6 @@ window.addEventListener('load', ()=>{
       clearInterval(waitForFb);
       document.getElementById('loginErr').textContent='Помилка завантаження. Перевірте з\'єднання та оновіть сторінку.';
       document.getElementById('loginSpinner').style.display='none';
-    } else if(attempts===60){
-      // still loading after 3s — show hint for slow connections
-      const spin=document.getElementById('loginSpinner');
-      if(spin&&spin.style.display!=='none'){
-        document.getElementById('loginErr').textContent='Завантаження... (повільне з\'єднання)';
-      }
     }
   }, 50);
 });
