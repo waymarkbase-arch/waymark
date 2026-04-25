@@ -947,6 +947,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 
 <script>
 const SL={new:'Нові',work:'В роботі',clarify:'Уточнення',done:'Виконано',urgent:'Терміново',test:'Тестування'};
+function fmtHrs(h){if(!h)return'';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
 const SC={new:'tg-new',work:'tg-work',clarify:'tg-clarify',done:'tg-done',urgent:'tg-urgent',test:'tg-test'};
 const STCOL={new:'#c8cdd6',work:'#dfc9b0',clarify:'#d5d4b8',done:'#c4d8c8',urgent:'#d4c4bc',test:'#c6c6d6'};
 const STCOL_CH={new:'#9ca3b0',work:'#c09060',clarify:'#a8a870',done:'#60a878',urgent:'#b07060',test:'#8878b0'};
