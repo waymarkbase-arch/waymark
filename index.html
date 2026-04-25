@@ -326,9 +326,20 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .arch-period label{font-size:11px;color:#aaa}
 .arch-g{margin-bottom:22px}
 .arch-hdr{font-size:11px;font-weight:700;color:#aaa;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
-.arch-row{background:#fff;border-radius:10px;padding:10px 16px;box-shadow:0 1px 6px rgba(0,0,0,.05);display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:12px;margin-bottom:6px;opacity:.85}
+.arch-row{background:#fff;border:1px solid #f0ede8;border-radius:12px;margin-bottom:8px;overflow:hidden;opacity:.9;transition:box-shadow .15s}
+.arch-row:hover{box-shadow:0 2px 10px rgba(0,0,0,.06);opacity:1}
+.arch-row-head{display:flex;align-items:center;gap:10px;padding:10px 13px;cursor:pointer;user-select:none}
+.arch-row.expanded .arch-row-body{display:block}
+.arch-row.expanded .arch-chevron{transform:rotate(180deg)}
+.arch-chevron{transition:transform .2s;flex-shrink:0;margin-left:auto}
+.arch-row-body{display:none;padding:0 13px 13px;border-top:1px solid #f5f2ee}
+.arch-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin:10px 0;font-size:12px}
+.arch-detail-label{color:#bbb;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+.arch-detail-val{color:#555}
+.arch-restore-btn{border:none;background:#e8f5ee;color:#1e7040;border-radius:9px;padding:7px 16px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-top:4px}
+.arch-restore-btn:hover{background:#d0edd8}
 .arch-st{border-radius:20px;padding:2px 10px;font-size:10px;font-weight:600;white-space:nowrap}
-.arch-ttl{font-size:13px;color:#444}
+.arch-ttl{font-size:13px;color:#444;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .arch-people{font-size:11px;color:#aaa;white-space:nowrap}
 .arch-dt{font-size:11px;color:#bbb;white-space:nowrap}
 /* ANALYTICS */
@@ -446,7 +457,11 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 [data-theme="dark"] .tc-res{background:#1a2e1a;color:#6bc88a}
 [data-theme="dark"] .tc-forecast{background:#1a1e38;color:#6890e0}
 [data-theme="dark"] .tc-cmt-box textarea{background:var(--surface2);border-color:var(--border);color:var(--text)}
-[data-theme="dark"] .arch-row{background:var(--surface)}
+[data-theme="dark"] .arch-row{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] .arch-row-head:hover{background:var(--card)}
+[data-theme="dark"] .arch-ttl{color:var(--text)}
+[data-theme="dark"] .arch-detail-val{color:var(--sub)}
+[data-theme="dark"] .arch-row-body{border-top-color:var(--border)}
 [data-theme="dark"] .anlyt-card{background:var(--surface)}
 [data-theme="dark"] .anlyt-card h3{color:var(--text2)}
 [data-theme="dark"] .mbox,[data-theme="dark"] .qbox,[data-theme="dark"] .cbox,[data-theme="dark"] .sbox,[data-theme="dark"] .lbox,[data-theme="dark"] .cal-box{background:var(--surface)}
@@ -520,8 +535,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
   .arch-w{padding:14px 16px 24px}
   .arch-subtabs{flex-direction:column;align-items:flex-start;gap:10px}
   .arch-period{flex-wrap:wrap;gap:6px}
-  .arch-row{grid-template-columns:auto 1fr auto;gap:8px}
-  .arch-people{display:none}
+  .arch-row-head{gap:7px;padding:9px 11px}
+  .arch-dt{display:none}
   .anlyt-w{padding:14px 16px 24px}
   .anlyt-grid{grid-template-columns:1fr}
   .anlyt-filters{flex-wrap:wrap;gap:6px}
@@ -582,7 +597,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <div style="text-align:center;margin-top:14px">
       <span onclick="doForgotPassword()" style="font-size:12px;color:#bbb;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Забули пароль?</span>
     </div>
-    <div id="loginSpinner" style="display:none;text-align:center;margin-top:14px;font-size:12px;color:#aaa">Завантаження...</div>
+    <div id="loginSpinner" style="display:block;text-align:center;margin-top:14px;font-size:12px;color:#aaa">Ініціалізація...</div>
     <div id="resetMsg" style="display:none;text-align:center;margin-top:12px;font-size:12px;color:#2e8653;background:#e8f5ee;border-radius:9px;padding:9px 14px"></div>
   </div>
 </div>
@@ -997,13 +1012,21 @@ async function doGoogleLogin(){
   errEl.textContent=''; spin.style.display='block';
   try{
     const {fbAuth, signInWithPopup, googleProv}=window._fb;
-    await signInWithPopup(fbAuth, googleProv);
+    // iOS Safari blocks popups — use redirect on mobile
+    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(isMobile){
+      const {signInWithRedirect, getRedirectResult} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      await signInWithRedirect(fbAuth, googleProv);
+      // page will reload; onAuthStateChanged handles result
+    } else {
+      await signInWithPopup(fbAuth, googleProv);
+    }
     // onAuthStateChanged handles the rest
   } catch(e){
     spin.style.display='none';
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
     const msgs={
-      'auth/popup-blocked':'Браузер заблокував спливаюче вікно. Дозвольте pop-ups для цього сайту.',
+      'auth/popup-blocked':'Браузер заблокував спливаюче вікно. Спробуйте ще раз або використайте email/пароль.',
       'auth/unauthorized-domain':'Цей домен не авторизований у Firebase Console → Authentication → Settings → Authorized domains.'
     };
     errEl.textContent=msgs[e.code]||'Помилка Google входу: '+e.message;
@@ -1156,8 +1179,10 @@ function openIdentityPicker(firebaseEmail){
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
 window.addEventListener('load', ()=>{
-  // poll until _fb is populated by the module script (max 3s)
+  // poll until _fb is populated by the module script
+  // mobile on slow connections can take 5–10s to load Firebase modules
   let attempts=0;
+  const maxAttempts=300; // 300 × 50ms = 15 seconds
   const waitForFb=setInterval(()=>{
     attempts++;
     if(window._fb){
@@ -1170,7 +1195,6 @@ window.addEventListener('load', ()=>{
           migrateMgrRoles();
           const code = emailToCode(user.email);
           if(!code){
-            // Google email not matched — ask user who they are
             openIdentityPicker(user.email);
           } else {
             curU = code;
@@ -1180,19 +1204,26 @@ window.addEventListener('load', ()=>{
             document.getElementById('appShell').style.display='block';
           }
         } else {
-          // not logged in — show login screen
-          // But if we showed the access-denied modal, keep it visible until user clicks "Вийти"
           if(window._accessDeniedShown) return;
+          document.getElementById('loginSpinner').style.display='none';
+          document.getElementById('loginErr').textContent='';
           document.getElementById('appShell').style.display='none';
           document.getElementById('loginScreen').style.display='flex';
           setTimeout(()=>document.getElementById('loginEmail').focus(),100);
         }
       });
-    } else if(attempts>60){
+    } else if(attempts>maxAttempts){
       clearInterval(waitForFb);
-      document.getElementById('loginErr').textContent='Помилка завантаження Firebase. Перевірте з\'єднання.';
+      document.getElementById('loginErr').textContent='Помилка завантаження. Перевірте з\'єднання та оновіть сторінку.';
+      document.getElementById('loginSpinner').style.display='none';
+    } else if(attempts===60){
+      // still loading after 3s — show hint for slow connections
+      const spin=document.getElementById('loginSpinner');
+      if(spin&&spin.style.display!=='none'){
+        document.getElementById('loginErr').textContent='Завантаження... (повільне з\'єднання)';
+      }
     }
-  }, 50); // check every 50ms, up to 3s
+  }, 50);
 });
 
 
@@ -2087,18 +2118,55 @@ function rArch(){
       <div class="arch-hdr">${k} — ${items.length} завд.</div>
       ${items.map(t=>{
         const fromM=mgr(t.from),toM=mgr(t.to);
-        return `<div class="arch-row">
-          <div class="arch-st" style="background:${STCOL[t.status]||'#ddd'};color:#555">${SL[t.status]}</div>
-          <div class="arch-ttl">${t.title||t.url||t.note||'—'}</div>
-          <div class="arch-people" title="Поставив → Виконав">
-            <span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${fromM.col};color:#fff;font-size:8px;font-weight:700;text-align:center;line-height:18px">${fromM.code}</span>
-            →
-            <span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:${toM.col};color:#fff;font-size:8px;font-weight:700;text-align:center;line-height:18px">${toM.code}</span>
+        const atid=typeof t.id==='number'?t.id:`'${t.id}'`;
+        const noteHtml=t.note?`<div class="arch-detail-label">Нотатка</div><div class="arch-detail-val" style="white-space:pre-wrap;grid-column:1/-1">${t.note}</div>`:'';
+        const resultHtml=t.result?`<div class="arch-detail-label">Результат</div><div class="arch-detail-val" style="grid-column:1/-1">${t.result}</div>`:'';
+        const tagsHtml=t.tags&&t.tags.length?t.tags.map(tg=>`<span style="background:#f0ede8;border-radius:10px;padding:1px 8px;font-size:10px;color:#888">${tg}</span>`).join(' '):'—';
+        const hoursHtml=canAccessHours()&&t.hours?`<div class="arch-detail-label">Години</div><div class="arch-detail-val">⏱ ${fmtHrs(t.hours)}</div>`:'';
+        const cmtsHtml=t.cmts&&t.cmts.length?`<div class="arch-detail-label" style="grid-column:1/-1">Коментарі (${t.cmts.length})</div>${t.cmts.map(c=>`<div style="grid-column:1/-1;background:#fafaf8;border-radius:8px;padding:6px 10px;font-size:12px;color:#555"><span style="font-weight:600;color:#888">${mgr(c.by).code}</span> <span style="color:#bbb">${c.t}</span> — ${c.tx}</div>`).join('')}`:'';
+        const canRestore=canDo('extended')||isSuperAdmin();
+        return `<div class="arch-row" id="archrow_${t.id}">
+          <div class="arch-row-head" onclick="toggleArchRow('${t.id}')">
+            <div class="arch-st" style="background:${STCOL[t.status]||'#ddd'};color:#555">${SL[t.status]}</div>
+            <div class="arch-ttl">${t.title||t.url||t.note||'—'}</div>
+            <span style="display:inline-flex;align-items:center;gap:3px;flex-shrink:0">
+              <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${fromM.col};color:#fff;font-size:7px;font-weight:700;text-align:center;line-height:16px">${fromM.code}</span>
+              <span style="color:#ccc;font-size:10px">→</span>
+              <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${toM.col};color:#fff;font-size:7px;font-weight:700;text-align:center;line-height:16px">${toM.code}</span>
+            </span>
+            <div class="arch-dt">${t.archAt||t.created}</div>
+            <svg class="arch-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="arch-dt">${t.archAt||t.created}</div>
+          <div class="arch-row-body">
+            <div class="arch-detail-grid">
+              <div><div class="arch-detail-label">Поставив</div><div class="arch-detail-val">${fromM.name}</div></div>
+              <div><div class="arch-detail-label">Виконував</div><div class="arch-detail-val">${toM.name}</div></div>
+              <div><div class="arch-detail-label">Створено</div><div class="arch-detail-val">${t.created||'—'}</div></div>
+              <div><div class="arch-detail-label">Архівовано</div><div class="arch-detail-val">${t.archAt||'—'}</div></div>
+              ${t.deadline?`<div><div class="arch-detail-label">Дедлайн</div><div class="arch-detail-val">${t.deadline}</div></div>`:''}
+              ${hoursHtml?`<div>${hoursHtml}</div>`:''}
+              <div style="grid-column:1/-1"><div class="arch-detail-label">Теги</div><div class="arch-detail-val" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${tagsHtml}</div></div>
+              ${noteHtml?`<div style="grid-column:1/-1">${noteHtml}</div>`:''}
+              ${resultHtml?`<div style="grid-column:1/-1">${resultHtml}</div>`:''}
+              ${cmtsHtml}
+            </div>
+            ${canRestore?`<button class="arch-restore-btn" onclick="restoreTask(${atid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>Відновити завдання</button>`:''}
+          </div>
         </div>`;
       }).join('')}
     </div>`).join('');
+}
+function toggleArchRow(id){
+  const row=document.getElementById('archrow_'+id);
+  if(row) row.classList.toggle('expanded');
+}
+function restoreTask(id){
+  const t=findTask(id);
+  if(!t){alert('Завдання не знайдено.');return;}
+  if(!confirm(`Відновити завдання «${t.title||t.url||t.note||'—'}» зі статусом "${SL[t.status]||t.status}"?`)) return;
+  t.arch=false;t.archAt='';
+  logEntry('restore',t.id,t.title||t.url||t.note||'—','arch','true','false');
+  save();rStats();render();rArch();
 }
 function resetPeriod(){
   document.getElementById('pFrom').value='';document.getElementById('pTo').value='';
