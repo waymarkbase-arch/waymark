@@ -24,7 +24,7 @@ import { getAuth, signInWithEmailAndPassword, signInWithPopup,
          onAuthStateChanged }          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc,
          onSnapshot, collection,
-         serverTimestamp }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         serverTimestamp, deleteField }from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage, ref as storageRef,
          uploadBytesResumable, getDownloadURL,
          deleteObject }                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
@@ -48,7 +48,7 @@ const googleProv = new GoogleAuthProvider();
 window._fb = { fbAuth, db, fbStorage, signInWithEmailAndPassword, signInWithPopup,
                googleProv, signOut, onAuthStateChanged,
                createUserWithEmailAndPassword, sendPasswordResetEmail,
-               doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp,
+               doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp, deleteField,
                storageRef, uploadBytesResumable, getDownloadURL, deleteObject };
 </script>
 <!-- Google API (Picker) -->
@@ -1319,12 +1319,13 @@ function canAccessHours(){
 }
 
 // ── SUPERADMIN AUTH ──
-// SA password hash is stored per Firebase UID: `wm_sa_hash_<uid>`
-// This means each user has their own SA password, and the hash on another
-// device/browser under a different account is useless.
-let superAdminSession=false; // true when logged in as superadmin this session
-let _saUid=null; // Firebase UID that started the current SA session
-const SA_KEY='wm_sa_hash'; // prefix; actual key = SA_KEY + '_' + firebaseUID
+// SA password hash is stored in Firestore: /waymark/sa_config { hash: "..." }
+// Only the SA owner's Firebase UID can read/write this document (enforced by Firestore Rules).
+// Migration: on first login after this update, fallback reads from localStorage and
+// automatically migrates the hash to Firestore, then clears localStorage.
+let superAdminSession=false;
+let _saUid=null;
+const SA_KEY='wm_sa_hash'; // kept only for migration fallback reads
 
 function _saKey(){
   const {fbAuth}=window._fb||{};
@@ -1336,35 +1337,64 @@ function saHash(s){
   return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))
     .then(buf=>Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''));
 }
+
+// Read SA hash: Firestore first, fallback to localStorage (migration path)
+async function _saGetHash(){
+  try{
+    const {db, doc, getDoc}=window._fb;
+    const snap=await getDoc(doc(db,'waymark','sa_config'));
+    if(snap.exists()&&snap.data().hash) return {hash:snap.data().hash, source:'firestore'};
+  }catch(e){ /* Firestore rules may block non-SA — expected for other users */ }
+  // Migration fallback: check localStorage
+  const key=_saKey();
+  const local=key?localStorage.getItem(key):null;
+  if(local) return {hash:local, source:'localStorage'};
+  return null;
+}
+
+// Write SA hash to Firestore and clear localStorage remnant
+async function _saSaveHash(hash){
+  const {db, doc, setDoc}=window._fb;
+  await setDoc(doc(db,'waymark','sa_config'),{hash, updatedAt:new Date().toISOString()});
+  // Clear old localStorage entry (migration cleanup)
+  const key=_saKey();
+  if(key) localStorage.removeItem(key);
+}
+
 function openSALogin(){
   if(curU!==SA_OWNER_CODE){alert('Суперадмін-доступ недоступний для цього акаунту.');return;}
   openM('mSALogin');setTimeout(()=>document.getElementById('saLoginPwd').focus(),80);
 }
+
 async function trySALogin(){
   const pwd=document.getElementById('saLoginPwd').value;
-  const key=_saKey();
-  if(!key){document.getElementById('saLoginErr').textContent='Потрібен вхід у Firebase.';return;}
-  const stored=localStorage.getItem(key);
-  if(!stored){document.getElementById('saLoginErr').textContent='Пароль не встановлено. Спочатку задайте його у Налаштуваннях.';return;}
+  const errEl=document.getElementById('saLoginErr');
+  errEl.textContent='';
+  const stored=await _saGetHash();
+  if(!stored){errEl.textContent='Пароль не встановлено. Спочатку задайте його у Налаштуваннях.';return;}
   const h=await saHash(pwd);
-  if(h===stored){
+  if(h===stored.hash){
     superAdminSession=true;
     _saUid=window._fb.fbAuth.currentUser.uid;
     document.getElementById('saLoginPwd').value='';
     closeM('mSALogin');
     renderSAIndicator();
     renderMgrList();
+    // Auto-migrate hash from localStorage to Firestore if needed
+    if(stored.source==='localStorage'){
+      try{ await _saSaveHash(h); }catch(e){ console.warn('SA hash migration failed:',e); }
+    }
     alert('✅ Ви увійшли як Суперадмін');
   } else {
-    document.getElementById('saLoginErr').textContent='Невірний пароль';
+    errEl.textContent='Невірний пароль';
   }
 }
+
 function saLogout(){
   superAdminSession=false;_saUid=null;
   renderSAIndicator();renderMgrList();
 }
 function _assertSAStillValid(){
-  // Revoke SA session if the Firebase user changed
   if(!superAdminSession) return;
   const {fbAuth}=window._fb||{};
   const uid=fbAuth&&fbAuth.currentUser&&fbAuth.currentUser.uid;
@@ -1377,51 +1407,57 @@ function renderSAIndicator(){
   el.style.display=isSuperAdmin()?'flex':'none';
   updateAvatarUI();
 }
+
 async function openSASetPwd(){
   if(curU!==SA_OWNER_CODE){alert('Зміна пароля суперадміна доступна лише власнику.');return;}
   if(!isSuperAdmin()){
-    // Allow change even without active session — will verify old password in saveSAPwd
-    const key=_saKey();
-    if(key&&!localStorage.getItem(key)){
-      // No password set yet — just open the form
-    } else {
-      // Has password — need to verify old one first
-      document.getElementById('saSetPwdOldWrap') && (document.getElementById('saSetPwdOldWrap').style.display='');
+    const stored=await _saGetHash();
+    if(stored){
+      document.getElementById('saSetPwdOldWrap')&&(document.getElementById('saSetPwdOldWrap').style.display='');
     }
+    // else: no password yet — just open the form
   } else {
-    document.getElementById('saSetPwdOldWrap') && (document.getElementById('saSetPwdOldWrap').style.display='none');
+    document.getElementById('saSetPwdOldWrap')&&(document.getElementById('saSetPwdOldWrap').style.display='none');
   }
   openM('mSASetPwd');setTimeout(()=>document.getElementById('saNewPwd').focus(),80);
 }
+
 async function saveSAPwd(){
   const p1=document.getElementById('saNewPwd').value;
   const p2=document.getElementById('saNewPwd2').value;
   const err=document.getElementById('saSetPwdErr');
   if(p1.length<8){err.textContent='Мінімум 8 символів';return;}
   if(p1!==p2){err.textContent='Паролі не збігаються';return;}
-  const key=_saKey();if(!key){err.textContent='Помилка: не знайдено Firebase UID.';return;}
-  // If not in SA session and password exists — verify old password first
-  if(!isSuperAdmin()&&localStorage.getItem(key)){
-    const oldInp=document.getElementById('saOldPwd');
-    if(!oldInp||!oldInp.value){err.textContent='Введіть поточний пароль для підтвердження.';return;}
-    const oldH=await saHash(oldInp.value);
-    if(oldH!==localStorage.getItem(key)){err.textContent='Поточний пароль невірний.';return;}
+  // If not in SA session — verify old password first
+  if(!isSuperAdmin()){
+    const stored=await _saGetHash();
+    if(stored){
+      const oldInp=document.getElementById('saOldPwd');
+      if(!oldInp||!oldInp.value){err.textContent='Введіть поточний пароль для підтвердження.';return;}
+      const oldH=await saHash(oldInp.value);
+      if(oldH!==stored.hash){err.textContent='Поточний пароль невірний.';return;}
+    }
   }
   const h=await saHash(p1);
-  localStorage.setItem(key,h);
+  try{
+    await _saSaveHash(h);
+  }catch(e){
+    err.textContent='Помилка збереження: '+e.message;return;
+  }
   document.getElementById('saNewPwd').value='';document.getElementById('saNewPwd2').value='';
   const oldInp2=document.getElementById('saOldPwd');if(oldInp2)oldInp2.value='';
   err.textContent='';closeM('mSASetPwd');alert('✅ Пароль суперадміна збережено');
 }
-const SA_OWNER_CODE='MK'; // єдиний менеджер, якому дозволено бути суперадміном
+
+const SA_OWNER_CODE='MK';
+
 async function saFirstSetup(){
-  // Only the designated SA owner can set up the superadmin password
   if(curU!==SA_OWNER_CODE) return;
-  const key=_saKey();
-  if(key&&!localStorage.getItem(key)){openM('mSAFirstSetup');}
+  const stored=await _saGetHash();
+  if(!stored) openM('mSAFirstSetup');
 }
+
 async function saveFirstSAPwd(){
-  // Double-check: only the designated SA owner can save this password
   if(curU!==SA_OWNER_CODE){
     closeM('mSAFirstSetup');
     alert('Недостатньо прав для встановлення пароля суперадміна.');
@@ -1432,9 +1468,12 @@ async function saveFirstSAPwd(){
   const err=document.getElementById('saFirstErr');
   if(p1.length<8){err.textContent='Мінімум 8 символів';return;}
   if(p1!==p2){err.textContent='Паролі не збігаються';return;}
-  const key=_saKey();if(!key){err.textContent='Помилка: потрібен Firebase UID.';return;}
   const h=await saHash(p1);
-  localStorage.setItem(key,h);
+  try{
+    await _saSaveHash(h);
+  }catch(e){
+    err.textContent='Помилка збереження: '+e.message;return;
+  }
   superAdminSession=true;
   _saUid=window._fb.fbAuth.currentUser.uid;
   document.getElementById('saFirstPwd').value='';document.getElementById('saFirstPwd2').value='';
@@ -1459,10 +1498,17 @@ function confirmSAHardDelete(){
   tasks=tasks.filter(t=>t.id!==saDelId);
   saDelId=null;closeM('mSAHardDel');save();rStats();render();
 }
-function saDelegateSuper(code){
+async function saDelegateSuper(code){
   if(!isSuperAdmin()){alert('Тільки суперадмін може делегувати повноваження.');return;}
   if(!confirm(`Передати роль суперадміна менеджеру ${code}? Поточний пароль буде скинуто, потрібно встановити новий.`)) return;
-  localStorage.removeItem(SA_KEY);
+  // Clear hash from Firestore
+  try{
+    const {db, doc, setDoc, deleteField}=window._fb;
+    await setDoc(doc(db,'waymark','sa_config'),{hash: deleteField(), updatedAt: new Date().toISOString()});
+  }catch(e){ console.warn('saDelegateSuper: could not clear Firestore hash:',e); }
+  // Also clear localStorage remnant if any
+  const key=_saKey();
+  if(key) localStorage.removeItem(key);
   superAdminSession=false;
   renderSAIndicator();renderMgrList();
   alert(`Роль суперадміна звільнено. Новий суперадмін (${code}) має відкрити додаток і встановити пароль.`);
