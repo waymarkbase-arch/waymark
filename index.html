@@ -2183,7 +2183,7 @@ function genPDF(){
     const fm=mgr(t.from),tm=mgr(t.to);
     const tagsStr=t.tags.filter(g=>!g.startsWith('@')).join(', ')||'—';
     const fmtH=h=>{if(!h)return'—';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');};
-    const hrsCell=showHrs?'<td style="font-weight:600;color:#555">'+fmtH(parseFloat(t.hours)||0)+'</td>':'';
+    const hrsCell=showHrs?'<td style="font-weight:600;color:#555">'+fmtH(t.hours)+'</td>':'';
     return '<tr><td>'+(i+1)+'</td><td>'+(t.title||t.url||t.note||'—')+'</td>'
       +'<td style="color:#5577cc;font-size:11px">'+tagsStr+'</td>'
       +'<td><span class="st" style="background:'+(STCOL[t.status]||'#ddd')+'">'+SL[t.status]+'</span></td>'
@@ -2679,7 +2679,7 @@ function openAdd(id){
   const hw=document.getElementById('fHoursWrap');
   if(hl) hl.style.display=showH?'':'none';
   if(hw) hw.style.display=showH?'flex':'none';
-  if(!showH) document.getElementById('fHours').value=0;
+  // Do NOT zero out hours when hidden — preserve existing value so it's not lost on save
 }
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
