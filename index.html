@@ -3022,11 +3022,16 @@ function tgRecipients(task, excludeCode){
   // автор та виконавець
   if(task.from) codes.add(task.from);
   if(task.to)   codes.add(task.to);
-  // @згадки
+  // @згадки — шукаємо по імені АБО коду (регістр ігнорується)
   (task.tags||[]).forEach(tag=>{
     if(tag.startsWith('@')){
-      const name=tag.slice(1).toLowerCase();
-      const m=managers.find(x=>x.name.toLowerCase()===name);
+      const val=tag.slice(1).toLowerCase().trim();
+      const m=managers.find(x=>
+        x.name.toLowerCase()===val ||
+        x.code.toLowerCase()===val ||
+        x.name.toLowerCase().startsWith(val) ||
+        val.startsWith(x.name.toLowerCase())
+      );
       if(m) codes.add(m.code);
     }
   });
