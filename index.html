@@ -3059,9 +3059,22 @@ async function tgNotifyCreate(task){
   );
 }
 
-// ── ЗМІНА СТАТУСУ — сповістити учасників ──
+// ── ЗМІНА СТАТУСУ — сповістити всіх учасників крім того хто змінив ──
 async function tgNotifyStatus(task, oldStatus, byCode){
-  const recipients=tgRecipients(task, byCode);
+  // Збираємо всіх учасників
+  const codes=new Set();
+  if(task.from) codes.add(task.from);
+  if(task.to)   codes.add(task.to);
+  (task.tags||[]).forEach(tag=>{
+    if(tag.startsWith('@')){
+      const val=tag.slice(1).toLowerCase().trim();
+      const m=managers.find(x=>x.name.toLowerCase()===val||x.code.toLowerCase()===val);
+      if(m) codes.add(m.code);
+    }
+  });
+  // Виключаємо того хто змінив — він і так знає
+  codes.delete(byCode);
+  const recipients=[...codes].map(c=>managers.find(x=>x.code===c)).filter(m=>m&&m.tgChatId);
   if(!recipients.length) return;
   const byM=managers.find(m=>m.code===byCode)||{name:byCode};
   const msg=`🔄 <b>Статус змінено</b>\n«${tgTaskLabel(task)}»\n${SL[oldStatus]||oldStatus} → <b>${SL[task.status]||task.status}</b>\n\n👤 ${byM.name}`;
