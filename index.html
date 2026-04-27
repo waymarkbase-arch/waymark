@@ -911,6 +911,10 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       <div class="srow"><label>Кінець</label><input type="time" id="we" value="18:00"></div>
       <p style="font-size:11px;color:#bbb;margin:10px 0 5px">Slack Webhook (Beta)</p>
       <input style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#777" placeholder="https://hooks.slack.com/...">
+      <div class="sec-title" style="margin-top:18px">🤖 Telegram Bot</div>
+      <p style="font-size:11px;color:#aaa;margin-bottom:6px">Токен бота від @BotFather. Менеджери отримуватимуть сповіщення у Telegram.</p>
+      <input id="tgBotToken" style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:7px 10px;font-size:12px;font-family:inherit;color:#555;margin-bottom:6px" placeholder="1234567890:ABCDefgh...">
+      <p style="font-size:11px;color:#aaa;margin-bottom:4px">Як підключитись: кожен менеджер пише <strong style="color:#555">/start</strong> вашому боту — і вводить свій код (TD, MK тощо). Бот запам'ятає і почне надсилати.</p>
     </div>
     <div id="settingsMyName" style="display:none">
       <div class="sec-title" style="margin-top:12px">Моє ім'я</div>
@@ -1596,6 +1600,7 @@ function checkDeadlines(){
     try{if(localStorage.getItem(key))return;localStorage.setItem(key,'1');}catch(e){}
     const titles=['Дедлайн сьогодні!','Дедлайн завтра','Дедлайн через 2 дні'];
     new Notification('Waymark — '+titles[diff],{body:t.title||t.url||t.note||'Завдання',tag:key});
+    tgNotifyDeadline(t, diff);
   });
 }
 
@@ -1927,6 +1932,7 @@ function addCmt(id,ev){
   const t=findTask(id),n=new Date();
   t.cmts.push({by:curU,t:n.getHours()+':'+String(n.getMinutes()).padStart(2,'0'),tx});
   logEntry('comment',id,t.title||t.url||t.note||'—',null,null,tx.slice(0,60)+(tx.length>60?'…':''));
+  tgNotifyComment(t, tx, curU);
   document.getElementById('ct'+id).value='';document.getElementById('cb'+id).classList.remove('show');
   t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
   t.lastChange={by:curU,summary:`коментар: ${tx.slice(0,60)+(tx.length>60?'…':'')}`,ts:new Date().toISOString()};
@@ -1989,6 +1995,13 @@ function renderMgrList(){
           <span>⏱ Доступ до годин${m.role==='admin'?'<span style="color:#bbb;font-size:10px"> (адмін — завжди)</span>':''}</span>
         </label>
       </div>`:''}
+      <div style="display:flex;align-items:center;gap:6px;padding:3px 0;flex-wrap:wrap">
+        <span style="font-size:11px;color:#aaa;white-space:nowrap">🤖 Telegram chat_id:</span>
+        <input value="${esc(m.tgChatId||'')}" placeholder="Після /start у боті" onblur="setMgrTg('${esc(m.code)}',this.value)"
+          style="border:1px solid #e4e0da;border-radius:6px;font-size:11px;padding:3px 7px;font-family:inherit;width:150px;color:#555"
+          ${canEditAll||isOwn?'':'disabled'}>
+        ${m.tgChatId?'<span style="font-size:10px;color:#2e8653;font-weight:600">✓ підключено</span>':'<span style="font-size:10px;color:#ccc">не підключено</span>'}
+      </div>
       <div class="vac-row">
         <label>Відпустка з</label>
         <button class="vac-date-btn" onclick="${canEditVac?`openCal('vacFrom','${esc(m.code)}|vacFrom')`:''}" ${canEditVac?'':'disabled style="opacity:.5;cursor:default"'}>${m.vacFrom||'Оберіть'}</button>
@@ -2807,6 +2820,10 @@ function mkT(){
     if(changes.length>0){
       t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
       t.lastChange={by:curU,summary:changes.join('; '),ts:new Date().toISOString()};
+      // Telegram: статус
+      if(oldStatus!==newStatus) tgNotifyStatus(t, oldStatus, curU);
+      // Telegram: новий виконавець
+      if(oldTo!==newTo) tgNotifyReassign(t, oldTo, curU);
     }
   } else {
     const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
@@ -2819,6 +2836,7 @@ function mkT(){
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]'),
       arch:false,archAt:'',cmts:[]});
     logEntry('create',newId,T||U||N||'—');
+    tgNotifyCreate(tasks[0]);
   }
   closeM('mAdd');eId=null;save();rStats();render();
 }
@@ -2846,6 +2864,7 @@ function apSt(){
   t.seenBy=t.seenBy.filter(c=>c===curU);
   t.lastChange={by:curU,summary:`статус: ${SL[oldStatus]} → ${SL[t.status]}`,ts:new Date().toISOString()};
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
+  tgNotifyStatus(t, oldStatus, curU);
   closeM('mSt');eId=null;save();rStats();render();
 }
 function doExp(){
@@ -2891,6 +2910,9 @@ function showSet(){
   rdDays();renderMgrList();renderColorPicker();
   const isAdm=canDo('admin')||isSuperAdmin();
   const isBasic=!canDo('extended')&&!isSuperAdmin();
+  // Populate tg token field
+  const tgField=document.getElementById('tgBotToken');
+  if(tgField) tgField.value=cfg.tgBotToken||'';
   // Admin-only sections: add manager, color picker
   const adminOnly=document.getElementById('settingsAdminOnly');
   if(adminOnly) adminOnly.style.display=isAdm?'':'none';
@@ -2934,7 +2956,143 @@ function saveMyName(){
 }
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
-function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;closeM('mSet');save();updClk();}
+function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;
+  const tok=document.getElementById('tgBotToken')?.value?.trim();
+  if(tok!==undefined) cfg.tgBotToken=tok;
+  closeM('mSet');save();updClk();}
+
+/* ══════════════════════════════════════════════
+   TELEGRAM BOT NOTIFICATIONS
+   ══════════════════════════════════════════════
+
+   Інструкція з підключення:
+   1. Напишіть @BotFather у Telegram → /newbot → отримайте токен
+   2. Вставте токен у Налаштування → поле «Токен бота»
+   3. Кожен менеджер пише вашому боту /start
+   4. Бот відповідає chat_id — вставте його у рядок менеджера в Налаштуваннях
+   5. Готово — сповіщення підуть автоматично
+
+   ВАЖЛИВО: Оскільки Waymark — single-file застосунок без бекенду,
+   повідомлення надсилаються напряму з браузера через Telegram Bot API.
+   Це працює але означає що токен видно у налаштуваннях.
+   Для команди де всі одне одному довіряють — нормально.
+*/
+
+// ── Зберегти токен бота ──
+function saveTgToken(){
+  const v=document.getElementById('tgBotToken')?.value?.trim()||'';
+  cfg.tgBotToken=v;
+  // одразу save() не викликаємо — він буде при натисканні «Зберегти» у Налаштуваннях
+}
+
+// ── Читати токен із cfg або поля ──
+function getTgToken(){
+  return (cfg.tgBotToken||'').trim();
+}
+
+// ── Встановити chat_id менеджеру ──
+function setMgrTg(code,val){
+  const m=managers.find(x=>x.code===code);
+  if(!m) return;
+  m.tgChatId=(val||'').trim();
+  save();
+  renderMgrList();
+}
+
+// ── Надіслати одне повідомлення у Telegram ──
+async function tgSend(chatId, text){
+  const token=getTgToken();
+  if(!token||!chatId) return;
+  try{
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      })
+    });
+  }catch(e){ console.warn('Telegram send error:',e); }
+}
+
+// ── Зібрати отримувачів для завдання (крім того хто змінив) ──
+function tgRecipients(task, excludeCode){
+  const codes=new Set();
+  // автор та виконавець
+  if(task.from) codes.add(task.from);
+  if(task.to)   codes.add(task.to);
+  // @згадки
+  (task.tags||[]).forEach(tag=>{
+    if(tag.startsWith('@')){
+      const name=tag.slice(1).toLowerCase();
+      const m=managers.find(x=>x.name.toLowerCase()===name);
+      if(m) codes.add(m.code);
+    }
+  });
+  // виключаємо того хто зробив дію
+  codes.delete(excludeCode);
+  // повертаємо тільки тих у кого є chat_id
+  return [...codes].map(c=>managers.find(x=>x.code===c)).filter(m=>m&&m.tgChatId);
+}
+
+// ── Форматувати назву завдання для повідомлення ──
+function tgTaskLabel(task){
+  return task.title||task.url||task.note||'—';
+}
+
+// ── НОВЕ ЗАВДАННЯ — сповістити виконавця ──
+async function tgNotifyCreate(task){
+  if(task.from===task.to) return; // сам собі — не треба
+  const toM=managers.find(m=>m.code===task.to);
+  if(!toM||!toM.tgChatId) return;
+  const fromM=managers.find(m=>m.code===task.from)||{name:task.from};
+  const dl=task.deadline?`\n📅 Дедлайн: <b>${task.deadline}</b>`:'';
+  const note=task.note?`\n📝 ${task.note.slice(0,100)+(task.note.length>100?'…':'')}` :'';
+  await tgSend(toM.tgChatId,
+    `📋 <b>Нове завдання для тебе</b>\n«${tgTaskLabel(task)}»${dl}${note}\n\n👤 Поставив: ${fromM.name}`
+  );
+}
+
+// ── ЗМІНА СТАТУСУ — сповістити учасників ──
+async function tgNotifyStatus(task, oldStatus, byCode){
+  const recipients=tgRecipients(task, byCode);
+  if(!recipients.length) return;
+  const byM=managers.find(m=>m.code===byCode)||{name:byCode};
+  const msg=`🔄 <b>Статус змінено</b>\n«${tgTaskLabel(task)}»\n${SL[oldStatus]||oldStatus} → <b>${SL[task.status]||task.status}</b>\n\n👤 ${byM.name}`;
+  for(const m of recipients) await tgSend(m.tgChatId, msg);
+}
+
+// ── НОВИЙ КОМЕНТАР — сповістити учасників ──
+async function tgNotifyComment(task, commentText, byCode){
+  const recipients=tgRecipients(task, byCode);
+  if(!recipients.length) return;
+  const byM=managers.find(m=>m.code===byCode)||{name:byCode};
+  const preview=commentText.slice(0,120)+(commentText.length>120?'…':'');
+  const msg=`💬 <b>Новий коментар</b>\n«${tgTaskLabel(task)}»\n<i>${preview}</i>\n\n👤 ${byM.name}`;
+  for(const m of recipients) await tgSend(m.tgChatId, msg);
+}
+
+// ── ЗМІНА ВИКОНАВЦЯ — сповістити нового виконавця ──
+async function tgNotifyReassign(task, oldToCode, byCode){
+  if(task.to===byCode) return; // призначив сам собі
+  const newToM=managers.find(m=>m.code===task.to);
+  if(!newToM||!newToM.tgChatId) return;
+  const byM=managers.find(m=>m.code===byCode)||{name:byCode};
+  const dl=task.deadline?`\n📅 Дедлайн: <b>${task.deadline}</b>`:'';
+  const msg=`👤 <b>Тебе призначено виконавцем</b>\n«${tgTaskLabel(task)}»${dl}\n\n✏️ ${byM.name}`;
+  await tgSend(newToM.tgChatId, msg);
+}
+
+// ── ДЕДЛАЙН НАБЛИЖАЄТЬСЯ — надсилається разом із push-сповіщенням ──
+async function tgNotifyDeadline(task, daysLeft){
+  const recipients=[task.from,task.to].filter((c,i,a)=>a.indexOf(c)===i)
+    .map(c=>managers.find(m=>m.code===c)).filter(m=>m&&m.tgChatId);
+  if(!recipients.length) return;
+  const labels=['⚠️ Дедлайн <b>сьогодні!</b>','⏰ Дедлайн <b>завтра</b>','📅 Дедлайн через 2 дні'];
+  const msg=`${labels[daysLeft]}\n«${tgTaskLabel(task)}»\n📅 ${task.deadline}`;
+  for(const m of recipients) await tgSend(m.tgChatId, msg);
+}
 
 /* ── INIT ── */
 (()=>{const m={name:'Waymark',short_name:'Waymark',start_url:location.href,display:'standalone',
