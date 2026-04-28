@@ -2907,8 +2907,10 @@ function mkQ(){
   const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
   const today=new Date().toISOString().split('T')[0];
   const defaultTo=(managers.find(m=>m.role==='admin'&&!m.hidden)||managers.find(m=>!m.hidden)||managers[0])?.code||curU;
-  tasks.unshift({id:(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2),title:iU?'':v,url:iU?v.replace(/^https?:\/\//,''):'',note:'',status:'new',tags:[],
-    created:today,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]});
+  const newTask={id:(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2),title:iU?'':v,url:iU?v.replace(/^https?:\/\//,''):'',note:'',status:'new',tags:[],
+    created:today,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]};
+  tasks.unshift(newTask);
+  tgNotifyCreate(newTask);
   document.getElementById('qI').value='';closeM('mQ');save();rStats();render();
 }
 function findTask(id){return tasks.find(t=>t.id===id||String(t.id)===String(id));}
@@ -3128,14 +3130,14 @@ function tgTaskLabel(task){
 
 // ── НОВЕ ЗАВДАННЯ — сповістити виконавця ──
 async function tgNotifyCreate(task){
-  if(task.from===task.to) return; // сам собі — не треба
   const toM=managers.find(m=>m.code===task.to);
   if(!toM||!toM.tgChatId) return;
   const fromM=managers.find(m=>m.code===task.from)||{name:task.from};
   const dl=task.deadline?`\n📅 Дедлайн: <b>${task.deadline}</b>`:'';
   const note=task.note?`\n📝 ${task.note.slice(0,100)+(task.note.length>100?'…':'')}` :'';
+  const self=task.from===task.to?' (вам)':'';
   await tgSend(toM.tgChatId,
-    `📋 <b>Нове завдання для тебе</b>\n«${tgTaskLabel(task)}»${dl}${note}\n\n👤 Поставив: ${fromM.name}`
+    `📋 <b>Нове завдання${self}</b>\n«${tgTaskLabel(task)}»${dl}${note}\n\n👤 Поставив: ${fromM.name}`
   );
 }
 
