@@ -1225,6 +1225,7 @@ window.addEventListener('load', ()=>{
             openIdentityPicker(user.email);
           } else {
             curU = code;
+            curEmail = user.email;
             bootApp();
             startRealtimeSync();
             document.getElementById('loginScreen').style.display='none';
@@ -1382,7 +1383,7 @@ async function _saSaveHash(hash){
 }
 
 function openSALogin(){
-  if(curU!==SA_OWNER_CODE){alert('Суперадмін-доступ недоступний для цього акаунту.');return;}
+  if(!isSAOwner()){alert('Суперадмін-доступ недоступний для цього акаунту.');return;}
   openM('mSALogin');setTimeout(()=>document.getElementById('saLoginPwd').focus(),80);
 }
 
@@ -1429,7 +1430,7 @@ function renderSAIndicator(){
 }
 
 async function openSASetPwd(){
-  if(curU!==SA_OWNER_CODE){alert('Зміна пароля суперадміна доступна лише власнику.');return;}
+  if(!isSAOwner()){alert('Зміна пароля суперадміна доступна лише власнику.');return;}
   if(!isSuperAdmin()){
     const stored=await _saGetHash();
     if(stored){
@@ -1469,16 +1470,18 @@ async function saveSAPwd(){
   err.textContent='';closeM('mSASetPwd');alert('✅ Пароль суперадміна збережено');
 }
 
-const SA_OWNER_CODE='MK';
+const SA_OWNER_EMAIL='waymark.base@gmail.com';
+let curEmail='';
+function isSAOwner(){ return curEmail===SA_OWNER_EMAIL; }
 
 async function saFirstSetup(){
-  if(curU!==SA_OWNER_CODE) return;
+  if(!isSAOwner()) return;
   const stored=await _saGetHash();
   if(!stored) openM('mSAFirstSetup');
 }
 
 async function saveFirstSAPwd(){
-  if(curU!==SA_OWNER_CODE){
+  if(!isSAOwner()){
     closeM('mSAFirstSetup');
     alert('Недостатньо прав для встановлення пароля суперадміна.');
     return;
@@ -2921,11 +2924,11 @@ function showSet(){
   if(adminOnly) adminOnly.style.display=isAdm?'':'none';
   // SA section: visible to MK always (to allow login), inner buttons depend on session
   const saOnly=document.getElementById('settingsSAOnly');
-  if(saOnly) saOnly.style.display=(curU===SA_OWNER_CODE)?'':'none';
+  if(saOnly) saOnly.style.display=(isSAOwner())?'':'none';
   const btnSALogin=document.getElementById('btnSALogin');
   if(btnSALogin) btnSALogin.style.display=isSuperAdmin()?'none':'';
   const btnSASetPwd=document.getElementById('btnSASetPwd');
-  if(btnSASetPwd) btnSASetPwd.style.display=(curU===SA_OWNER_CODE)?'':'none';
+  if(btnSASetPwd) btnSASetPwd.style.display=(isSAOwner())?'':'none';
   // "Менеджери" title — rename for non-admins
   const mgrTitle=document.getElementById('settingsMgrTitle');
   if(mgrTitle) mgrTitle.textContent=isAdm?'Менеджери':'Мій профіль';
