@@ -1031,16 +1031,17 @@ async function doGoogleLogin(){
   spin.style.display='block';
   try{
     const {fbAuth, signInWithPopup, googleProv}=window._fb;
-    // iOS Safari blocks popups — use redirect on mobile
-    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if(isMobile){
-      const {signInWithRedirect, getRedirectResult} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    // PWA/iOS/Android: popups are blocked — use redirect flow
+    const isMobilePWA=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      || window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone===true;
+    if(isMobilePWA){
+      const {signInWithRedirect} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
       await signInWithRedirect(fbAuth, googleProv);
-      // page will reload; onAuthStateChanged handles result
+      // page reloads; handleRedirectResult() picks it up
     } else {
       await signInWithPopup(fbAuth, googleProv);
     }
-    // onAuthStateChanged handles the rest
   } catch(e){
     spin.style.display='none';
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
@@ -1186,6 +1187,10 @@ function emailToCode(email){
 // Only an exact email match in the managers list grants access.
 // If no match is found — show "request access" screen and sign out.
 function openIdentityPicker(firebaseEmail){
+  // SECURITY: immediately hide the app shell — user must NOT see app content
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginScreen').style.display='none';
+
   const el=document.getElementById('identityPicker');
   const list=document.getElementById('identityList');
 
@@ -1218,6 +1223,12 @@ window.addEventListener('load', ()=>{
     if(window._fb){
       clearInterval(waitForFb);
       const {fbAuth, onAuthStateChanged} = window._fb;
+
+      // Handle Google redirect result (PWA/mobile after signInWithRedirect)
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
+        .then(({getRedirectResult})=>getRedirectResult(fbAuth))
+        .catch(()=>{}); // errors handled by onAuthStateChanged below
+
       onAuthStateChanged(fbAuth, async user=>{
         if(user){
           document.getElementById('loginSpinner').style.display='none';
