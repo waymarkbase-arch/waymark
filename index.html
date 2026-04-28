@@ -2906,8 +2906,9 @@ function mkQ(){
   const v=document.getElementById('qI').value.trim();if(!v)return;
   const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
   const today=new Date().toISOString().split('T')[0];
+  const defaultTo=(managers.find(m=>m.role==='admin'&&!m.hidden)||managers.find(m=>!m.hidden)||managers[0])?.code||curU;
   tasks.unshift({id:(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2),title:iU?'':v,url:iU?v.replace(/^https?:\/\//,''):'',note:'',status:'new',tags:[],
-    created:today,deadline:'',forecast:'',from:curU,to:curU,result:'',arch:false,archAt:'',cmts:[]});
+    created:today,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]});
   document.getElementById('qI').value='';closeM('mQ');save();rStats();render();
 }
 function findTask(id){return tasks.find(t=>t.id===id||String(t.id)===String(id));}
