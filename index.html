@@ -1971,6 +1971,9 @@ function renderMgrList(){
     return `<div class="mgr-row">
       <div class="mgr-top">
         <div class="mgr-av" style="background:${m.col}">${esc(m.code)}</div>
+        ${canEditAll?`<input value="${esc(m.code)}" maxlength="3" title="Код (аватар)"
+          onblur="setMgrCode('${esc(m.code)}',this.value.toUpperCase())"
+          style="border:1px solid #e4e0da;border-radius:6px;font-size:12px;font-weight:700;padding:3px 6px;font-family:inherit;width:48px;flex-shrink:0;text-align:center;color:#333">`:''}
         <input value="${esc(m.name)}" placeholder="Ім'я"
           onblur="setMgrName('${esc(m.code)}',this.value)"
           style="border:1px solid #e4e0da;border-radius:6px;font-size:13px;font-weight:600;padding:3px 8px;font-family:inherit;width:100px;flex-shrink:0;color:#333"
@@ -2995,6 +2998,24 @@ function setMgrTg(code,val){
   const m=managers.find(x=>x.code===code);
   if(!m) return;
   m.tgChatId=(val||'').trim();
+  save();
+  renderMgrList();
+}
+
+function setMgrCode(oldCode, newCode){
+  newCode=(newCode||'').trim().toUpperCase().slice(0,3);
+  if(!newCode||newCode===oldCode) return;
+  if(managers.find(x=>x.code===newCode)){alert('Такий код вже існує.');renderMgrList();return;}
+  const m=managers.find(x=>x.code===oldCode);
+  if(!m||!(isSuperAdmin()||canDo('admin'))) return;
+  // оновлюємо код у завданнях
+  tasks.forEach(t=>{
+    if(t.from===oldCode) t.from=newCode;
+    if(t.to===oldCode)   t.to=newCode;
+  });
+  m.code=newCode;
+  // якщо це поточний юзер — оновлюємо curU
+  if(curU===oldCode) curU=newCode;
   save();
   renderMgrList();
 }
