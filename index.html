@@ -394,6 +394,9 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .dbtn.on{background:#1c1c1c;color:#fff;border-color:#1c1c1c}
 .mgr-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
 .mgr-row{background:#f8f8f5;border-radius:10px;padding:8px 12px}
+.drag-handle{font-size:16px;color:#ccc;cursor:grab;padding:0 4px 0 0;user-select:none;line-height:1}
+.drag-handle:active{cursor:grabbing}
+.mgr-row.drag-over{border:2px dashed #8b1a1a;background:#fdf5f5}
 .mgr-top{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
 .mgr-top input{min-width:0}
 .mgr-av{width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -1964,15 +1967,18 @@ document.addEventListener('click',e=>{if(!e.target.closest('.ment-wrap'))documen
 function renderMgrList(){
   const isSA=isSuperAdmin();
   const isAdm=canDo('admin');
+  const canReorder=isSA||isAdm;
   // Non-admins see only their own row
   const visibleMgrs = (isSA||isAdm) ? managers : managers.filter(m=>m.code===curU);
   document.getElementById('mgrList').innerHTML=visibleMgrs.map(m=>{
     const vac=isOnVacation(m);
     const isOwn=m.code===curU;
-    const canEditAll=isSA||isAdm;           // admins can edit anyone
-    const canEditVac=canEditAll||isOwn;     // user can only edit own vacation
-    return `<div class="mgr-row">
+    const canEditAll=isSA||isAdm;
+    const canEditVac=canEditAll||isOwn;
+    return `<div class="mgr-row" draggable="${canReorder}" data-code="${esc(m.code)}"
+      style="cursor:${canReorder?'default':''}">
       <div class="mgr-top">
+      ${canReorder?`<span class="drag-handle" title="Перетягнути для зміни порядку">⠿</span>`:''}
         <div class="mgr-av" style="background:${m.col}">${esc(m.code)}</div>
         ${canEditAll?`<input value="${esc(m.code)}" maxlength="3" title="Код (аватар)"
           onblur="setMgrCode('${esc(m.code)}',this.value.toUpperCase())"
@@ -2022,8 +2028,43 @@ function renderMgrList(){
       </div>
     </div>`;
   }).join('');
-  const sel=document.getElementById('fTo');
-  if(sel) sel.innerHTML=managers.filter(m=>!m.hidden).map(m=>`<option value="${esc(m.code)}">${esc(m.name)} (${esc(m.code)})</option>`).join('');
+  // bind drag & drop after render
+  if(canReorder) bindMgrDrag();
+}
+
+function bindMgrDrag(){
+  const list=document.getElementById('mgrList');
+  let dragCode=null;
+  list.querySelectorAll('.mgr-row[draggable="true"]').forEach(row=>{
+    row.addEventListener('dragstart',e=>{
+      dragCode=row.dataset.code;
+      e.dataTransfer.effectAllowed='move';
+      setTimeout(()=>row.style.opacity='0.4',0);
+    });
+    row.addEventListener('dragend',()=>{
+      row.style.opacity='';
+      list.querySelectorAll('.mgr-row').forEach(r=>r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      list.querySelectorAll('.mgr-row').forEach(r=>r.classList.remove('drag-over'));
+      if(row.dataset.code!==dragCode) row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave',()=>row.classList.remove('drag-over'));
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      if(!dragCode||row.dataset.code===dragCode) return;
+      const fromIdx=managers.findIndex(m=>m.code===dragCode);
+      const toIdx=managers.findIndex(m=>m.code===row.dataset.code);
+      if(fromIdx<0||toIdx<0) return;
+      const [moved]=managers.splice(fromIdx,1);
+      managers.splice(toIdx,0,moved);
+      save();
+      renderMgrList();
+    });
+  });
 }
 let _roleChangeLock=false; // prevents realtime sync overwriting managers right after role change
 
@@ -2796,7 +2837,9 @@ function openAdd(id){
     document.getElementById('mH').textContent='+ Нове завдання';document.getElementById('mBtn').textContent='Створити';
     ['fT','fU','fN','fTg','fFc','fR'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('fDl').value='';document.getElementById('fDlTxt').textContent='Оберіть дату...';document.getElementById('fDlTxt').className='placeholder';
-    document.getElementById('fS').value='new';document.getElementById('fTo').value=managers[0].code;
+    document.getElementById('fS').value='new';
+    const firstVisible=managers.find(m=>!m.hidden);
+    document.getElementById('fTo').value=firstVisible?firstVisible.code:(managers[0]?.code||'');
     document.getElementById('fHours').value=0;
     document.getElementById('fDriveFiles').value='[]';renderDriveLinks([]);
   }
@@ -2812,6 +2855,8 @@ function openAdd(id){
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
   if(!T&&!U&&!N)return;
+  const toVal=document.getElementById('fTo').value;
+  if(!toVal){alert('Оберіть виконавця.');document.getElementById('fTo').focus();return;}
   const today=new Date().toISOString().split('T')[0];
   if(eId){
     const t=findTask(eId);
