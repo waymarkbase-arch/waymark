@@ -1031,22 +1031,44 @@ async function doGoogleLogin(){
   spin.style.display='block';
   try{
     const {fbAuth, signInWithPopup, googleProv}=window._fb;
-    // PWA/iOS/Android: popups are blocked — use redirect flow
-    const isMobilePWA=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      || window.matchMedia('(display-mode: standalone)').matches
-      || window.navigator.standalone===true;
-    if(isMobilePWA){
-      const {signInWithRedirect} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-      await signInWithRedirect(fbAuth, googleProv);
-      // page reloads; handleRedirectResult() picks it up
+
+    // Force Google account chooser every time
+    googleProv.setCustomParameters({ prompt: 'select_account' });
+
+    // iOS Safari in PWA (standalone) blocks both popup AND redirect via 3rd-party cookie restrictions.
+    // Best approach: always try popup first; if blocked — fall back to redirect (works on Android PWA).
+    const isIOSStandalone = /iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+      (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches);
+
+    if(isIOSStandalone){
+      // On iOS PWA: popup opens in same WebView tab — this actually works on iOS 16.4+
+      // If it fails with popup-blocked, we show a helpful message
+      try {
+        await signInWithPopup(fbAuth, googleProv);
+      } catch(popupErr){
+        if(popupErr.code==='auth/popup-blocked'||popupErr.code==='auth/cancelled-popup-request'){
+          spin.style.display='none';
+          errEl.textContent='Будь ласка, використайте вхід через Email/Пароль — Google вхід обмежений у PWA на iOS.';
+          return;
+        }
+        throw popupErr;
+      }
     } else {
+      // Android PWA or regular browser — redirect works fine
+      const isAndroidPWA = /Android/i.test(navigator.userAgent) &&
+        (window.matchMedia('(display-mode: standalone)').matches);
+      if(isAndroidPWA){
+        const {signInWithRedirect} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await signInWithRedirect(fbAuth, googleProv);
+        return; // page reloads; onAuthStateChanged handles result
+      }
       await signInWithPopup(fbAuth, googleProv);
     }
   } catch(e){
     spin.style.display='none';
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
     const msgs={
-      'auth/popup-blocked':'Браузер заблокував спливаюче вікно. Спробуйте ще раз або використайте email/пароль.',
+      'auth/popup-blocked':'Браузер заблокував спливаюче вікно. Використайте вхід через Email/Пароль.',
       'auth/unauthorized-domain':'Цей домен не авторизований у Firebase Console → Authentication → Settings → Authorized domains.'
     };
     errEl.textContent=msgs[e.code]||'Помилка Google входу: '+e.message;
@@ -1057,6 +1079,9 @@ async function doLogout(){
   window._accessDeniedShown = false;
   const picker = document.getElementById('identityPicker');
   if(picker) picker.style.display='none';
+  // Hide mobile nav immediately on logout
+  const nav = document.getElementById('mobileNav');
+  if(nav) nav.style.setProperty('display','none','important');
   const {fbAuth, signOut} = window._fb;
   if(_unsubSnapshot){_unsubSnapshot();_unsubSnapshot=null;}
   superAdminSession=false;_saUid=null;
@@ -1224,10 +1249,23 @@ window.addEventListener('load', ()=>{
       clearInterval(waitForFb);
       const {fbAuth, onAuthStateChanged} = window._fb;
 
-      // Handle Google redirect result (PWA/mobile after signInWithRedirect)
+      // Handle Google redirect result (Android PWA after signInWithRedirect)
       import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js')
-        .then(({getRedirectResult})=>getRedirectResult(fbAuth))
-        .catch(()=>{}); // errors handled by onAuthStateChanged below
+        .then(async ({getRedirectResult})=>{
+          try{
+            const result = await getRedirectResult(fbAuth);
+            if(result && result.user){
+              // Spinner shown while onAuthStateChanged processes
+              document.getElementById('loginSpinner').style.display='block';
+            }
+          } catch(e){
+            const errEl=document.getElementById('loginErr');
+            if(errEl && e.code !== 'auth/no-such-provider'){
+              errEl.textContent = 'Помилка Google входу: ' + (e.message||e.code);
+            }
+          }
+        })
+        .catch(()=>{});
 
       onAuthStateChanged(fbAuth, async user=>{
         if(user){
@@ -1323,6 +1361,9 @@ function bootApp(){
   migrateMgrRoles();
   updateAvatarUI();
   updateRoleUI();
+  // Show mobile nav only for authenticated users
+  const nav = document.getElementById('mobileNav');
+  if(nav) nav.style.removeProperty('display');
   reqNotifPerm();initTheme();renderLabelPills();rStats();render();updClk();renderVacBanner();renderSAIndicator();
   setInterval(updClk,20000);
   setInterval(checkDeadlines,3600000);
@@ -3221,7 +3262,7 @@ async function tgNotifyDeadline(task, daysLeft){
   <button onclick="batchArchive()">До архіву</button>
   <button class="batch-cancel" onclick="toggleBatchMode()">✕</button>
 </div>
-<div class="mobile-nav" id="mobileNav">
+<div class="mobile-nav" id="mobileNav" style="display:none!important">
   <button onclick="goTab('main',this)" class="on" id="mnMain">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Завдання
