@@ -2000,6 +2000,11 @@ function renderMgrList(){
             style="accent-color:#2f52cc;width:13px;height:13px;cursor:${m.role==='admin'?'default':'pointer'}">
           <span>⏱ Доступ до годин${m.role==='admin'?'<span style="color:#bbb;font-size:10px"> (адмін — завжди)</span>':''}</span>
         </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#666;cursor:pointer" title="Приховати зі списку виконавців при створенні завдання">
+          <input type="checkbox" ${m.hidden?'checked':''} onchange="setMgrHidden('${esc(m.code)}',this.checked)"
+            style="accent-color:#8b1a1a;width:13px;height:13px;cursor:pointer">
+          <span>🙈 Приховати зі списку виконавців</span>
+        </label>
       </div>`:''}
       <div style="display:flex;align-items:center;gap:6px;padding:3px 0;flex-wrap:wrap">
         <span style="font-size:11px;color:#aaa;white-space:nowrap">🤖 Telegram chat_id:</span>
@@ -2018,7 +2023,7 @@ function renderMgrList(){
     </div>`;
   }).join('');
   const sel=document.getElementById('fTo');
-  if(sel) sel.innerHTML=managers.map(m=>`<option value="${esc(m.code)}">${esc(m.name)} (${esc(m.code)})</option>`).join('');
+  if(sel) sel.innerHTML=managers.filter(m=>!m.hidden).map(m=>`<option value="${esc(m.code)}">${esc(m.name)} (${esc(m.code)})</option>`).join('');
 }
 let _roleChangeLock=false; // prevents realtime sync overwriting managers right after role change
 
@@ -2058,6 +2063,11 @@ function setMgrHours(code,val){
   if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати цей дозвіл.');return;}
   const m=managers.find(x=>x.code===code);
   if(m){m.canSeeHours=val;save();renderMgrList();}
+}
+function setMgrHidden(code,val){
+  if(!canDo('admin')&&!isSuperAdmin()){alert('Тільки адміністратор може змінювати цей дозвіл.');return;}
+  const m=managers.find(x=>x.code===code);
+  if(m){m.hidden=!!val;save();renderMgrList();}
 }
 function renderColorPicker(){
   document.getElementById('mgrColorPicker').innerHTML=MGR_COLORS.map(c=>`<div class="color-dot${c===selectedMgrColor?' sel':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
@@ -2748,7 +2758,7 @@ function renderGantt(ts,startISO,endISO){
 /* ── ADD/EDIT ── */
 function populateTo(){
   const sel=document.getElementById('fTo');
-  sel.innerHTML=managers.map(m=>`<option value="${m.code}">${m.name} (${m.code})</option>`).join('');
+  sel.innerHTML=managers.filter(m=>!m.hidden).map(m=>`<option value="${m.code}">${m.name} (${m.code})</option>`).join('');
 }
 function canEditTask(t){
   // basic: only own tasks (from or to)
