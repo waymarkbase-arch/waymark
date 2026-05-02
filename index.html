@@ -821,6 +821,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 <div class="mbg hide" id="mAdd">
   <div class="mbox">
     <h3 id="mH">+ Нове завдання</h3>
+    <div id="fFromWrap" style="display:none"><label>Автор завдання</label><select id="fFrom"></select></div>
     <label>Назва (необов'язково)</label><input id="fT" placeholder="Назва...">
     <label>URL</label><input id="fU" placeholder="https://...">
     <label>Нотатка</label><textarea id="fN" placeholder="Деталі..."></textarea>
@@ -2930,11 +2931,26 @@ function populateTo(){
   const sel=document.getElementById('fTo');
   sel.innerHTML=managers.filter(m=>!m.hidden).map(m=>`<option value="${m.code}">${m.name} (${m.code})</option>`).join('');
 }
+function populateFrom(){
+  const sel=document.getElementById('fFrom');
+  if(!sel) return;
+  sel.innerHTML=managers.map(m=>`<option value="${m.code}">${m.name} (${m.code})</option>`).join('');
+}
+function isMentionedInTask(t){
+  // Returns true if current user is @mentioned in the task tags
+  return (t.tags||[]).some(g=>{
+    if(!g.startsWith('@')) return false;
+    const mentionedName=g.slice(1).toLowerCase();
+    const curMgrObj=managers.find(m=>m.code===curU);
+    if(!curMgrObj) return false;
+    return mentionedName===curMgrObj.name.toLowerCase() || mentionedName===curU.toLowerCase();
+  });
+}
 function canEditTask(t){
-  // basic: only own tasks (from or to)
   // extended+: any task
   if(canDo('extended')||isSuperAdmin()) return true;
-  return t.from===curU||t.to===curU;
+  // basic: own tasks (author/assignee) OR @mentioned in tags
+  return t.from===curU||t.to===curU||isMentionedInTask(t);
 }
 function canArchiveTask(t){
   // extended+ or the task author
@@ -2948,10 +2964,14 @@ function canChangeStatus(t){
 }
 
 function openAdd(id){
-  eId=id;populateTo();
+  eId=id;populateTo();populateFrom();
+  // Show "author" field only for admins/superadmin (and only when editing)
+  const isAdminOrSA=canDo('admin')||isSuperAdmin();
+  const fromWrap=document.getElementById('fFromWrap');
+  if(fromWrap) fromWrap.style.display=(isAdminOrSA&&id)?'':'none';
   if(id){
     const t=findTask(id);
-    if(!canEditTask(t)){alert('Редагувати можна лише свої завдання. Для редагування чужих потрібен розширений доступ.');return;}
+    if(!canEditTask(t)){alert('Редагувати можна лише свої завдання або завдання, в яких вас тегнули. Для редагування чужих потрібен розширений доступ.');return;}
     document.getElementById('mH').textContent='✏ Редагувати';
     document.getElementById('mBtn').textContent='Зберегти';
     document.getElementById('fT').value=t.title;document.getElementById('fU').value=t.url;
@@ -2962,6 +2982,11 @@ function openAdd(id){
     document.getElementById('fFc').value=t.forecast;document.getElementById('fTo').value=t.to;document.getElementById('fR').value=t.result;
     document.getElementById('fHours').value=t.hours||0;
     const df=t.driveFiles||[];document.getElementById('fDriveFiles').value=JSON.stringify(df);renderDriveLinks(df);
+    // populate author field for admins
+    if(isAdminOrSA){
+      const fFromSel=document.getElementById('fFrom');
+      if(fFromSel) fFromSel.value=t.from;
+    }
   } else {
     document.getElementById('mH').textContent='+ Нове завдання';document.getElementById('mBtn').textContent='Створити';
     ['fT','fU','fN','fTg','fFc','fR'].forEach(i=>document.getElementById(i).value='');
@@ -2990,13 +3015,19 @@ function mkT(){
   if(eId){
     const t=findTask(eId);
     if(!t||!canEditTask(t)){alert('Недостатньо прав для редагування цього завдання.');closeM('mAdd');return;}
-    const oldTitle=t.title,oldStatus=t.status,oldTo=t.to,oldDl=t.deadline;
+    const oldTitle=t.title,oldStatus=t.status,oldTo=t.to,oldDl=t.deadline,oldFrom=t.from;
     const newStatus=document.getElementById('fS').value;
     const newTo=document.getElementById('fTo').value;
     const newDl=document.getElementById('fDl').value;
+    // Author change — only admins/superadmin
+    const isAdminOrSA=canDo('admin')||isSuperAdmin();
+    const newFrom=isAdminOrSA&&document.getElementById('fFromWrap').style.display!=='none'
+      ? (document.getElementById('fFrom').value||t.from)
+      : t.from;
     Object.assign(t,{title:T,url:U.replace(/^https?:\/\//,''),note:N,status:newStatus,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       deadline:newDl,forecast:document.getElementById('fFc').value,
+      from:newFrom,
       to:newTo,result:document.getElementById('fR').value,
       hours:parseFloat(document.getElementById('fHours').value)||0,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]')});
@@ -3007,6 +3038,7 @@ function mkT(){
     if(oldTo!==newTo){ logEntry('edit',eId,label,'виконавець',mgr(oldTo).name,mgr(newTo).name); changes.push(`виконавець: ${mgr(oldTo).name} → ${mgr(newTo).name}`); }
     if(oldDl!==newDl){ logEntry('edit',eId,label,'дедлайн',oldDl||'—',newDl||'—'); changes.push(`дедлайн: ${oldDl||'—'} → ${newDl||'—'}`); }
     if(oldTitle!==T&&T){ logEntry('edit',eId,label,'назва',oldTitle||'—',T); changes.push(`назва: «${(oldTitle||'—').slice(0,25)+(oldTitle&&oldTitle.length>25?'…':'')}» → «${T.slice(0,25)+(T.length>25?'…':'')}»`); }
+    if(oldFrom!==newFrom){ logEntry('edit',eId,label,'автор',mgr(oldFrom).name,mgr(newFrom).name); changes.push(`автор: ${mgr(oldFrom).name} → ${mgr(newFrom).name}`); }
     if(changes.length>0){
       t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
       t.lastChange={by:curU,summary:changes.join('; '),ts:new Date().toISOString()};
