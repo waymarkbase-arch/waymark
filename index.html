@@ -2075,7 +2075,8 @@ function goPage(p){
   currentPage=p;
   render();
   document.getElementById('ta').scrollIntoView({behavior:'smooth',block:'start'});
-}if(ev)ev.stopPropagation();const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
+}
+function togCmt(id,ev){if(ev)ev.stopPropagation();const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
 function addCmt(id,ev){
   if(ev)ev.stopPropagation();
   const tx=document.getElementById('ct'+id).value.trim();if(!tx)return;
