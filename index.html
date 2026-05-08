@@ -503,6 +503,19 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 [data-theme="dark"] .sort-btn.on{background:var(--surface2)!important;color:var(--text)!important}
 [data-theme="dark"] .sort-btn:hover:not(.on){background:var(--surface2)!important}
 [data-theme="dark"] .pg-foot{color:var(--text3)}
+/* ── PAGINATION ── */
+.pag-bar{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 48px 0;flex-wrap:wrap}
+.pag-bar.bottom{padding:0 48px 8px}
+.pag-btn{border:1px solid #d2d0c8;background:#fff;border-radius:9px;padding:7px 14px;font-size:12px;font-family:inherit;color:#555;cursor:pointer;min-width:36px;text-align:center;transition:all .12s;font-weight:500}
+.pag-btn:hover:not(:disabled):not(.on){background:#f5f3ee;border-color:#bbb}
+.pag-btn.on{background:#8b1a1a;color:#fff;border-color:#8b1a1a;font-weight:700}
+.pag-btn:disabled{opacity:.35;cursor:default}
+.pag-info{font-size:11px;color:#aaa;padding:0 6px}
+[data-theme="dark"] .pag-btn{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] .pag-btn:hover:not(:disabled):not(.on){background:var(--surface)}
+[data-theme="dark"] .pag-btn.on{background:#8b1a1a;color:#fff;border-color:#8b1a1a}
+[data-theme="dark"] .pag-info{color:var(--text3)}
+@media(max-width:768px){.pag-bar{padding:10px 16px 0}.pag-bar.bottom{padding:0 16px 6px}.pag-btn{padding:6px 10px;font-size:11px}}
 [data-theme="dark"] .batch-bar{background:#333}
 @media(max-width:768px){
   .hdr{padding:16px 16px 0;flex-wrap:wrap;gap:10px}
@@ -685,7 +698,7 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     </div>
   </div>
   <div class="sa">
-    <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="render()"></div>
+    <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="currentPage=1;render()"></div>
     <button class="btn-cal" onclick="openCal(null,null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Календар</button>
     <div style="display:flex;gap:4px;background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:4px">
       <button class="sort-btn on" data-s="created" onclick="toggleSort('created')" title="За датою створення" style="border:none;background:none;border-radius:7px;padding:5px 10px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500">Дата <span id="sort-created-icon">↓</span></button>
@@ -695,7 +708,9 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
     <button onclick="toggleBatchMode()" title="Пакетне редагування (☑)" id="batchModeBtn" style="background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:11px 13px;font-size:14px;cursor:pointer">☑</button>
     <button class="btn-qk" onclick="openQ()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>ШВИДКЕ ЗАВДАННЯ</button>
   </div>
+  <div class="pag-bar" id="pagTop"></div>
   <div class="ta" id="ta"></div>
+  <div class="pag-bar bottom" id="pagBot"></div>
 </div>
 <!-- ARCHIVE -->
 <div id="vArch" style="display:none">
@@ -727,6 +742,13 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
         <button onclick="resetPeriod()" style="border:1px solid #d2d0c8;background:#fff;border-radius:10px;padding:7px 12px;font-size:12px;font-family:inherit;color:#888;cursor:pointer">Скинути</button>
         <button onclick="confirmClearArchive()" style="border:1px solid #e8a8a0;background:#fff5f5;border-radius:10px;padding:7px 14px;font-size:12px;font-family:inherit;color:#b83a2a;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Очистити архів</button>
       </div>
+    </div>
+    <div style="margin:14px 0 4px;display:flex;align-items:center;gap:8px">
+      <div class="sb" style="max-width:340px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="archSrch" placeholder="Пошук по назві або посиланню..." oninput="rArch()" style="font-size:12px">
+      </div>
+      <button onclick="document.getElementById('archSrch').value='';rArch()" id="archSrchClear" style="display:none;border:none;background:#f5f3ee;border-radius:8px;padding:7px 12px;font-size:11px;color:#888;cursor:pointer;font-family:inherit">✕ Очистити</button>
     </div>
     <div id="archC"></div>
   </div>
@@ -1348,6 +1370,8 @@ let managers=[
   {code:'MK',name:'Міша', col:'#3a9e6a',vacFrom:'',vacTo:'',role:'admin',   email:'misha@waymark.app', canSeeHours:true} // суперадмін
 ];
 let selectedMgrColor=MGR_COLORS[2];
+const TASKS_PER_PAGE=10;
+let currentPage=1;
 let tasks=[
   {id:'f47ac10b-58cc-4372-a567-0e02b2c3d479',title:'Bell Raco Apartments — La Pineda',url:'lux.floriantravel.com',note:'Ціна 3100 євро нетто. Уточнити наявність на червень.',status:'work',tags:["Об'єкти"],created:'2026-04-20',deadline:'2026-04-28',forecast:'15:30 / 2026-04-28',from:'TD',to:'MK',result:'',hours:2,arch:false,archAt:'',cmts:[],seenBy:[]},
   {id:'550e8400-e29b-41d4-a716-446655440001',title:'Розсилка Іспанія — травень',url:'',note:'Підготувати шаблон листа для клієнтів бази.',status:'clarify',tags:['Розсилка'],created:'2026-04-19',deadline:'2026-04-30',forecast:'',from:'MK',to:'TD',result:'',hours:0,arch:false,archAt:'',cmts:[],seenBy:[]},
@@ -1830,7 +1854,7 @@ function addLabel(){
 
 /* ── FILTER ── */
 function sf(f,el){
-  flt=f; fltMine=false;
+  flt=f; fltMine=false; currentPage=1;
   document.querySelectorAll('.fp,.fp-label').forEach(p=>p.classList.remove('on'));
   if(el) el.classList.add('on');
   else{const x=document.querySelector(`[data-f="${f}"]`);if(x)x.classList.add('on');}
@@ -1840,7 +1864,7 @@ function sf(f,el){
   render();
 }
 function sfMine(el){
-  fltMine=!fltMine;
+  fltMine=!fltMine; currentPage=1;
   if(fltMine){
     // deactivate status filter buttons but keep flt for combined filtering
     document.querySelectorAll('.fp:not(#fpMine),.fp-label').forEach(p=>p.classList.remove('on'));
@@ -1871,6 +1895,7 @@ function toggleSort(field){
   const di=document.getElementById('sort-deadline-icon');
   if(ci) ci.textContent=sortDir.created==='desc'?'↓':'↑';
   if(di) di.textContent=sortDir.deadline==='asc'?'↑':'↓';
+  currentPage=1;
   render();
 }
 
@@ -1930,9 +1955,21 @@ function render(){
     ]:['Немає завдань за цим фільтром'];
     const msg=msgs[Math.floor(Math.random()*msgs.length)];
     ta.innerHTML=`<div class="empty-s" style="font-size:15px;color:${allDone?'#2e8653':'#ccc'}">${msg}</div>`;
+    renderPagination(0,0);
     return;
   }
-  ta.innerHTML=list.map(t=>{
+
+  // ── pagination ──
+  const totalPages=Math.ceil(list.length/TASKS_PER_PAGE);
+  if(currentPage>totalPages) currentPage=totalPages;
+  if(currentPage<1) currentPage=1;
+  const pageStart=(currentPage-1)*TASKS_PER_PAGE;
+  const pageEnd=pageStart+TASKS_PER_PAGE;
+  const pageList=list.slice(pageStart,pageEnd);
+
+  renderPagination(list.length,totalPages);
+
+  ta.innerHTML=pageList.map(t=>{
     const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
@@ -1942,7 +1979,7 @@ function render(){
     const urlH=t.url?`<a class="tc-url" href="${safeUrl}" target="_blank" rel="noopener"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>${esc(t.url)}</a>`:'';
     const noteH=t.note?`<div class="tc-note">${esc(t.note)}</div>`:'';
     const dp=[];
-    if(t.created) dp.push(`<span><span class="dlbl">Створено</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d0ccc8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(t.created)}</span>`);
+    if(t.created) dp.push(`<span><span class="dlbl">Створено</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d0ccc8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(t.created)}${t.createdTime?`<span style="color:#ccc;margin-left:3px">${esc(t.createdTime)}</span>`:''}</span>`);
     if(t.deadline) dp.push(`<span><span class="dlbl">Дедлайн</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e0a090" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span style="color:${over?'#c0392b':'#c07858'};font-weight:${over?'600':'400'}">${esc(t.deadline)}</span></span>`);
     const dtH=dp.length?`<div class="tc-dates">${dp.join('')}</div>`:'';
     const overdueH=over?`<div class="overdue-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Дедлайн прострочено</div>`:'';
@@ -2008,7 +2045,37 @@ function render(){
   }).join('');
 }
 
-function togCmt(id,ev){if(ev)ev.stopPropagation();const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
+function renderPagination(total,totalPages){
+  const bars=['pagTop','pagBot'];
+  bars.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(total<=TASKS_PER_PAGE){el.innerHTML='';return;}
+    const from=(currentPage-1)*TASKS_PER_PAGE+1;
+    const to=Math.min(currentPage*TASKS_PER_PAGE,total);
+    let html=`<button class="pag-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    // Show at most 7 page buttons with ellipsis
+    const WING=2;
+    let pages=[];
+    for(let p=1;p<=totalPages;p++){
+      if(p===1||p===totalPages||Math.abs(p-currentPage)<=WING) pages.push(p);
+      else if(pages[pages.length-1]!=='…') pages.push('…');
+    }
+    pages.forEach(p=>{
+      if(p==='…') html+=`<span class="pag-info">…</span>`;
+      else html+=`<button class="pag-btn${p===currentPage?' on':''}" onclick="goPage(${p})">${p}</button>`;
+    });
+    html+=`<button class="pag-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    html+=`<span class="pag-info">${from}–${to} з ${total}</span>`;
+    el.innerHTML=html;
+  });
+}
+
+function goPage(p){
+  currentPage=p;
+  render();
+  document.getElementById('ta').scrollIntoView({behavior:'smooth',block:'start'});
+}if(ev)ev.stopPropagation();const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
 function addCmt(id,ev){
   if(ev)ev.stopPropagation();
   const tx=document.getElementById('ct'+id).value.trim();if(!tx)return;
@@ -2370,10 +2437,15 @@ function aTab(m,el){aMode=m;document.querySelectorAll('.atab').forEach(t=>t.clas
 function getWk(d){const dt=new Date(d),j=new Date(dt.getFullYear(),0,1);return Math.ceil(((dt-j)/86400000+j.getDay()+1)/7);}
 function rArch(){
   const pF=document.getElementById('pFrom').value,pT=document.getElementById('pTo').value;
+  const q=(document.getElementById('archSrch')?.value||'').toLowerCase().trim();
+  // show/hide clear button
+  const clrBtn=document.getElementById('archSrchClear');
+  if(clrBtn) clrBtn.style.display=q?'':'none';
   // ALL archived tasks (including done status)
   let arch=tasks.filter(t=>t.arch);
   if(pF) arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT) arch=arch.filter(t=>(t.archAt||t.created)<=pT);
+  if(q) arch=arch.filter(t=>(t.title+' '+t.url+' '+t.note).toLowerCase().includes(q));
   const el=document.getElementById('archC');
   if(!arch.length){el.innerHTML='<p style="color:#ccc;font-size:13px;padding:20px 0">Архів порожній за цей період</p>';return;}
   const grp={};
@@ -2412,7 +2484,7 @@ function rArch(){
             <div class="arch-detail-grid">
               <div><div class="arch-detail-label">Поставив</div><div class="arch-detail-val">${fromM.name}</div></div>
               <div><div class="arch-detail-label">Виконував</div><div class="arch-detail-val">${toM.name}</div></div>
-              <div><div class="arch-detail-label">Створено</div><div class="arch-detail-val">${t.created||'—'}</div></div>
+              <div><div class="arch-detail-label">Створено</div><div class="arch-detail-val">${t.created||'—'}${t.createdTime?` <span style="color:#bbb">${esc(t.createdTime)}</span>`:''}</div></div>
               <div><div class="arch-detail-label">Архівовано</div><div class="arch-detail-val">${t.archAt||'—'}</div></div>
               ${t.deadline?`<div><div class="arch-detail-label">Дедлайн</div><div class="arch-detail-val">${t.deadline}</div></div>`:''}
               ${hoursHtml?`<div>${hoursHtml}</div>`:''}
@@ -2443,6 +2515,8 @@ function resetPeriod(){
   document.getElementById('pFrom').value='';document.getElementById('pTo').value='';
   document.getElementById('pFromTxt').textContent='Початок...';document.getElementById('pFromTxt').className='placeholder';
   document.getElementById('pToTxt').textContent='Кінець...';document.getElementById('pToTxt').className='placeholder';
+  const s=document.getElementById('archSrch');if(s)s.value='';
+  const c=document.getElementById('archSrchClear');if(c)c.style.display='none';
   rArch();
 }
 function confirmClearArchive(){
@@ -3048,11 +3122,14 @@ function mkT(){
       if(oldTo!==newTo) tgNotifyReassign(t, oldTo, curU);
     }
   } else {
+    const now=new Date();
+    const today=now.toISOString().split('T')[0];
+    const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
     tasks.unshift({id:newId,title:T,url:U.replace(/^https?:\/\//,''),note:N,
       status:document.getElementById('fS').value,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
-      created:today,deadline:document.getElementById('fDl').value,forecast:document.getElementById('fFc').value,
+      created:today,createdTime:timeStr,deadline:document.getElementById('fDl').value,forecast:document.getElementById('fFc').value,
       from:curU,to:document.getElementById('fTo').value,result:document.getElementById('fR').value,
       hours:parseFloat(document.getElementById('fHours').value)||0,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]'),
@@ -3066,11 +3143,15 @@ function openQ(){openM('mQ');setTimeout(()=>document.getElementById('qI').focus(
 function mkQ(){
   const v=document.getElementById('qI').value.trim();if(!v)return;
   const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
-  const today=new Date().toISOString().split('T')[0];
+  const now=new Date();
+  const today=now.toISOString().split('T')[0];
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   const defaultTo=(managers.find(m=>m.role==='admin'&&!m.hidden)||managers.find(m=>!m.hidden)||managers[0])?.code||curU;
-  const newTask={id:(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2),title:iU?'':v,url:iU?v.replace(/^https?:\/\//,''):'',note:'',status:'new',tags:[],
-    created:today,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]};
+  const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
+  const newTask={id:newId,title:iU?'':v,url:iU?v.replace(/^https?:\/\//,''):'',note:'',status:'new',tags:[],
+    created:today,createdTime:timeStr,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]};
   tasks.unshift(newTask);
+  logEntry('create',newId,v.slice(0,60)||'—');
   tgNotifyCreate(newTask);
   document.getElementById('qI').value='';closeM('mQ');save();rStats();render();
 }
@@ -3133,6 +3214,11 @@ function updClk(){
 }
 function showSet(){
   rdDays();renderMgrList();renderColorPicker();
+  // ── populate work hours inputs from current cfg ──
+  const wsEl=document.getElementById('ws');
+  const weEl=document.getElementById('we');
+  if(wsEl) wsEl.value=cfg.s||'09:00';
+  if(weEl) weEl.value=cfg.e||'18:00';
   const isAdm=canDo('admin')||isSuperAdmin();
   const isBasic=!canDo('extended')&&!isSuperAdmin();
   // Populate tg token field
