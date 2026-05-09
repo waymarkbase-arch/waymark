@@ -23,8 +23,8 @@ import { getAuth, signInWithEmailAndPassword, signInWithPopup,
          sendPasswordResetEmail,
          onAuthStateChanged }          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc,
-         onSnapshot, collection,
-         serverTimestamp, deleteField }from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+         onSnapshot, collection, getDocs,
+         deleteDoc, serverTimestamp, deleteField }from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage, ref as storageRef,
          uploadBytesResumable, getDownloadURL,
          deleteObject }                from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
@@ -48,7 +48,8 @@ const googleProv = new GoogleAuthProvider();
 window._fb = { fbAuth, db, fbStorage, signInWithEmailAndPassword, signInWithPopup,
                googleProv, signOut, onAuthStateChanged,
                createUserWithEmailAndPassword, sendPasswordResetEmail,
-               doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp, deleteField,
+               doc, getDoc, setDoc, onSnapshot, collection, getDocs,
+               deleteDoc, serverTimestamp, deleteField,
                storageRef, uploadBytesResumable, getDownloadURL, deleteObject };
 </script>
 <!-- Google API (Picker) -->
@@ -580,6 +581,12 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 }
 @media(min-width:769px){.mobile-nav{display:none}.fc-short{display:none!important}.fc-full{display:inline!important}}
 @media print{.mobile-nav{display:none!important}}
+
+/* ── MAINTENANCE SCREEN ── */
+#mntGear{animation:mntSpin 4s linear infinite}
+@keyframes mntSpin{to{transform:rotate(360deg)}}
+#mntDot{animation:mntPulse 1.4s ease-in-out infinite}
+@keyframes mntPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 </style>
 </head>
 <body>
@@ -979,7 +986,18 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
       </div>
 
     </div>
-    <div style="text-align:right;margin-top:14px"><button style="background:#1c1c1c;color:#fff;border:none;border-radius:9px;padding:9px 22px;cursor:pointer;font-size:13px;font-family:inherit" onclick="saveCfg()">Зберегти</button></div>
+          <div class="sec-title" style="margin-top:18px;color:#b83a2a">🔧 Режим обслуговування</div>
+      <p style="font-size:11px;color:#aaa;margin-bottom:10px">Базові учасники побачать екран обслуговування і не зможуть користуватись додатком.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+          <input type="checkbox" id="mntToggle" onchange="onMntToggle()" style="opacity:0;width:0;height:0;position:absolute">
+          <span id="mntSlider" style="position:absolute;inset:0;background:#ddd;border-radius:24px;transition:.3s;cursor:pointer"></span>
+          <span id="mntThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.2)"></span>
+        </label>
+        <span id="mntToggleLabel" style="font-size:13px;color:#555;font-weight:600">Вимкнено</span>
+      </div>
+      <textarea id="mntMsgInput" placeholder="Повідомлення для учасників (необов'язково)..." style="width:100%;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;color:#555;resize:vertical;min-height:56px;box-sizing:border-box"></textarea>
+      <div style="text-align:right;margin-top:14px"><button style="background:#1c1c1c;color:#fff;border:none;border-radius:9px;padding:9px 22px;cursor:pointer;font-size:13px;font-family:inherit" onclick="saveCfg()">Зберегти</button></div>
   </div>
 </div>
 
@@ -1141,9 +1159,11 @@ const FS_DOC = 'waymark/main'; // single shared document
 
 // ── SAVE to Firestore ──
 async function save(){
+  // ── активні завдання (arch:false) — в основний документ
+  const activeTasks=tasks.filter(t=>!t.arch);
   // Mirror to localStorage as offline cache
   try{
-    localStorage.setItem('wm_tasks',    JSON.stringify(tasks));
+    localStorage.setItem('wm_tasks',    JSON.stringify(activeTasks));
     localStorage.setItem('wm_managers', JSON.stringify(managers));
     localStorage.setItem('wm_labels',   JSON.stringify(customLabels));
     localStorage.setItem('wm_cfg',      JSON.stringify(cfg));
@@ -1151,28 +1171,45 @@ async function save(){
   }catch(e){}
   // Push to Firestore.
   // IMPORTANT: For production — add Firestore Security Rules in Firebase Console:
-  //   match /waymark/main {
+  //   match /waymark/{docId} {
   //     allow read, write: if request.auth != null
   //       && request.auth.token.email_verified == true;
   //   }
-  // This ensures only authenticated, email-verified Firebase users can read/write.
-  // Role-level access control lives here in the client, but network-level auth
-  // is enforced by Firestore Rules on the server.
+  //   match /waymark_archive/{docId} {
+  //     allow read, write: if request.auth != null
+  //       && request.auth.token.email_verified == true;
+  //   }
   try{
     const {db, doc, setDoc, serverTimestamp} = window._fb;
     await setDoc(doc(db, 'waymark','main'), {
-      tasks, managers, customLabels, cfg,
-      auditLog: auditLog.slice(0,500), // cap at 500 entries
+      tasks: activeTasks, managers, customLabels, cfg,
+      auditLog: auditLog.slice(0,500),
       updatedAt: serverTimestamp(),
       updatedBy: curU
     });
   }catch(e){ console.error('Firestore save error:',e); }
 }
 
+// ── зберегти одне архівне завдання в окремий документ ──
+async function saveArchiveDoc(t){
+  try{
+    const {db, doc, setDoc} = window._fb;
+    await setDoc(doc(db,'waymark_archive', String(t.id)), t);
+  }catch(e){ console.error('Firestore archive save error:',e); }
+}
+
+// ── видалити одне архівне завдання з колекції ──
+async function deleteArchiveDoc(id){
+  try{
+    const {db, doc, deleteDoc} = window._fb;
+    await deleteDoc(doc(db,'waymark_archive', String(id)));
+  }catch(e){ console.error('Firestore archive delete error:',e); }
+}
+
 // ── LOAD from Firestore (one-time) ──
 async function loadFromFirestore(){
   try{
-    const {db, doc, getDoc} = window._fb;
+    const {db, doc, getDoc, collection, getDocs} = window._fb;
     const snap = await getDoc(doc(db,'waymark','main'));
     if(snap.exists()){
       const d = snap.data();
@@ -1182,9 +1219,17 @@ async function loadFromFirestore(){
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
     }
+    // ── завантажити архівні завдання з окремої колекції ──
+    try{
+      const archSnap = await getDocs(collection(db,'waymark_archive'));
+      const archTasks = [];
+      archSnap.forEach(d => archTasks.push(d.data()));
+      // злити з активними (уникнути дублів)
+      const activeIds = new Set(tasks.map(t=>String(t.id)));
+      archTasks.forEach(t=>{ if(!activeIds.has(String(t.id))) tasks.push(t); });
+    }catch(e){ console.warn('Archive collection load error:',e); }
   }catch(e){
     console.error('Firestore load error:',e);
-    // fall back to localStorage cache
     loadFromLocalStorage();
   }
 }
@@ -1209,11 +1254,16 @@ function startRealtimeSync(){
     const d=snap.data();
     // only apply if another user changed it (not our own save)
     if(d.updatedBy && d.updatedBy !== curU){
-      if(d.tasks)        tasks        = d.tasks;
+      if(d.tasks){
+        // merge: keep archived tasks from separate collection, replace active tasks
+        const curArch=tasks.filter(t=>t.arch);
+        const archIds=new Set(curArch.map(t=>String(t.id)));
+        tasks=[...d.tasks, ...curArch.filter(t=>!d.tasks.some(a=>String(a.id)===String(t.id)))];
+      }
       // never overwrite managers during SA session or right after a role change
       if(d.managers && !isSuperAdmin() && !_roleChangeLock) managers = d.managers;
       if(d.customLabels) customLabels = d.customLabels;
-      if(d.cfg)          cfg          = d.cfg;
+      if(d.cfg){cfg=d.cfg;applyMaintenance();}
       if(d.auditLog)     auditLog     = d.auditLog;
       rStats(); render(); renderVacBanner(); renderLabelPills();
       if(currentTab==='arch') rArch();
@@ -1329,6 +1379,7 @@ window.addEventListener('load', ()=>{
             startRealtimeSync();
             document.getElementById('loginScreen').style.display='none';
             document.getElementById('appShell').style.display='block';
+            applyMaintenance();
           }
         } else {
           if(window._accessDeniedShown) return;
@@ -1621,7 +1672,10 @@ function openSAHardDelete(id){
 }
 function confirmSAHardDelete(){
   const t=findTask(saDelId);
-  if(t) logEntry('hard_delete',saDelId,t.title||t.url||t.note||'—');
+  if(t){
+    logEntry('hard_delete',saDelId,t.title||t.url||t.note||'—');
+    if(t.arch) deleteArchiveDoc(saDelId);
+  }
   tasks=tasks.filter(t=>t.id!==saDelId);
   saDelId=null;closeM('mSAHardDel');save();rStats();render();
 }
@@ -1671,7 +1725,10 @@ function batchArchive(){
   if(!canDo('extended')&&!isSuperAdmin()){alert('Пакетне архівування потребує розширеного доступу.');return;}
   if(!confirm('Перемістити '+batchSelected.size+' завдань до архіву?'))return;
   const d=new Date().toISOString().split('T')[0];
-  batchSelected.forEach(id=>{const t=tasks.find(t=>t.id===id);if(t){t.arch=true;t.archAt=d;}});
+  batchSelected.forEach(id=>{
+    const t=tasks.find(t=>t.id===id);
+    if(t){t.arch=true;t.archAt=d;saveArchiveDoc(t);}
+  });
   save();batchSelected.clear();toggleBatchMode();rStats();render();
 }
 
@@ -2411,6 +2468,7 @@ function doDel(){
   const t=findTask(dId);
   logEntry('archive',dId,t.title||t.url||t.note||'—');
   t.arch=true;t.archAt=new Date().toISOString().split('T')[0];
+  saveArchiveDoc(t);
   closeM('mCf');save();rStats();render();rArch();
 }
 function goTab(tab,el){
@@ -2509,6 +2567,7 @@ function restoreTask(id){
   if(!t){alert('Завдання не знайдено.');return;}
   if(!confirm(`Відновити завдання «${t.title||t.url||t.note||'—'}» зі статусом "${SL[t.status]||t.status}"?`)) return;
   t.arch=false;t.archAt='';
+  deleteArchiveDoc(id);
   logEntry('restore',t.id,t.title||t.url||t.note||'—','arch','true','false');
   save();rStats();render();rArch();
 }
@@ -2527,8 +2586,10 @@ function confirmClearArchive(){
   if(countEl) countEl.textContent='Буде видалено: '+archTasks.length+' завдань'+( archTasks.length===1?'о':archTasks.length<5?'я':'');
   openM('mClearArchive');
 }
-function doClearArchive(){
-  const before=tasks.filter(t=>t.arch).length;
+async function doClearArchive(){
+  const archTasks=tasks.filter(t=>t.arch);
+  const before=archTasks.length;
+  await Promise.all(archTasks.map(t=>deleteArchiveDoc(t.id)));
   tasks=tasks.filter(t=>!t.arch);
   logEntry('hard_delete',null,'Очищення архіву','','','Видалено '+before+' завдань');
   save();
@@ -3214,12 +3275,21 @@ function updClk(){
   document.getElementById('clk').className='clk'+(ok?' work':'');
 }
 function showSet(){
+  if(!canDo('admin')&&!isSuperAdmin()){return;}
   rdDays();renderMgrList();renderColorPicker();
   // ── populate work hours inputs from current cfg ──
   const wsEl=document.getElementById('ws');
   const weEl=document.getElementById('we');
   if(wsEl) wsEl.value=cfg.s||'09:00';
   if(weEl) weEl.value=cfg.e||'18:00';
+  // ── populate maintenance toggle ──
+  const mntTog=document.getElementById('mntToggle');
+  const mntMsg=document.getElementById('mntMsgInput');
+  if(mntTog){
+    mntTog.checked=!!(cfg.maintenance);
+    syncMntToggleUI(mntTog.checked);
+  }
+  if(mntMsg) mntMsg.value=cfg.maintenanceMsg||'';
   const isAdm=canDo('admin')||isSuperAdmin();
   const isBasic=!canDo('extended')&&!isSuperAdmin();
   // Populate tg token field
@@ -3268,10 +3338,114 @@ function saveMyName(){
 }
 function rdDays(){const ns=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];document.getElementById('dbtns').innerHTML=ns.map((n,i)=>`<button class="dbtn${cfg.days.includes(i)?' on':''}" onclick="tDay(${i},this)">${n}</button>`).join('');}
 function tDay(i,el){const x=cfg.days.indexOf(i);if(x>-1)cfg.days.splice(x,1);else cfg.days.push(i);el.classList.toggle('on');}
-function saveCfg(){cfg.s=document.getElementById('ws').value;cfg.e=document.getElementById('we').value;
+
+// ══ MAINTENANCE MODE ══
+function syncMntToggleUI(on){
+  const slider=document.getElementById('mntSlider');
+  const thumb=document.getElementById('mntThumb');
+  const label=document.getElementById('mntToggleLabel');
+  if(!slider) return;
+  slider.style.background=on?'#b83a2a':'#ddd';
+  thumb.style.left=on?'21px':'3px';
+  if(label) label.textContent=on?'Увімкнено':'Вимкнено';
+}
+function onMntToggle(){
+  const on=document.getElementById('mntToggle').checked;
+  syncMntToggleUI(on);
+}
+function applyMaintenance(){
+  const on=!!(cfg.maintenance);
+  const isBasic=!canDo('extended')&&!isSuperAdmin();
+  const screen=document.getElementById('maintenanceScreen');
+  const shell=document.getElementById('appShell');
+  if(!screen) return;
+  if(on && isBasic){
+    // show maintenance, hide app
+    document.getElementById('mntMsg').textContent=cfg.maintenanceMsg||'Система тимчасово недоступна. Будь ласка, зачекайте.';
+    screen.style.display='block';
+    if(shell) shell.style.display='none';
+    startMntCanvas();
+  } else {
+    screen.style.display='none';
+    if(shell && curU) shell.style.display='block';
+    stopMntCanvas();
+  }
+}
+// ── animated canvas background ──
+let _mntAnimId=null;
+function startMntCanvas(){
+  const canvas=document.getElementById('mntCanvas');
+  if(!canvas||_mntAnimId) return;
+  const ctx=canvas.getContext('2d');
+  const pts=[];
+  function resize(){canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;}
+  resize();
+  window.addEventListener('resize',resize);
+  // generate floating particles
+  for(let i=0;i<60;i++) pts.push({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+    vx:(Math.random()-.5)*.4, vy:(Math.random()-.5)*.4,
+    r:Math.random()*1.8+.4, a:Math.random()
+  });
+  function draw(){
+    const W=canvas.width,H=canvas.height;
+    // dark gradient background
+    const g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#0f0f13');
+    g.addColorStop(.5,'#1a0a0a');
+    g.addColorStop(1,'#0a0a0f');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // subtle grid
+    ctx.strokeStyle='rgba(139,26,26,.07)';ctx.lineWidth=1;
+    const gStep=44;
+    for(let x=0;x<W;x+=gStep){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=gStep){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // particles + connections
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(224,80,80,${p.a*.5})`;
+      ctx.fill();
+    });
+    // draw connections between nearby particles
+    for(let i=0;i<pts.length;i++){
+      for(let j=i+1;j<pts.length;j++){
+        const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<110){
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x,pts[i].y);
+          ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle=`rgba(180,50,50,${(1-dist/110)*.18})`;
+          ctx.lineWidth=.8;
+          ctx.stroke();
+        }
+      }
+    }
+    _mntAnimId=requestAnimationFrame(draw);
+  }
+  draw();
+}
+function stopMntCanvas(){
+  if(_mntAnimId){cancelAnimationFrame(_mntAnimId);_mntAnimId=null;}
+}
+
+function saveCfg(){
+  cfg.s=document.getElementById('ws').value;
+  cfg.e=document.getElementById('we').value;
   const tok=document.getElementById('tgBotToken')?.value?.trim();
   if(tok!==undefined) cfg.tgBotToken=tok;
-  closeM('mSet');save();updClk();}
+  // maintenance
+  const mntOn=document.getElementById('mntToggle')?.checked||false;
+  const mntMsg=document.getElementById('mntMsgInput')?.value?.trim()||'';
+  cfg.maintenance=mntOn;
+  cfg.maintenanceMsg=mntMsg;
+  closeM('mSet');save();updClk();
+  applyMaintenance();
+}
 
 /* ══════════════════════════════════════════════
    TELEGRAM BOT NOTIFICATIONS
@@ -3667,5 +3841,20 @@ async function tgNotifyDeadline(task, daysLeft){
   window.addEventListener('resize',hide);
 })();
 </script>
+
+<!-- ══ MAINTENANCE SCREEN ══ -->
+<div id="maintenanceScreen" style="display:none;position:fixed;inset:0;z-index:99999;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif">
+  <canvas id="mntCanvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center">
+    <div id="mntGear" style="font-size:72px;margin-bottom:24px;display:inline-block;filter:drop-shadow(0 0 32px rgba(139,26,26,.7))">⚙️</div>
+    <div style="font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#e05050;font-weight:700;margin-bottom:12px;opacity:.85">Waymark</div>
+    <div style="font-size:28px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-.5px">Технічне обслуговування</div>
+    <div id="mntMsg" style="font-size:15px;color:rgba(255,255,255,.6);max-width:380px;line-height:1.6;margin-bottom:40px">Система тимчасово недоступна. Будь ласка, зачекайте.</div>
+    <div style="display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.35);font-size:12px">
+      <span id="mntDot" style="width:8px;height:8px;background:#e05050;border-radius:50%;display:inline-block"></span>
+      Ведуться роботи
+    </div>
+  </div>
+</div>
 </body>
 </html>
