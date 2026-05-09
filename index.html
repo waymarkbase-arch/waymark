@@ -2991,6 +2991,7 @@ function renderGanttView(){
 }
 function renderGantt(ts,startISO,endISO){
   const el=document.getElementById('ganttChart');if(!el)return;
+  // Fix 1: show task if its bar overlaps the visible range at all
   const wd=ts.filter(t=>t.deadline&&t.created&&!t.arch)
     .filter(t=>t.deadline>=startISO&&t.created<=endISO)
     .sort((a,b)=>a.deadline.localeCompare(b.deadline));
@@ -3000,64 +3001,97 @@ function renderGantt(ts,startISO,endISO){
   const tot=Math.max(1,Math.ceil((maxD-minD)/86400000)+1);
   const COL_W=ganttPeriod==='quarter'?10:ganttPeriod==='month'?16:28;
   const LABEL_W=160;
-  const W=tot*COL_W,H=wd.length*30+42;
+  const W=tot*COL_W,H=wd.length*30+52;
   const today=new Date();today.setHours(0,0,0,0);
 
-  let svg=`<svg width="${LABEL_W+W+30}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">`;
+  let svg=`<svg width="${LABEL_W+W+40}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif">`;
+
+  // background
+  svg+=`<rect width="${LABEL_W+W+40}" height="${H}" fill="transparent"/>`;
 
   // grid + headers
-  let curM='',curW=-1;
+  let curM='';
   for(let d=0;d<tot;d++){
     const dd=new Date(minD);dd.setDate(dd.getDate()+d);
     const x=LABEL_W+d*COL_W;
     const isToday=dd.getTime()===today.getTime();
-    const isMon=dd.getDay()===1||d===0;
 
     if(ganttPeriod==='quarter'||ganttPeriod==='month'){
       const mo=dd.toLocaleDateString('uk-UA',{month:'short'});
       if(mo!==curM){
-        svg+=`<text x="${x}" y="13" font-size="9" fill="#aaa">${mo}</text>`;
-        svg+=`<line x1="${x}" y1="16" x2="${x}" y2="${H}" stroke="#e8e6e0" stroke-width="1"/>`;
+        svg+=`<text x="${x+2}" y="13" font-size="9" fill="#aaa" font-weight="600">${mo}</text>`;
+        svg+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#e8e6e0" stroke-width="1"/>`;
         curM=mo;
       }
-      if(dd.getDate()===1||d===0){
-        // day of month every 5 in quarter, every day in month
-        const step=ganttPeriod==='quarter'?5:1;
-        if(d%step===0) svg+=`<text x="${x+2}" y="26" font-size="8" fill="#ccc">${dd.getDate()}</text>`;
+      // Fix 3: show day numbers correctly — every day in month, every 5 in quarter
+      const step=ganttPeriod==='quarter'?5:1;
+      if(d%step===0){
+        svg+=`<text x="${x+2}" y="26" font-size="8" fill="#bbb">${dd.getDate()}</text>`;
       }
     } else {
-      // week view — show day name + date
+      // week view
       const dayName=dd.toLocaleDateString('uk-UA',{weekday:'short'});
       const isWeekend=dd.getDay()===0||dd.getDay()===6;
-      if(isWeekend) svg+=`<rect x="${x}" y="30" width="${COL_W}" height="${H-30}" fill="#fafaf8" opacity=".6"/>`;
+      if(isWeekend) svg+=`<rect x="${x}" y="30" width="${COL_W}" height="${H-30}" fill="#f8f6f2" opacity=".7"/>`;
       svg+=`<text x="${x+COL_W/2}" y="13" font-size="9" fill="${isWeekend?'#ccc':'#aaa'}" text-anchor="middle">${dayName}</text>`;
-      svg+=`<text x="${x+COL_W/2}" y="25" font-size="10" fill="${isWeekend?'#ccc':'#888'}" text-anchor="middle">${dd.getDate()}</text>`;
+      svg+=`<text x="${x+COL_W/2}" y="25" font-size="10" fill="${isWeekend?'#bbb':'#888'}" text-anchor="middle" font-weight="${isToday?'700':'400'}">${dd.getDate()}</text>`;
       svg+=`<line x1="${x}" y1="28" x2="${x}" y2="${H}" stroke="#f0ede8" stroke-width="1"/>`;
     }
-    // today highlight
-    if(isToday) svg+=`<rect x="${x}" y="28" width="${Math.max(COL_W,1)}" height="${H-28}" fill="#e8f4ea" opacity=".4"/>`;
+    // Fix 4: today — green highlight + red vertical line
+    if(isToday){
+      svg+=`<rect x="${x}" y="28" width="${COL_W}" height="${H-28}" fill="#e8f4ea" opacity=".5"/>`;
+      svg+=`<line x1="${x+COL_W/2}" y1="28" x2="${x+COL_W/2}" y2="${H}" stroke="#2e8653" stroke-width="1.5" stroke-dasharray="3,3"/>`;
+    }
   }
+
+  // separator line under header
+  svg+=`<line x1="${LABEL_W}" y1="30" x2="${LABEL_W+W}" y2="30" stroke="#e0ddd6" stroke-width="1"/>`;
 
   // task bars
   wd.forEach((t,i)=>{
     const y=42+i*30;
-    const cS=new Date(Math.max(new Date(t.created+'T00:00:00'),minD));
-    const cE=new Date(Math.min(new Date(t.deadline+'T00:00:00'),maxD));
+    // row stripe
+    if(i%2===1) svg+=`<rect x="0" y="${y}" width="${LABEL_W+W+40}" height="30" fill="#faf9f7" opacity=".5"/>`;
+
+    const rawS=new Date(t.created+'T00:00:00');
+    const rawE=new Date(t.deadline+'T00:00:00');
+    // Fix 2: guard against inverted dates
+    if(rawE<rawS) return;
+    const cS=new Date(Math.max(rawS,minD));
+    const cE=new Date(Math.min(rawE,maxD));
     const s=Math.round((cS-minD)/86400000);
-    const e=Math.min(tot-1,Math.round((cE-minD)/86400000));
+    const e=Math.max(s,Math.min(tot-1,Math.round((cE-minD)/86400000)));
     const barW=Math.max(COL_W,(e-s+1)*COL_W);
+
     const col=STCOL[t.status]||'#c8cdd6';
     const over=isOverdue(t);
-    const lbl=(t.title||t.url||t.note||'—').slice(0,ganttPeriod==='week'?24:18);
-    svg+=`<text x="${LABEL_W-6}" y="${y+16}" font-size="11" fill="#555" text-anchor="end">${esc(lbl)}</text>`;
-    svg+=`<rect x="${LABEL_W+s*COL_W}" y="${y+3}" width="${barW}" height="20" rx="5" fill="${over?'#e8a0a0':col}" opacity=".9"/>`;
-    if(ganttPeriod!=='quarter'){
-      svg+=`<text x="${LABEL_W+s*COL_W+6}" y="${y+16}" font-size="9" fill="#444">${esc(lbl.slice(0,ganttPeriod==='month'?14:20))}</text>`;
+    const barCol=over?'#e8a0a0':col;
+    const lbl=(t.title||t.url||t.note||'—');
+    const lblShort=lbl.slice(0,ganttPeriod==='week'?22:16);
+
+    // label column
+    svg+=`<text x="${LABEL_W-8}" y="${y+16}" font-size="11" fill="#555" text-anchor="end" clip-path="url(#cp)">${esc(lblShort)}</text>`;
+
+    // bar shadow
+    svg+=`<rect x="${LABEL_W+s*COL_W+1}" y="${y+5}" width="${barW}" height="20" rx="5" fill="rgba(0,0,0,.06)"/>`;
+    // bar
+    svg+=`<rect x="${LABEL_W+s*COL_W}" y="${y+4}" width="${barW}" height="20" rx="5" fill="${barCol}" opacity=".92"/>`;
+
+    // bar label (inside bar if wide enough)
+    if(barW>30&&ganttPeriod!=='quarter'){
+      const barLbl=lbl.slice(0,ganttPeriod==='month'?12:18);
+      svg+=`<text x="${LABEL_W+s*COL_W+6}" y="${y+17}" font-size="9" fill="${over?'#7a2020':'#333'}" font-weight="500">${esc(barLbl)}</text>`;
     }
+
+    // assignee avatar
     const m=mgr(t.to);
-    svg+=`<circle cx="${LABEL_W+(e+1)*COL_W+10}" cy="${y+13}" r="9" fill="${m.col}"/>`;
-    svg+=`<text x="${LABEL_W+(e+1)*COL_W+10}" y="${y+17}" font-size="8" fill="white" text-anchor="middle">${esc(m.code)}</text>`;
+    const ax=LABEL_W+(e+1)*COL_W+14;
+    svg+=`<circle cx="${ax}" cy="${y+14}" r="10" fill="${m.col}"/>`;
+    svg+=`<text x="${ax}" y="${y+18}" font-size="8" fill="white" text-anchor="middle" font-weight="600">${esc(m.code.slice(0,2))}</text>`;
   });
+
+  // vertical label separator
+  svg+=`<line x1="${LABEL_W}" y1="0" x2="${LABEL_W}" y2="${H}" stroke="#e4e0da" stroke-width="1.5"/>`;
 
   svg+='</svg>';el.innerHTML=svg;
 }
