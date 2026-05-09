@@ -750,14 +750,22 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
         <button onclick="confirmClearArchive()" style="border:1px solid #e8a8a0;background:#fff5f5;border-radius:10px;padding:7px 14px;font-size:12px;font-family:inherit;color:#b83a2a;cursor:pointer;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Очистити архів</button>
       </div>
     </div>
-    <div style="margin:14px 0 4px;display:flex;align-items:center;gap:8px">
-      <div class="sb" style="max-width:340px">
+    <div style="margin:14px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="sb" style="max-width:300px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input id="archSrch" placeholder="Пошук по назві або посиланню..." oninput="rArch()" style="font-size:12px">
+        <input id="archSrch" placeholder="Пошук по назві або посиланню..." oninput="archPage=1;rArch()" style="font-size:12px">
       </div>
-      <button onclick="document.getElementById('archSrch').value='';rArch()" id="archSrchClear" style="display:none;border:none;background:#f5f3ee;border-radius:8px;padding:7px 12px;font-size:11px;color:#888;cursor:pointer;font-family:inherit">✕ Очистити</button>
+      <button onclick="document.getElementById('archSrch').value='';archPage=1;rArch()" id="archSrchClear" style="display:none;border:none;background:#f5f3ee;border-radius:8px;padding:7px 12px;font-size:11px;color:#888;cursor:pointer;font-family:inherit">✕</button>
+      <select id="archFilterFrom" onchange="archPage=1;rArch()" style="border:1px solid #e4e0da;border-radius:9px;padding:7px 10px;font-size:12px;font-family:inherit;background:#fff;color:#555">
+        <option value="">Автор: усі</option>
+      </select>
+      <select id="archFilterTo" onchange="archPage=1;rArch()" style="border:1px solid #e4e0da;border-radius:9px;padding:7px 10px;font-size:12px;font-family:inherit;background:#fff;color:#555">
+        <option value="">Виконавець: усі</option>
+      </select>
     </div>
+    <div id="archPagTop" style="margin-bottom:8px"></div>
     <div id="archC"></div>
+    <div id="archPagBot" style="margin-top:12px"></div>
   </div>
 </div>
 <!-- ANALYTICS -->
@@ -1848,11 +1856,11 @@ function calConfirmDate(){
   } else if(calMode==='pFrom'){
     document.getElementById('pFrom').value=iso;
     const t=document.getElementById('pFromTxt');t.textContent=iso;t.className='';
-    rArch();
+    archPage=1;rArch();
   } else if(calMode==='pTo'){
     document.getElementById('pTo').value=iso;
     const t=document.getElementById('pToTxt');t.textContent=iso;t.className='';
-    rArch();
+    archPage=1;rArch();
   } else if(calMode==='vacFrom'||calMode==='vacTo'){
     const [code,field]=calTarget.split('|');
     const m=managers.find(x=>x.code===code);
@@ -2479,11 +2487,11 @@ function askDel(id){
   if(el) el.textContent=preview;
   openM('mCf');
 }
-function doDel(){
+async function doDel(){
   const t=findTask(dId);
   logEntry('archive',dId,t.title||t.url||t.note||'—');
   t.arch=true;t.archAt=new Date().toISOString().split('T')[0];
-  saveArchiveDoc(t);
+  await saveArchiveDoc(t); // must complete before save() removes it from main doc
   closeM('mCf');save();rStats();render();rArch();
 }
 function goTab(tab,el){
@@ -2507,65 +2515,140 @@ function goTab(tab,el){
   if(tab==='anlyt') renderAnalytics();
   if(tab==='log') renderLog();
 }
-function aTab(m,el){aMode=m;document.querySelectorAll('.atab').forEach(t=>t.classList.remove('on'));el.classList.add('on');rArch();}
+function aTab(m,el){aMode=m;archPage=1;document.querySelectorAll('.atab').forEach(t=>t.classList.remove('on'));el.classList.add('on');rArch();}
 function getWk(d){const dt=new Date(d),j=new Date(dt.getFullYear(),0,1);return Math.ceil(((dt-j)/86400000+j.getDay()+1)/7);}
 function fmtArchDate(iso){
   if(!iso) return '?';
   const [,m,d]=iso.split('-');
   return d+'.'+m;
 }
+let archPage=1;
+const ARCH_PER_PAGE=50;
+
+function renderArchPagination(total, totalPages, containerId){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  if(totalPages<=1){el.innerHTML='';return;}
+  const from=(archPage-1)*ARCH_PER_PAGE+1;
+  const to=Math.min(archPage*ARCH_PER_PAGE,total);
+  const WING=2;
+  let pages=[];
+  for(let p=1;p<=totalPages;p++){
+    if(p===1||p===totalPages||Math.abs(p-archPage)<=WING) pages.push(p);
+    else if(pages[pages.length-1]!=='…') pages.push('…');
+  }
+  let html=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:#888">`;
+  html+=`<button class="pag-btn" onclick="goArchPage(${archPage-1})" ${archPage===1?'disabled':''}>‹</button>`;
+  pages.forEach(p=>{
+    if(p==='…') html+=`<span class="pag-info">…</span>`;
+    else html+=`<button class="pag-btn${p===archPage?' on':''}" onclick="goArchPage(${p})">${p}</button>`;
+  });
+  html+=`<button class="pag-btn" onclick="goArchPage(${archPage+1})" ${archPage===totalPages?'disabled':''}>›</button>`;
+  html+=`<span class="pag-info" style="margin-left:4px">${from}–${to} з ${total}</span>`;
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+function goArchPage(p){
+  archPage=p;
+  rArch();
+  document.getElementById('vArch').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function rArch(){
   const pF=document.getElementById('pFrom').value,pT=document.getElementById('pTo').value;
   const q=(document.getElementById('archSrch')?.value||'').toLowerCase().trim();
+  const filterFrom=document.getElementById('archFilterFrom')?.value||'';
+  const filterTo=document.getElementById('archFilterTo')?.value||'';
+
   // show/hide clear button
   const clrBtn=document.getElementById('archSrchClear');
   if(clrBtn) clrBtn.style.display=q?'':'none';
-  // ALL archived tasks (including done status)
-  let arch=tasks.filter(t=>t.arch);
+
+  // populate from/to selects (all archived tasks, not filtered)
+  const allArch=tasks.filter(t=>t.arch);
+  const fromSel=document.getElementById('archFilterFrom');
+  const toSel=document.getElementById('archFilterTo');
+  if(fromSel){
+    const curFrom=fromSel.value;
+    const fromCodes=[...new Set(allArch.map(t=>t.from).filter(Boolean))];
+    fromSel.innerHTML='<option value="">Автор: усі</option>'+
+      fromCodes.map(c=>`<option value="${esc(c)}" ${curFrom===c?'selected':''}>${esc(mgr(c).name)}</option>`).join('');
+  }
+  if(toSel){
+    const curTo=toSel.value;
+    const toCodes=[...new Set(allArch.map(t=>t.to).filter(Boolean))];
+    toSel.innerHTML='<option value="">Виконавець: усі</option>'+
+      toCodes.map(c=>`<option value="${esc(c)}" ${curTo===c?'selected':''}>${esc(mgr(c).name)}</option>`).join('');
+  }
+
+  // ALL archived tasks — filter BEFORE pagination (search works across all pages)
+  let arch=allArch;
   if(pF) arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT) arch=arch.filter(t=>(t.archAt||t.created)<=pT);
+  if(filterFrom) arch=arch.filter(t=>t.from===filterFrom);
+  if(filterTo) arch=arch.filter(t=>t.to===filterTo);
   if(q) arch=arch.filter(t=>(t.title+' '+t.url+' '+t.note).toLowerCase().includes(q));
+
   const el=document.getElementById('archC');
-  if(!arch.length){el.innerHTML='<p style="color:#ccc;font-size:13px;padding:20px 0">Архів порожній за цей період</p>';return;}
+  if(!arch.length){
+    el.innerHTML='<p style="color:#ccc;font-size:13px;padding:20px 0">Архів порожній за цим фільтром</p>';
+    renderArchPagination(0,0,'archPagTop');
+    renderArchPagination(0,0,'archPagBot');
+    return;
+  }
+
+  // Sort by archAt desc (newest first)
+  arch=arch.slice().sort((a,b)=>(b.archAt||b.created).localeCompare(a.archAt||a.created));
+
+  // Pagination
+  const totalPages=Math.ceil(arch.length/ARCH_PER_PAGE);
+  if(archPage>totalPages) archPage=totalPages;
+  if(archPage<1) archPage=1;
+  const pageSlice=arch.slice((archPage-1)*ARCH_PER_PAGE, archPage*ARCH_PER_PAGE);
+
+  renderArchPagination(arch.length,totalPages,'archPagTop');
+
+  // Group current page by week/month/year
   const grp={};
-  arch.forEach(t=>{
+  pageSlice.forEach(t=>{
     const d=t.archAt||t.created;let k;
     if(aMode==='week') k=`Тиждень ${getWk(d)}, ${d.slice(0,4)}`;
     else if(aMode==='month') k=MK_UK[parseInt(d.slice(5,7))-1]+' '+d.slice(0,4);
     else k=d.slice(0,4)+' рік';
     if(!grp[k])grp[k]=[];grp[k].push(t);
   });
+
   el.innerHTML=Object.entries(grp).map(([k,items])=>`
     <div class="arch-g">
       <div class="arch-hdr">${k} — ${items.length} завд.</div>
       ${items.map(t=>{
         const fromM=mgr(t.from),toM=mgr(t.to);
         const atid=typeof t.id==='number'?t.id:`'${t.id}'`;
-        const noteHtml=t.note?`<div class="arch-detail-label">Нотатка</div><div class="arch-detail-val" style="white-space:pre-wrap;grid-column:1/-1">${t.note}</div>`:'';
-        const resultHtml=t.result?`<div class="arch-detail-label">Результат</div><div class="arch-detail-val" style="grid-column:1/-1">${t.result}</div>`:'';
-        const tagsHtml=t.tags&&t.tags.length?t.tags.map(tg=>`<span style="background:#f0ede8;border-radius:10px;padding:1px 8px;font-size:10px;color:#888">${tg}</span>`).join(' '):'—';
+        const noteHtml=t.note?`<div class="arch-detail-label">Нотатка</div><div class="arch-detail-val" style="white-space:pre-wrap;grid-column:1/-1">${esc(t.note)}</div>`:'';
+        const resultHtml=t.result?`<div class="arch-detail-label">Результат</div><div class="arch-detail-val" style="grid-column:1/-1">${esc(t.result)}</div>`:'';
+        const tagsHtml=t.tags&&t.tags.length?t.tags.map(tg=>`<span style="background:#f0ede8;border-radius:10px;padding:1px 8px;font-size:10px;color:#888">${esc(tg)}</span>`).join(' '):'—';
         const hoursHtml=canAccessHours()&&t.hours?`<div class="arch-detail-label">Години</div><div class="arch-detail-val">⏱ ${fmtHrs(t.hours)}</div>`:'';
-        const cmtsHtml=t.cmts&&t.cmts.length?`<div class="arch-detail-label" style="grid-column:1/-1">Коментарі (${t.cmts.length})</div>${t.cmts.map(c=>`<div style="grid-column:1/-1;background:#fafaf8;border-radius:8px;padding:6px 10px;font-size:12px;color:#555"><span style="font-weight:600;color:#888">${mgr(c.by).code}</span> <span style="color:#bbb">${c.t}</span> — ${c.tx}</div>`).join('')}`:'';
+        const cmtsHtml=t.cmts&&t.cmts.length?`<div class="arch-detail-label" style="grid-column:1/-1">Коментарі (${t.cmts.length})</div>${t.cmts.map(c=>`<div style="grid-column:1/-1;background:#fafaf8;border-radius:8px;padding:6px 10px;font-size:12px;color:#555"><span style="font-weight:600;color:#888">${esc(mgr(c.by).code)}</span> <span style="color:#bbb">${esc(c.t)}</span> — ${esc(c.tx)}</div>`).join('')}`:'';
         const canRestore=canDo('extended')||isSuperAdmin();
         return `<div class="arch-row" id="archrow_${t.id}">
           <div class="arch-row-head" onclick="toggleArchRow('${t.id}')">
             <div class="arch-st" style="background:${STCOL[t.status]||'#ddd'};color:#555">${SL[t.status]}</div>
-            <div class="arch-ttl">${t.title||t.url||t.note||'—'}</div>
+            <div class="arch-ttl">${esc(t.title||t.url||t.note||'—')}</div>
             <span style="display:inline-flex;align-items:center;gap:3px;flex-shrink:0">
-              <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${fromM.col};color:#fff;font-size:7px;font-weight:700;text-align:center;line-height:16px">${fromM.code}</span>
+              <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${fromM.col};color:#fff;font-size:7px;font-weight:700;text-align:center;line-height:16px" title="${esc(fromM.name)}">${esc(fromM.code)}</span>
               <span style="color:#ccc;font-size:10px">→</span>
-              <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${toM.col};color:#fff;font-size:7px;font-weight:700;text-align:center;line-height:16px">${toM.code}</span>
+              <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${toM.col};color:#fff;font-size:7px;font-weight:700;text-align:center;line-height:16px" title="${esc(toM.name)}">${esc(toM.code)}</span>
             </span>
             <div class="arch-dt" title="Створено: ${t.created||'?'} → Архівовано: ${t.archAt||'?'}">${fmtArchDate(t.created)}<span style="color:#ddd;margin:0 3px">→</span>${fmtArchDate(t.archAt||t.created)}</div>
             <svg class="arch-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="arch-row-body">
             <div class="arch-detail-grid">
-              <div><div class="arch-detail-label">Поставив</div><div class="arch-detail-val">${fromM.name}</div></div>
-              <div><div class="arch-detail-label">Виконував</div><div class="arch-detail-val">${toM.name}</div></div>
-              <div><div class="arch-detail-label">Створено</div><div class="arch-detail-val">${t.created||'—'}${t.createdTime?` <span style="color:#bbb">${esc(t.createdTime)}</span>`:''}</div></div>
-              <div><div class="arch-detail-label">Архівовано</div><div class="arch-detail-val">${t.archAt||'—'}</div></div>
-              ${t.deadline?`<div><div class="arch-detail-label">Дедлайн</div><div class="arch-detail-val">${t.deadline}</div></div>`:''}
+              <div><div class="arch-detail-label">Поставив</div><div class="arch-detail-val">${esc(fromM.name)}</div></div>
+              <div><div class="arch-detail-label">Виконував</div><div class="arch-detail-val">${esc(toM.name)}</div></div>
+              <div><div class="arch-detail-label">Створено</div><div class="arch-detail-val">${esc(t.created||'—')}${t.createdTime?` <span style="color:#bbb">${esc(t.createdTime)}</span>`:''}</div></div>
+              <div><div class="arch-detail-label">Архівовано</div><div class="arch-detail-val">${esc(t.archAt||'—')}</div></div>
+              ${t.deadline?`<div><div class="arch-detail-label">Дедлайн</div><div class="arch-detail-val">${esc(t.deadline)}</div></div>`:''}
               ${hoursHtml?`<div>${hoursHtml}</div>`:''}
               <div style="grid-column:1/-1"><div class="arch-detail-label">Теги</div><div class="arch-detail-val" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${tagsHtml}</div></div>
               ${noteHtml?`<div style="grid-column:1/-1">${noteHtml}</div>`:''}
@@ -2577,6 +2660,8 @@ function rArch(){
         </div>`;
       }).join('')}
     </div>`).join('');
+
+  renderArchPagination(arch.length,totalPages,'archPagBot');
 }
 function toggleArchRow(id){
   const row=document.getElementById('archrow_'+id);
@@ -2597,6 +2682,9 @@ function resetPeriod(){
   document.getElementById('pToTxt').textContent='Кінець...';document.getElementById('pToTxt').className='placeholder';
   const s=document.getElementById('archSrch');if(s)s.value='';
   const c=document.getElementById('archSrchClear');if(c)c.style.display='none';
+  const ff=document.getElementById('archFilterFrom');if(ff)ff.value='';
+  const ft=document.getElementById('archFilterTo');if(ft)ft.value='';
+  archPage=1;
   rArch();
 }
 function confirmClearArchive(){
@@ -2629,9 +2717,13 @@ function genPDF(){
   if(!canDo('extended')){alert('Доступ заборонено.');return;}
   const showHrs=document.getElementById('inclHours')?.checked!==false;
   const pF=document.getElementById('pFrom').value,pT=document.getElementById('pTo').value;
+  const filterFrom=document.getElementById('archFilterFrom')?.value||'';
+  const filterTo=document.getElementById('archFilterTo')?.value||'';
   let arch=tasks.filter(t=>t.arch);
   if(pF) arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT) arch=arch.filter(t=>(t.archAt||t.created)<=pT);
+  if(filterFrom) arch=arch.filter(t=>t.from===filterFrom);
+  if(filterTo) arch=arch.filter(t=>t.to===filterTo);
   const hrsCol=showHrs?'<th>Години</th>':'';
   const totalHrs=showHrs?' · Годин: '+arch.reduce((s,t)=>s+(parseFloat(t.hours)||0),0).toFixed(1):'';
   const rows=arch.map((t,i)=>{
@@ -3300,9 +3392,13 @@ function exportCSV(){
   if(!canDo('extended')){alert('Доступ до експорту лише для розширених прав.');return;}
   const pF=document.getElementById('pFrom')?.value||'',pT=document.getElementById('pTo')?.value||'';
   const showHrs=document.getElementById('inclHours')?.checked!==false;
+  const filterFrom=document.getElementById('archFilterFrom')?.value||'';
+  const filterTo=document.getElementById('archFilterTo')?.value||'';
   let arch=tasks.filter(t=>t.arch);
   if(pF)arch=arch.filter(t=>(t.archAt||t.created)>=pF);
   if(pT)arch=arch.filter(t=>(t.archAt||t.created)<=pT);
+  if(filterFrom)arch=arch.filter(t=>t.from===filterFrom);
+  if(filterTo)arch=arch.filter(t=>t.to===filterTo);
   const hdr=['#','Назва','Теги','Статус','Поставив','Виконував',...(showHrs?['Години']:[]),'Дата'];
   const rows=arch.map((t,i)=>{
     const fm=mgr(t.from),tm=mgr(t.to);
