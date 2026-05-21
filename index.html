@@ -257,8 +257,8 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .cav-arr{font-size:13px;color:#ccc;margin:0 1px}
 .tc-r{display:flex;align-items:center;gap:7px}
 .spin-ic{animation:sp 1.5s linear infinite;display:inline-flex;align-items:center}.spin-ic svg{width:22px!important;height:22px!important;stroke:#e06030!important}
-.edit-btn{font-size:11px;color:#bbb;cursor:pointer;display:flex;align-items:center;gap:3px;border:none;background:none;font-family:inherit;padding:0}
-.edit-btn:hover{color:#777}
+.edit-btn{font-size:11px;color:#888;cursor:pointer;display:flex;align-items:center;gap:4px;border:1px solid #e0ddd8;background:#f7f5f2;border-radius:7px;font-family:inherit;padding:5px 10px;line-height:1;transition:all .13s}
+.edit-btn:hover{background:#edeae4;border-color:#ccc;color:#444}
 .x-btn{display:flex;align-items:center;cursor:pointer;color:#d4a0a0}
 .tc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
 .tg{border:1px solid #e0dcd6;border-radius:50px;padding:3px 13px;font-size:11px;color:#777}
@@ -278,9 +278,15 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .overdue-badge{display:inline-flex;align-items:center;gap:4px;background:#fdecea;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:600;color:#c0392b;margin-bottom:8px}
 .tc-forecast{background:#e8effd;border-radius:8px;padding:6px 12px;font-size:12px;color:#2f52cc;display:flex;align-items:center;gap:5px;margin-bottom:10px}
 .tc-res{background:#eaf6f0;border-radius:8px;padding:7px 12px;margin-bottom:12px;display:flex;align-items:center;gap:7px;font-size:12px;color:#2a8a55;font-weight:500;word-break:break-all}
-.tc-cmts{margin-bottom:8px}
-.tc-cmt{font-size:11px;color:#888;background:#f8f8f5;border-radius:6px;padding:5px 9px;margin-bottom:4px}
-.tc-cmt-by{font-weight:600;color:#aaa}
+.tc-cmts{margin-bottom:8px;display:flex;flex-direction:column;gap:6px}
+.tc-cmt{display:flex;flex-direction:column;max-width:82%}
+.tc-cmt.mine{align-self:flex-end;align-items:flex-end}
+.tc-cmt.other{align-self:flex-start;align-items:flex-start}
+.tc-cmt-by{font-size:10px;font-weight:600;color:#aaa;margin-bottom:2px;padding:0 4px}
+.tc-cmt-bubble{font-size:12px;padding:7px 11px;border-radius:14px;line-height:1.45;word-break:break-word}
+.tc-cmt.mine .tc-cmt-bubble{background:#2f52cc;color:#fff;border-bottom-right-radius:4px}
+.tc-cmt.other .tc-cmt-bubble{background:#f0ede8;color:#333;border-bottom-left-radius:4px}
+.tc-cmt-time{font-size:10px;color:#bbb;margin-top:2px;padding:0 4px}
 .tc-cmt-box{display:none;margin-top:8px}
 .tc-cmt-box.show{display:block}
 .tc-cmt-box textarea{width:100%;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:50px;color:#333}
@@ -2071,7 +2077,7 @@ function render(){
       const resHref=esc(t.result.startsWith('http')?t.result:'https://'+t.result);
       resH=`<div class="tc-res"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a8a55" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>${isUrl(t.result)?`<a href="${resHref}" target="_blank" rel="noopener" style="color:#2a8a55;text-decoration:underline">${safeRes}</a>`:safeRes}</div>`;
     }
-    const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>`<div class="tc-cmt"><span class="tc-cmt-by">${esc(c.by)} · ${esc(c.t)}</span><br>${esc(c.tx)}</div>`).join('')}</div>`:'';
+    const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
     const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
     const hoursH=t.hours&&canAccessHours()?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
     const _seenByMe=(t.seenBy||[]).includes(curU);
@@ -2108,7 +2114,7 @@ function render(){
           <div class="tc-tags">${tagsH}${stH}</div>
           <div style="display:flex;gap:6px;align-items:center">
             ${spinH}
-            ${canEditTask(t)?`<button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c8c8c4" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>`:''}
+            ${canEditTask(t)?`<button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>`:''}
             ${canArchiveTask(t)?`<span class="x-btn" onclick="event.stopPropagation();askDel(${tid})"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d4a0a0" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>`:''}
           </div>
         </div>
