@@ -166,7 +166,7 @@ function pickerCallback(data){
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
+html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .page{display:flex;flex-direction:column;min-height:100vh}
 .hdr{display:flex;align-items:center;padding:24px 48px 0}
 .logo-name{font-size:24px;font-weight:800;color:#8b1a1a;font-style:italic;letter-spacing:-0.5px;line-height:1}
@@ -217,9 +217,13 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .btn-add{background:#2f52cc;color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .btn-qk{background:#28a890;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .ta{padding:20px 48px 40px;display:flex;flex-direction:column;gap:8px}
-/* TASK CARD */
-.tc{background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 1px 8px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s}
-.tc:hover{box-shadow:0 2px 16px rgba(0,0,0,.1)}
+/* TASK CARD — new design */
+.tc{background:#fff;border-radius:20px;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s;overflow:hidden;border:1px solid #ede9e3;border-left:4px solid #8F1A1A}
+.tc:hover{box-shadow:0 4px 24px rgba(0,0,0,.1)}
+/* card header strip */
+.tc-header{display:flex;align-items:center;padding:18px 22px 14px;gap:14px}
+/* card body inner panel */
+.tc-inner{background:#EEEEEE;margin:0 10px 10px;border-radius:12px;padding:16px 18px}
 .batch-bar{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;border-radius:40px;padding:10px 20px;display:flex;align-items:center;gap:12px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:150;white-space:nowrap}
 .batch-bar button{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:inherit}
 .batch-bar .batch-cancel{background:transparent;opacity:.7}
@@ -235,27 +239,26 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .wm-tip-inner .tip-row b{color:#fff}
 .wm-tip-arrow{width:10px;height:6px;overflow:visible;display:block;margin:0 auto}
 .wm-tip-arrow polygon{fill:#1c1c1c}
-.tc-collapsed .tc-body{display:none}
-.tc-collapsed .tc-foot{display:none}
+.tc-collapsed .tc-inner{display:none}
 .tc-preview{display:flex;align-items:center;gap:10px;min-height:0}
 .tc-preview-title{flex:1;font-size:13px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tc-preview-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .tc-expand-btn{background:none;border:none;cursor:pointer;color:#bbb;padding:2px 4px;font-size:16px;line-height:1;display:flex;align-items:center}
 .tc-expand-btn:hover{color:#888}
-.tc-body{padding-top:10px}
+.tc-body{padding-top:0}
 @keyframes wglow{0%,100%{box-shadow:0 2px 16px rgba(0,0,0,.07)}50%{box-shadow:0 2px 28px rgba(224,96,48,.3),0 0 0 2px rgba(224,96,48,.12)}}
 @keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes cp{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes overdue{0%,100%{box-shadow:0 2px 16px rgba(0,0,0,.07)}50%{box-shadow:0 2px 24px rgba(185,30,30,.25),0 0 0 2px rgba(185,30,30,.18)}}
 .tc.st-work{animation:wglow 2.5s ease-in-out infinite}
 .tc.st-clarify{animation:cp 2.8s ease-in-out infinite}
-.tc.overdue{border-left:3px solid #c0392b;animation:overdue 2s ease-in-out infinite}
-.tc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-.tc-avs{display:flex;align-items:center;gap:5px}
-.cav{width:28px;height:28px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;position:relative}
+.tc.overdue{border-left:4px solid #c0392b;animation:overdue 2s ease-in-out infinite}
+.tc-top{display:flex;align-items:center;gap:14px;flex:1}
+.tc-avs{display:flex;align-items:center;gap:8px}
+.cav{width:36px;height:36px;border-radius:50%;font-size:11px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
 .cav-vac::after{content:'🏖';position:absolute;bottom:-4px;right:-4px;font-size:9px}
-.cav-arr{font-size:13px;color:#ccc;margin:0 1px}
-.tc-r{display:flex;align-items:center;gap:7px}
+.cav-arr{display:flex;align-items:center;color:#aaa;margin:0 2px}
+.tc-r{display:flex;align-items:center;gap:7px;flex-shrink:0}
 .spin-ic{animation:sp 1.5s linear infinite;display:inline-flex;align-items:center}.spin-ic svg{width:22px!important;height:22px!important;stroke:#e06030!important}
 .edit-btn{font-size:11px;color:#888;cursor:pointer;display:flex;align-items:center;gap:4px;border:1px solid #e0ddd8;background:#f7f5f2;border-radius:7px;font-family:inherit;padding:5px 10px;line-height:1;transition:all .13s}
 .edit-btn:hover{background:#edeae4;border-color:#ccc;color:#444}
@@ -269,15 +272,19 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .tg-test{background:#f4f0fd;border-color:#c8b8f0;color:#5830a8}
 .tg-new{background:#f4f4f4;border-color:#ddd;color:#666}
 .tg-label{background:#f0f6fc;border-color:#a8c8e8;color:#2a6090}
-.tc-title{font-size:14px;font-weight:600;color:#1c1c1c;line-height:1.4;margin-bottom:4px}
-.tc-url{font-size:12px;color:#5577cc;display:flex;align-items:center;gap:4px;margin-bottom:10px;text-decoration:none}
+.tc-title{font-size:18px;font-weight:600;color:#8b1a1a;line-height:1.3;margin:0;flex:1}
+.tc-url{font-size:12px;color:#333;display:flex;align-items:center;gap:6px;margin-bottom:6px;text-decoration:none;word-break:break-all}
 .tc-url:hover{text-decoration:underline}
+.tc-url-label{font-size:11px;color:#aaa;margin-bottom:3px;font-weight:500}
 .tc-note{border:1px solid #edeae4;border-radius:8px;padding:8px 12px;font-size:12px;color:#888;margin-bottom:10px;background:#fafaf8}
-.tc-dates{display:flex;align-items:center;gap:12px;font-size:11px;color:#bbb;margin-bottom:10px;flex-wrap:wrap}
-.dlbl{font-size:10px;color:#d8d5d0;margin-right:2px}
+.tc-dates{display:flex;align-items:center;gap:4px;font-size:12px;color:#555;margin-bottom:8px;flex-wrap:wrap}
+.dlbl{font-size:11px;color:#aaa;margin-right:2px;font-weight:500}
 .overdue-badge{display:inline-flex;align-items:center;gap:4px;background:#fdecea;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:600;color:#c0392b;margin-bottom:8px}
-.tc-forecast{background:#e8effd;border-radius:8px;padding:6px 12px;font-size:12px;color:#2f52cc;display:flex;align-items:center;gap:5px;margin-bottom:10px}
-.tc-res{background:#eaf6f0;border-radius:8px;padding:7px 12px;margin-bottom:12px;display:flex;align-items:center;gap:7px;font-size:12px;color:#2a8a55;font-weight:500;word-break:break-all}
+.tc-forecast{background:#e8effd;border-radius:8px;padding:5px 10px;font-size:11px;color:#2f52cc;display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.tc-res{background:transparent;border-radius:0;padding:0;margin-bottom:8px;display:flex;flex-direction:column;gap:3px;font-size:12px;color:#333;font-weight:400;word-break:break-all}
+.tc-res-label{font-size:11px;color:#aaa;font-weight:500}
+.tc-res-link{color:#333;text-decoration:none;display:flex;align-items:center;gap:6px}
+.tc-res-link:hover{text-decoration:underline}
 .tc-cmts{margin-bottom:8px;display:flex;flex-direction:column;gap:6px}
 .tc-cmt{display:flex;flex-direction:column;max-width:82%}
 .tc-cmt.mine{align-self:flex-end;align-items:flex-end}
@@ -291,11 +298,23 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 .tc-cmt-box.show{display:block}
 .tc-cmt-box textarea{width:100%;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:50px;color:#333}
 .tc-cmt-box button{margin-top:5px;background:#2f52cc;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:11px;cursor:pointer;font-family:inherit}
-.tc-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f0ede8;padding-top:11px;margin-top:4px}
-.comm-btn{display:flex;align-items:center;gap:5px;font-size:12px;color:#666;cursor:pointer;border:1px solid #e0dcd6;background:#fafaf8;font-family:inherit;padding:6px 13px;border-radius:20px;font-weight:500;transition:background .15s,border-color .15s}
-.comm-btn:hover{background:#f0ede8;border-color:#ccc;color:#333}
-.comm-btn svg{stroke:#888}
-.cst-btn{background:#1c1c1c;color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:11px;font-weight:500;font-family:inherit;cursor:pointer}
+.tc-foot{display:flex;align-items:center;justify-content:space-between;background:#BEBECD;padding:10px 18px;margin:0}
+.comm-btn{display:flex;align-items:center;gap:7px;font-size:12px;color:#555;cursor:pointer;border:none;background:transparent;font-family:inherit;padding:5px 0;font-weight:500;transition:color .15s}
+.comm-btn:hover{color:#222}
+.comm-btn svg{stroke:#6B6B7E}
+.cst-btn{background:#fff;color:#333;border:1px solid #d8d5ce;border-radius:20px;padding:5px 16px;font-size:11px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px}
+.cst-btn:hover{background:#f5f3ee}
+/* status dropdown in header */
+.tc-status-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tc-status-label{font-size:11px;color:#aaa;font-weight:500}
+.tc-status-btn{display:flex;align-items:center;gap:6px;border:1px solid #d8d5ce;background:#F0EEE6;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:#333;white-space:nowrap}
+.tc-status-btn:hover{background:#f5f3ee}
+/* action buttons in inner panel */
+.tc-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:10px}
+.tc-btn-del{display:flex;align-items:center;gap:5px;border:1px solid #e8d8d8;background:#fff;border-radius:8px;padding:6px 12px;font-size:11px;color:#c0a0a0;cursor:pointer;font-family:inherit}
+.tc-btn-del:hover{background:#fdecea;color:#b83a2a}
+.tc-btn-arch{display:flex;align-items:center;gap:5px;border:1px solid #d8d5ce;background:#fff;border-radius:8px;padding:6px 12px;font-size:11px;color:#666;cursor:pointer;font-family:inherit}
+.tc-btn-arch:hover{background:#f5f3ee}
 /* MENTION */
 .ment-wrap{position:relative}
 .ment-drop{position:absolute;top:100%;left:0;background:#fff;border:1px solid #e0dcd6;border-radius:10px;padding:4px 0;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;min-width:160px;display:none}
@@ -444,6 +463,14 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 
 .pg-foot{margin-top:auto;padding:36px 0 22px;text-align:center;font-size:12px;color:#c0bdb6}
 
+/* ══ TOAST NOTIFICATION ══ */
+#wm-toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);z-index:9997;pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s ease}
+#wm-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.wm-toast-inner{background:#fff;border-radius:24px;padding:24px 32px;min-width:240px;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.14);display:flex;flex-direction:column;align-items:center;gap:10px}
+.wm-toast-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center}
+.wm-toast-title{font-size:16px;font-weight:700;color:#1c1c1c}
+.wm-toast-sub{font-size:13px;color:#aaa}
+
 /* ══ MOBILE RESPONSIVE ══ */
 
 /* ══ DARK THEME ══ */
@@ -463,18 +490,20 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
 [data-theme="dark"] .fp-label{background:#1a2838;border-color:#2a4860;color:#6090c0}
 [data-theme="dark"] .sb{background:var(--surface);border-color:var(--border)}
 [data-theme="dark"] .sb input{color:var(--text2)}
-[data-theme="dark"] .tc{background:var(--surface);box-shadow:0 1px 8px rgba(0,0,0,.4)}
-[data-theme="dark"] .tc-preview-title,[data-theme="dark"] .tc-title{color:var(--text)}
+[data-theme="dark"] .tc{background:var(--surface);box-shadow:0 2px 12px rgba(0,0,0,.4);border-color:var(--border)}
+[data-theme="dark"] .tc-inner{background:var(--surface2)}
+[data-theme="dark"] .tc-title{color:#e08080}
+[data-theme="dark"] .tc-preview-title{color:var(--text)}
 [data-theme="dark"] .tc-note{background:var(--surface2);border-color:var(--border);color:var(--text2)}
-[data-theme="dark"] .tc-url{color:#6090e0}
+[data-theme="dark"] .tc-url{color:#e8e8ec}
 [data-theme="dark"] .tg{border-color:var(--border);color:var(--text2)}
 [data-theme="dark"] .tg-label{background:#1a2838;border-color:#2a4860;color:#6090c0}
-[data-theme="dark"] .tc-foot{border-top-color:var(--border)}
+[data-theme="dark"] .tc-foot{background:var(--surface2)}
 [data-theme="dark"] .cst-btn{background:var(--text);color:var(--bg)}
-[data-theme="dark"] .comm-btn{background:var(--card);border-color:var(--border);color:var(--sub)}
-[data-theme="dark"] .comm-btn:hover{background:var(--border);color:var(--text)}
-[data-theme="dark"] .tc-res{background:#1a2e1a;color:#6bc88a}
+[data-theme="dark"] .comm-btn{color:var(--text3)}
+[data-theme="dark"] .tc-res{color:var(--text2)}
 [data-theme="dark"] .tc-forecast{background:#1a1e38;color:#6890e0}
+[data-theme="dark"] .tc-status-btn{background:var(--surface2);border-color:var(--border);color:var(--text2)}
 [data-theme="dark"] .tc-cmt-box textarea{background:var(--surface2);border-color:var(--border);color:var(--text)}
 [data-theme="dark"] .arch-row{background:var(--surface);border-color:var(--border)}
 [data-theme="dark"] .arch-row-head:hover{background:var(--card)}
@@ -547,22 +576,14 @@ html,body{font-family:'Inter',sans-serif;background:#f2f1ec;min-height:100vh}
   .btn-cal{padding:9px 12px;font-size:11px}
   .btn-add,.btn-qk{padding:9px 14px;font-size:11px;letter-spacing:.04em}
   .ta{padding:12px 16px 24px;display:flex;flex-direction:column;gap:6px}
-  .tc{border-radius:10px}
-  .tc-preview{gap:7px}
-  .tc-preview-title{font-size:12px}
-  .tc-preview-meta{gap:4px;flex-wrap:wrap}
-  /* Task card mobile fixes */
-  .tc{overflow:hidden;max-width:100%}
-  .tc-top{flex-wrap:wrap;gap:6px}
-  .tc-r{flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:100%}
-  .tc-tags{flex-wrap:wrap;gap:4px}
-  .tc-dates{flex-wrap:wrap;gap:6px;font-size:10px}
-  .tg{font-size:10px;padding:2px 10px;white-space:nowrap}
-  .tc-avs{flex-shrink:0}
-  .tc-preview{flex-wrap:wrap;gap:5px}
-  .tc-preview-meta{flex-wrap:wrap;gap:4px;max-width:100%;overflow:hidden}
-  .tc-preview-title{min-width:60px;max-width:100%}
-  .tc-preview-meta span,.tc-preview-meta button{flex-shrink:0}
+  .tc{border-radius:14px}
+  .tc-header{padding:14px 16px 12px;gap:10px}
+  .tc-inner{margin:0 8px 8px;padding:12px 14px}
+  .tc-title{font-size:15px}
+  .cav{width:30px;height:30px}
+  .tc-status-btn{font-size:11px;padding:4px 10px}
+  .tc-dates{font-size:11px}
+  .tc-foot{padding:8px 16px}
   .fc-short{display:inline}.fc-full{display:none}
   .arch-w{padding:14px 16px 24px}
   .arch-subtabs{flex-direction:column;align-items:flex-start;gap:10px}
@@ -2059,28 +2080,6 @@ function render(){
   ta.innerHTML=pageList.map(t=>{
     const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
-    const tagsH=t.tags.map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
-    const stH=`<span class="tg ${SC[t.status]}">${SL[t.status]}</span>`;
-    const ttH=t.title?`<div class="tc-title">${esc(t.title)}</div>`:'';
-    const safeUrl=esc(t.url.startsWith('http')?t.url:'https://'+t.url);
-    const urlH=t.url?`<a class="tc-url" href="${safeUrl}" target="_blank" rel="noopener"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>${esc(t.url)}</a>`:'';
-    const noteH=t.note?`<div class="tc-note">${esc(t.note)}</div>`:'';
-    const dp=[];
-    if(t.created) dp.push(`<span><span class="dlbl">Створено</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d0ccc8" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(t.created)}${t.createdTime?`<span style="color:#ccc;margin-left:3px">${esc(t.createdTime)}</span>`:''}</span>`);
-    if(t.deadline) dp.push(`<span><span class="dlbl">Дедлайн</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#e0a090" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span style="color:${over?'#c0392b':'#c07858'};font-weight:${over?'600':'400'}">${esc(t.deadline)}</span></span>`);
-    const dtH=dp.length?`<div class="tc-dates">${dp.join('')}</div>`:'';
-    const overdueH=over?`<div class="overdue-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Дедлайн прострочено</div>`:'';
-    const fcH=t.forecast?`<div class="tc-forecast"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Прогноз: ${esc(t.forecast)}</div>`:'';
-    let resH='';
-    if(t.result){
-      const safeRes=esc(t.result);
-      const resHref=esc(t.result.startsWith('http')?t.result:'https://'+t.result);
-      resH=`<div class="tc-res"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a8a55" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>${isUrl(t.result)?`<a href="${resHref}" target="_blank" rel="noopener" style="color:#2a8a55;text-decoration:underline">${safeRes}</a>`:safeRes}</div>`;
-    }
-    const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
-    const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
-    const hoursH=t.hours&&canAccessHours()?`<span style="font-size:10px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:1px 8px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
-    const _seenByMe=(t.seenBy||[]).includes(curU);
     // Badge visible only to task participants (author, assignee, or @mentioned)
     const _isMentioned=(t.tags||[]).some(g=>g.startsWith('@')&&managers.find(m=>m.code===curU&&g.slice(1).toLowerCase()===m.name.toLowerCase()));
     const _isParticipant=(t.from===curU||t.to===curU||_isMentioned);
@@ -2091,41 +2090,89 @@ function render(){
     const _tipSum=t.lastChange?esc(t.lastChange.summary):'';
     const unseenBadge=_isUnseen?`<div class="unseen-badge" data-tip="1" data-tip-by="${esc(_tipBy)}" data-tip-sum="${_tipSum}">${_unseenCnt>0?_unseenCnt:'!'}</div>`:'';
     const changeHint=(_isParticipant&&_hasChange&&!_seenByMe)?`<div style="font-size:10px;color:#b05a20;background:#fff4ee;border-radius:6px;padding:2px 8px;margin-top:4px;display:inline-flex;align-items:center;gap:4px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${esc(t.lastChange.by)}: ${esc(t.lastChange.summary)}</div>`:'';
-    const previewTitle=esc(t.title||t.url||t.note||'—');
-    return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}" onclick="tcExpand(event,${tid})">
+
+    // ── ARROW icon SVG ──
+    const arrowSvg=`<svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M4.25 16C4.25 16.1989 4.32902 16.3897 4.46967 16.5303C4.61032 16.671 4.80109 16.75 5 16.75H25.1888L17.47 24.47C17.3963 24.5387 17.3372 24.6215 17.2962 24.7135C17.2552 24.8055 17.2332 24.9048 17.2314 25.0055C17.2296 25.1062 17.2482 25.2062 17.2859 25.2996C17.3236 25.393 17.3797 25.4778 17.451 25.549C17.5222 25.6203 17.607 25.6764 17.7004 25.7141C17.7938 25.7518 17.8938 25.7704 17.9945 25.7686C18.0952 25.7668 18.1945 25.7448 18.2865 25.7038C18.3785 25.6628 18.4613 25.6037 18.53 25.53L27.53 16.53C27.6705 16.3894 27.7493 16.1987 27.7493 16C27.7493 15.8012 27.6705 15.6106 27.53 15.47L18.53 6.47C18.3878 6.33752 18.1998 6.2654 18.0055 6.26882C17.8112 6.27225 17.6258 6.35096 17.4884 6.48838C17.351 6.62579 17.2723 6.81118 17.2688 7.00548C17.2654 7.19978 17.3375 7.38782 17.47 7.53L25.1888 15.25H5C4.80109 15.25 4.61032 15.329 4.46967 15.4697C4.32902 15.6103 4.25 15.8011 4.25 16Z" fill="#84837E"/></svg>`;
+    // ── calendar icon SVG ──
+    const calSvg=`<svg width="16" height="16" viewBox="0 0 21 21" fill="none"><path d="M17.0625 2.78906H14.9297V1.96875C14.9297 1.83821 14.8778 1.71302 14.7855 1.62072C14.6932 1.52842 14.568 1.47656 14.4375 1.47656C14.307 1.47656 14.1818 1.52842 14.0895 1.62072C13.9972 1.71302 13.9453 1.83821 13.9453 1.96875V2.78906H7.05469V1.96875C7.05469 1.83821 7.00283 1.71302 6.91053 1.62072C6.81823 1.52842 6.69304 1.47656 6.5625 1.47656C6.43196 1.47656 6.30677 1.52842 6.21447 1.62072C6.12217 1.71302 6.07031 1.83821 6.07031 1.96875V2.78906H3.9375C3.63292 2.78906 3.34081 2.91006 3.12543 3.12543C2.91006 3.34081 2.78906 3.63292 2.78906 3.9375V17.0625C2.78906 17.3671 2.91006 17.6592 3.12543 17.8746C3.34081 18.0899 3.63292 18.2109 3.9375 18.2109H17.0625C17.3671 18.2109 17.6592 18.0899 17.8746 17.8746C18.0899 17.6592 18.2109 17.3671 18.2109 17.0625V3.9375C18.2109 3.63292 18.0899 3.34081 17.8746 3.12543C17.6592 2.91006 17.3671 2.78906 17.0625 2.78906ZM3.9375 3.77344H6.07031V4.59375C6.07031 4.72429 6.12217 4.84948 6.21447 4.94178C6.30677 5.03408 6.43196 5.08594 6.5625 5.08594C6.69304 5.08594 6.81823 5.03408 6.91053 4.94178C7.00283 4.84948 7.05469 4.72429 7.05469 4.59375V3.77344H13.9453V4.59375C13.9453 4.72429 13.9972 4.84948 14.0895 4.94178C14.1818 5.03408 14.307 5.08594 14.4375 5.08594C14.568 5.08594 14.6932 5.03408 14.7855 4.94178C14.8778 4.84948 14.9297 4.72429 14.9297 4.59375V3.77344H17.0625C17.106 3.77344 17.1477 3.79072 17.1785 3.82149C17.2093 3.85226 17.2266 3.89399 17.2266 3.9375V6.72656H3.77344V3.9375C3.77344 3.89399 3.79072 3.85226 3.82149 3.82149C3.85226 3.79072 3.89399 3.77344 3.9375 3.77344ZM17.0625 17.2266H3.9375C3.89399 17.2266 3.85226 17.2093 3.82149 17.1785C3.79072 17.1477 3.77344 17.106 3.77344 17.0625V7.71094H17.2266V17.0625C17.2266 17.106 17.2093 17.1477 17.1785 17.1785C17.1477 17.2093 17.106 17.2266 17.0625 17.2266Z" fill="#8F1A1A"/></svg>`;
+    // ── clock icon SVG ──
+    const clockSvg=`<svg width="16" height="16" viewBox="0 0 23 23" fill="none"><path d="M11.5 2.33594C9.68752 2.33594 7.91575 2.8734 6.40872 3.88036C4.9017 4.88732 3.72712 6.31855 3.03351 7.99307C2.33991 9.66758 2.15843 11.5102 2.51203 13.2878C2.86562 15.0655 3.73842 16.6984 5.02003 17.98C6.30165 19.2616 7.93453 20.1344 9.71218 20.488C11.4898 20.8416 13.3324 20.6601 15.0069 19.9665C16.6815 19.2729 18.1127 18.0983 19.1196 16.5913C20.1266 15.0843 20.6641 13.3125 20.6641 11.5C20.6612 9.07042 19.6948 6.74116 17.9768 5.02318C16.2588 3.3052 13.9296 2.33879 11.5 2.33594ZM17.0703 11.5C17.0703 11.643 17.0135 11.7801 16.9124 11.8812C16.8113 11.9823 16.6742 12.0391 16.5313 12.0391H11.5C11.357 12.0391 11.2199 11.9823 11.1188 11.8812C11.0177 11.7801 10.9609 11.643 10.9609 11.5V6.46875C10.9609 6.32578 11.0177 6.18867 11.1188 6.08758C11.2199 5.98648 11.357 5.92969 11.5 5.92969C11.643 5.92969 11.7801 5.98648 11.8812 6.08758C11.9823 6.18867 12.0391 6.32578 12.0391 6.46875V10.9609H16.5313C16.6742 10.9609 16.8113 11.0177 16.9124 11.1188C17.0135 11.2199 17.0703 11.357 17.0703 11.5Z" fill="#679673"/></svg>`;
+    // ── link icon SVG ──
+    const linkSvg=`<svg width="22" height="22" viewBox="0 0 31 31" fill="none"><path d="M15.5 0C12.4344 0 9.43763 0.909059 6.88867 2.61222C4.3397 4.31538 2.35303 6.73615 1.17987 9.5684C0.00671564 12.4007 -0.300236 15.5172 0.297835 18.5239C0.895906 21.5306 2.37214 24.2924 4.53985 26.4601C6.70756 28.6279 9.4694 30.1041 12.4761 30.7022C15.4828 31.3002 18.5993 30.9933 21.4316 29.8201C24.2638 28.647 26.6846 26.6603 28.3878 24.1113C30.0909 21.5624 31 18.5656 31 15.5C30.9952 11.3906 29.3606 7.45094 26.4548 4.54517C23.5491 1.63941 19.6094 0.00482605 15.5 0ZM21.2745 10.6373V17.9314C21.2745 18.1732 21.1785 18.4051 21.0075 18.5761C20.8365 18.7471 20.6046 18.8431 20.3627 18.8431C20.1209 18.8431 19.889 18.7471 19.718 18.5761C19.547 18.4051 19.451 18.1732 19.451 17.9314V12.8392L11.2816 21.0071C11.1087 21.1681 10.8801 21.2558 10.6439 21.2516C10.4077 21.2475 10.1823 21.1518 10.0153 20.9847C9.84824 20.8177 9.75255 20.5923 9.74838 20.3561C9.74421 20.1199 9.83189 19.8913 9.99295 19.7184L18.1608 11.549H13.0686C12.8268 11.549 12.5949 11.453 12.4239 11.282C12.2529 11.111 12.1569 10.8791 12.1569 10.6373C12.1569 10.3954 12.2529 10.1635 12.4239 9.99254C12.5949 9.82155 12.8268 9.72549 13.0686 9.72549H20.3627C20.6046 9.72549 20.8365 9.82155 21.0075 9.99254C21.1785 10.1635 21.2745 10.3954 21.2745 10.6373Z" fill="#5FAE9A"/></svg>`;
+    // ── trash icon SVG ──
+    const trashSvg=`<svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M18.5625 4.29688H14.9531V3.4375C14.9531 2.93608 14.7539 2.45519 14.3994 2.10063C14.0448 1.74607 13.5639 1.54688 13.0625 1.54688H8.9375C8.43608 1.54688 7.95519 1.74607 7.60063 2.10063C7.24607 2.45519 7.04688 2.93608 7.04688 3.4375V4.29688H3.4375C3.30075 4.29688 3.1696 4.3512 3.0729 4.4479C2.9762 4.5446 2.92188 4.67575 2.92188 4.8125C2.92188 4.94925 2.9762 5.0804 3.0729 5.1771C3.1696 5.2738 3.30075 5.32812 3.4375 5.32812H4.29688V17.875C4.29688 18.1941 4.42363 18.5001 4.64926 18.7257C4.87489 18.9514 5.18091 19.0781 5.5 19.0781H16.5C16.8191 19.0781 17.1251 18.9514 17.3507 18.7257C17.5764 18.5001 17.7031 18.1941 17.7031 17.875V5.32812H18.5625C18.6993 5.32812 18.8304 5.2738 18.9271 5.1771C19.0238 5.0804 19.0781 4.94925 19.0781 4.8125C19.0781 4.67575 19.0238 4.5446 18.9271 4.4479C18.8304 4.3512 18.6993 4.29688 18.5625 4.29688ZM9.45312 14.4375C9.45312 14.5743 9.3988 14.7054 9.3021 14.8021C9.2054 14.8988 9.07425 14.9531 8.9375 14.9531C8.80075 14.9531 8.6696 14.8988 8.5729 14.8021C8.4762 14.7054 8.42188 14.5743 8.42188 14.4375V8.9375C8.42188 8.80075 8.4762 8.6696 8.5729 8.5729C8.6696 8.4762 8.80075 8.42188 8.9375 8.42188C9.07425 8.42188 9.2054 8.4762 9.3021 8.5729C9.3988 8.6696 9.45312 8.80075 9.45312 8.9375V14.4375ZM13.5781 14.4375C13.5781 14.5743 13.5238 14.7054 13.4271 14.8021C13.3304 14.8988 13.1993 14.9531 13.0625 14.9531C12.9257 14.9531 12.7946 14.8988 12.6979 14.8021C12.6012 14.7054 12.5469 14.5743 12.5469 14.4375V8.9375C12.5469 8.80075 12.6012 8.6696 12.6979 8.5729C12.7946 8.4762 12.9257 8.42188 13.0625 8.42188C13.1993 8.42188 13.3304 8.4762 13.4271 8.5729C13.5238 8.6696 13.5781 8.80075 13.5781 8.9375V14.4375Z" fill="#D2ACAC"/></svg>`;
+    // ── chat icon SVG ──
+    const chatSvg=`<svg width="18" height="18" viewBox="0 0 32 32" fill="none"><path d="M16 3.25C13.7897 3.24954 11.6173 3.82366 9.69586 4.91604C7.77441 6.00843 6.16994 7.58155 5.03985 9.48107C3.90977 11.3806 3.2929 13.5413 3.24975 15.7511C3.20661 17.961 3.73867 20.1441 4.79375 22.0863L3.34125 26.445C3.23842 26.7533 3.2235 27.0842 3.29815 27.4006C3.37281 27.7169 3.53409 28.0062 3.76393 28.2361C3.99377 28.4659 4.28307 28.6272 4.59942 28.7018C4.91577 28.7765 5.24666 28.7616 5.555 28.6588L9.91375 27.2062C11.62 28.1322 13.5151 28.6563 15.4546 28.7385C17.3942 28.8208 19.3269 28.4591 21.1054 27.681C22.8839 26.903 24.4613 25.729 25.7172 24.2488C26.9732 22.7685 27.8745 21.021 28.3525 19.1395C28.8305 17.258 28.8726 15.2922 28.4755 13.3919C28.0784 11.4917 27.2526 9.70725 26.0611 8.17462C24.8697 6.64199 23.344 5.40167 21.6004 4.54822C19.8567 3.69478 17.9413 3.25075 16 3.25ZM16 27.25C14.0224 27.2505 12.0796 26.7296 10.3675 25.74C10.2534 25.6744 10.1242 25.6395 9.9925 25.6388C9.9118 25.6392 9.83167 25.6523 9.755 25.6775L5.08125 27.235C5.0372 27.2497 4.98993 27.2518 4.94474 27.2412C4.89955 27.2305 4.85822 27.2075 4.82538 27.1746C4.79255 27.1418 4.76951 27.1005 4.75884 27.0553C4.74818 27.0101 4.75031 26.9628 4.765 26.9188L6.3225 22.25C6.3562 22.1491 6.36805 22.0422 6.35728 21.9364C6.3465 21.8306 6.31334 21.7283 6.26 21.6362C5.01907 19.4926 4.52027 16.9994 4.84099 14.5433C5.16171 12.0873 6.28401 9.8057 8.03378 8.0526C9.78356 6.2995 12.063 5.17287 14.5184 4.84749C16.9739 4.52211 19.4681 5.01618 21.614 6.25304C23.76 7.4899 25.4378 9.40041 26.3872 11.6882C27.3365 13.9759 27.5043 16.513 26.8645 18.9059C26.2247 21.2987 24.8131 23.4136 22.8487 24.9223C20.8843 26.431 18.4769 27.2492 16 27.25Z" fill="white"/></svg>`;
+    // ── chevron SVG ──
+    const chevronSvg=`<svg width="12" height="7" viewBox="0 0 17 9" fill="none"><path d="M16.6104 0.985384L8.79788 8.79788C8.68802 8.90761 8.5391 8.96924 8.38382 8.96924C8.22855 8.96924 8.07962 8.90761 7.96976 8.79788L0.157259 0.985384C0.053759 0.87431 -0.00258701 0.727399 9.1287e-05 0.575602C0.00276958 0.423804 0.0642631 0.278972 0.171617 0.171618C0.278971 0.0642639 0.423803 0.00276958 0.575601 9.12858e-05C0.727399 -0.00258701 0.87431 0.0537598 0.985384 0.15726L8.38382 7.55472L15.7823 0.15726C15.8933 0.0537598 16.0402 -0.00258701 16.192 9.12858e-05C16.3438 0.00276958 16.4887 0.0642639 16.596 0.171618C16.7034 0.278972 16.7649 0.423804 16.7676 0.575602C16.7702 0.727399 16.7139 0.87431 16.6104 0.985384Z" fill="#303030"/></svg>`;
+
+    // ── status button ──
+    const stBtnH=canChangeStatus(t)?
+      `<div class="tc-status-wrap"><span class="tc-status-label">Статус</span><button class="tc-status-btn" onclick="event.stopPropagation();openSt(${tid})">${SL[t.status]} ${chevronSvg}</button></div>`
+      :`<div class="tc-status-wrap"><span class="tg ${SC[t.status]}" style="padding:4px 14px">${SL[t.status]}</span></div>`;
+
+    // ── spinH for "in work" ──
+    const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
+    const hoursH=t.hours&&canAccessHours()?`<span style="font-size:11px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:2px 9px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
+
+    // ── result block ──
+    let resH='';
+    if(t.result){
+      const safeRes=esc(t.result);
+      const resHref=esc(t.result.startsWith('http')?t.result:'https://'+t.result);
+      resH=`<div class="tc-res"><div class="tc-res-label">Результат:</div>${isUrl(t.result)?`<a class="tc-res-link" href="${resHref}" target="_blank" rel="noopener">${safeRes} ${linkSvg}</a>`:safeRes}</div>`;
+    }
+
+    // ── URL block ──
+    const safeUrl=esc(t.url.startsWith('http')?t.url:'https://'+t.url);
+    const urlH=t.url?`<div style="margin-bottom:8px"><div class="tc-url-label">URL:</div><a class="tc-url" href="${safeUrl}" target="_blank" rel="noopener">${esc(t.url)}</a></div>`:'';
+
+    // ── note ──
+    const noteH=t.note?`<div class="tc-note">${esc(t.note)}</div>`:'';
+
+    // ── dates ──
+    const dp=[];
+    if(t.created) dp.push(`<span style="display:inline-flex;align-items:center;gap:4px"><span class="dlbl">Створено:</span>${calSvg} ${esc(t.created)} ${clockSvg}${t.createdTime?` ${esc(t.createdTime)}`:''}</span>`);
+    if(t.deadline) dp.push(`<span style="display:inline-flex;align-items:center;gap:4px;color:${over?'#c0392b':'#555'};font-weight:${over?600:400}"><span class="dlbl">Дедлайн:</span>${calSvg} ${esc(t.deadline)}</span>`);
+    const dtH=dp.length?`<div class="tc-dates">${dp.join('<span style="color:#ddd;margin:0 4px">·</span>')}</div>`:'';
+
+    const overdueH=over?`<div class="overdue-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Дедлайн прострочено</div>`:'';
+    const fcH=t.forecast?`<div class="tc-forecast"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M12.875 8C12.8747 7.22638 12.6902 6.46395 12.3366 5.77585C11.9831 5.08775 11.4707 4.49377 10.8418 4.04313L10.4437 1.84375C10.4071 1.64203 10.3008 1.45957 10.1434 1.32821C9.98602 1.19685 9.78749 1.12493 9.58247 1.125H6.41747C6.21245 1.12493 6.01392 1.19685 5.85652 1.32821C5.69911 1.45957 5.59283 1.64203 5.55622 1.84375L5.1581 4.04313C4.52908 4.49358 4.01652 5.08751 3.66292 5.77566C3.30933 6.4638 3.12488 7.22633 3.12488 8C3.12488 8.77367 3.30933 9.5362 3.66292 10.2243C4.01652 10.9125 4.52908 11.5064 5.1581 11.9569L5.55622 14.1562C5.59283 14.358 5.69911 14.5404 5.85652 14.6718C6.01392 14.8032 6.21245 14.8751 6.41747 14.875H9.58247C9.78749 14.8751 9.98602 14.8032 10.1434 14.6718C10.3008 14.5404 10.4071 14.358 10.4437 14.1562L10.8418 11.9569C11.4707 11.5062 11.9831 10.9123 12.3366 10.2242C12.6902 9.53605 12.8747 8.77362 12.875 8Z" fill="#679673"/></svg> ${esc(t.forecast)}</div>`:'';
+
+    const tagsH=t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
+    const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
+
+    // title — fallback to url or note
+    const titleText=t.title||t.url||t.note||'—';
+
+    return `<div class="tc st-${t.status}${over?' overdue':''}" id="tcard${t.id}">
       ${unseenBadge}
-      <div class="tc-preview" onclick="if(batchMode){event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))}">
+      <!-- HEADER -->
+      <div class="tc-header" onclick="if(batchMode){event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))}">
         <input type="checkbox" class="tc-check" onclick="event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))" ${batchSelected.has(t.id)?'checked':''}>
-        <div class="tc-avs">${cavH(t.from)}<span class="cav-arr">→</span>${cavH(t.to)}</div>
+        <div class="tc-avs">${cavH(t.from)}<span class="cav-arr">${arrowSvg}</span>${cavH(t.to)}</div>
         ${isW?spinH:''}
-        <div class="tc-preview-title">${previewTitle}</div>
-        <div class="tc-preview-meta">
-          ${t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label" style="padding:2px 8px;font-size:10px">${esc(g)}</span>`).join('')}
-          ${t.deadline?`<span style="font-size:10px;color:${over?'#c0392b':'#b07050'};font-weight:${over?700:400};display:flex;align-items:center;gap:2px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${esc(t.deadline)}</span>`:''}
-          ${t.forecast?`<span class="fc-preview-badge" style="font-size:10px;color:#2f52cc;display:flex;align-items:center;gap:2px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="fc-full">${esc(t.forecast)}</span><span class="fc-short">${esc(t.forecast.split('/')[0].trim())}</span></span>`:''}
-          ${hoursH}
-          ${over?`<span style="font-size:10px;background:#fdecea;color:#c0392b;border-radius:10px;padding:1px 8px;font-weight:600">⚠</span>`:''}
-          <span class="tg ${SC[t.status]}" style="padding:2px 10px;font-size:10px">${SL[t.status]}</span>
-          <button class="tc-expand-btn" onclick="event.stopPropagation();tcExpand(event,${tid})" title="Розгорнути">▾</button>
-        </div>
+        <div class="tc-title">${esc(titleText)}</div>
+        ${stBtnH}
       </div>
-      <div class="tc-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-top:2px">
-          <div class="tc-tags">${tagsH}${stH}</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            ${spinH}
-            ${canEditTask(t)?`<button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>`:''}
-            ${canArchiveTask(t)?`<span class="x-btn" onclick="event.stopPropagation();askDel(${tid})"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d4a0a0" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>`:''}
-          </div>
-        </div>
-        ${ttH}${urlH}${noteH}${changeHint}${dtH}${overdueH}${fcH}${resH}${driveFilesH(t.driveFiles)}${cmtsH}
-        <div class="tc-cmt-box" id="cb${t.id}" onclick="event.stopPropagation()"><textarea id="ct${t.id}" placeholder="Нотатка або коментар..." onclick="event.stopPropagation()"></textarea><button onclick="event.stopPropagation();addCmt(${tid},event)">Зберегти</button></div>
-        <div class="tc-foot">
-          <button class="comm-btn" onclick="event.stopPropagation();togCmt(${tid},event)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Додати нотатку</button>
-          ${canChangeStatus(t)?`<button class="cst-btn" onclick="event.stopPropagation();openSt(${tid})">Змінити статус</button>`:''}
-          ${t.status==='done'&&canArchiveTask(t)?`<button onclick="event.stopPropagation();askDel(${tid})" style="border:none;background:#edf8f2;color:#1e7040;border-radius:9px;padding:7px 14px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>Архівувати</button>`:''}
+      <!-- INNER BODY -->
+      <div class="tc-inner">
+        ${resH}${urlH}${noteH}${changeHint}${dtH}${overdueH}${fcH}${driveFilesH(t.driveFiles)}${cmtsH}
+        ${tagsH?`<div class="tc-tags" style="margin-top:6px">${tagsH}</div>`:''}
+        ${hoursH?`<div style="margin-top:6px">${hoursH}</div>`:''}
+        <!-- ACTIONS -->
+        <div class="tc-actions">
+          ${canEditTask(t)?`<button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>`:''}
+          ${canArchiveTask(t)?`<button class="tc-btn-del" onclick="event.stopPropagation();askDel(${tid})">${trashSvg} Видалити</button>`:''}
+          ${t.status==='done'&&canArchiveTask(t)?`<button class="tc-btn-arch" onclick="event.stopPropagation();askDel(${tid})"><svg width="14" height="14" viewBox="0 0 22 22" fill="none"><path d="M18.5625 4.29688H14.9531V3.4375C14.9531 2.93608 14.7539 2.45519 14.3994 2.10063C14.0448 1.74607 13.5639 1.54688 13.0625 1.54688H8.9375C8.43608 1.54688 7.95519 1.74607 7.60063 2.10063C7.24607 2.45519 7.04688 2.93608 7.04688 3.4375V4.29688H3.4375C3.30075 4.29688 3.1696 4.3512 3.0729 4.4479C2.9762 4.5446 2.92188 4.67575 2.92188 4.8125C2.92188 4.94925 2.9762 5.0804 3.0729 5.1771C3.1696 5.2738 3.30075 5.32812 3.4375 5.32812H4.29688V17.875C4.29688 18.1941 4.42363 18.5001 4.64926 18.7257C4.87489 18.9514 5.18091 19.0781 5.5 19.0781H16.5C16.8191 19.0781 17.1251 18.9514 17.3507 18.7257C17.5764 18.5001 17.7031 18.1941 17.7031 17.875V5.32812H18.5625C18.6993 5.32812 18.8304 5.2738 18.9271 5.1771C19.0238 5.0804 19.0781 4.94925 19.0781 4.8125C19.0781 4.67575 19.0238 4.5446 18.9271 4.4479C18.8304 4.3512 18.6993 4.29688 18.5625 4.29688ZM9.45312 14.4375C9.45312 14.5743 9.3988 14.7054 9.3021 14.8021C9.2054 14.8988 9.07425 14.9531 8.9375 14.9531C8.80075 14.9531 8.6696 14.8988 8.5729 14.8021C8.4762 14.7054 8.42188 14.5743 8.42188 14.4375V8.9375C8.42188 8.80075 8.4762 8.6696 8.5729 8.5729C8.6696 8.4762 8.80075 8.42188 8.9375 8.42188C9.07425 8.42188 9.2054 8.4762 9.3021 8.5729C9.3988 8.6696 9.45312 8.80075 9.45312 8.9375V14.4375ZM13.5781 14.4375C13.5781 14.5743 13.5238 14.7054 13.4271 14.8021C13.3304 14.8988 13.1993 14.9531 13.0625 14.9531C12.9257 14.9531 12.7946 14.8988 12.6979 14.8021C12.6012 14.7054 12.5469 14.5743 12.5469 14.4375V8.9375C12.5469 8.80075 12.6012 8.6696 12.6979 8.5729C12.7946 8.4762 12.9257 8.42188 13.0625 8.42188C13.1993 8.42188 13.3304 8.4762 13.4271 8.5729C13.5238 8.6696 13.5781 8.80075 13.5781 8.9375V14.4375Z" fill="#8b1a1a"/></svg> Архівувати</button>`:''}
           ${isSuperAdmin()?`<button onclick="event.stopPropagation();openSAHardDelete(${tid})" style="border:none;background:#fdecea;color:#b83a2a;border-radius:9px;padding:7px 12px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600">🗑 Видалити назавжди</button>`:''}
         </div>
+        <!-- COMMENT BOX -->
+        <div class="tc-cmt-box" id="cb${t.id}" onclick="event.stopPropagation()"><textarea id="ct${t.id}" placeholder="Нотатка або коментар..." onclick="event.stopPropagation()"></textarea><button onclick="event.stopPropagation();addCmt(${tid},event)">Зберегти</button></div>
+      </div>
+      <!-- FOOTER -->
+      <div class="tc-foot">
+        <button class="comm-btn" onclick="event.stopPropagation();togCmt(${tid},event)">${chatSvg} Додати нотатку</button>
       </div>
     </div>`;
   }).join('');
@@ -3299,6 +3346,7 @@ function openAdd(id){
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
   if(!T&&!U&&!N)return;
+  const _wasEdit=!!eId;
   const toVal=document.getElementById('fTo').value;
   if(!toVal){alert('Оберіть виконавця.');document.getElementById('fTo').focus();return;}
   const today=new Date().toISOString().split('T')[0];
@@ -3354,6 +3402,9 @@ function mkT(){
     tgNotifyCreate(tasks[0]);
   }
   closeM('mAdd');eId=null;save();rStats();render();
+  // toast
+  if(!_wasEdit) showToast('Завдання додано!','План стає реальнішим');
+  else showToast('Збережено!','Зміни застосовано');
 }
 function openQ(){openM('mQ');setTimeout(()=>document.getElementById('qI').focus(),80);}
 function mkQ(){
@@ -3370,6 +3421,7 @@ function mkQ(){
   logEntry('create',newId,v.slice(0,60)||'—');
   tgNotifyCreate(newTask);
   document.getElementById('qI').value='';closeM('mQ');save();rStats();render();
+  showToast('Завдання додано!','Швидке — але важливе');
 }
 function findTask(id){return tasks.find(t=>t.id===id||String(t.id)===String(id));}
 function openSt(id){
@@ -3388,8 +3440,21 @@ function apSt(){
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
   tgNotifyStatus(t, oldStatus, curU);
   closeM('mSt');eId=null;save();rStats();render();
+  showToast('Статус змінено',''+SL[t.status]);
 }
-function doExp(){
+/* ── TOAST ── */
+function showToast(title, sub){
+  const el=document.getElementById('wm-toast');
+  const tEl=document.getElementById('wm-toast-title');
+  const sEl=document.getElementById('wm-toast-sub');
+  if(!el) return;
+  if(tEl) tEl.textContent=title||'Готово!';
+  if(sEl) sEl.textContent=sub||'';
+  el.classList.add('show');
+  clearTimeout(el._toastTimer);
+  el._toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+function exportPDFReport(){
   if(!canDo('extended')){alert('Доступ до Архіву лише для розширених прав.');return;}
   goTab('arch',document.querySelectorAll('.tab')[1]);
   setTimeout(genPDF,400);
@@ -3882,6 +3947,16 @@ async function tgNotifyDeadline(task, daysLeft){
 <div id="identityPicker" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10000;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.15)">
     <div id="identityList"></div>
+  </div>
+</div>
+<!-- ══ TOAST NOTIFICATION ══ -->
+<div id="wm-toast">
+  <div class="wm-toast-inner">
+    <div class="wm-toast-icon" id="wm-toast-icon">
+      <svg width="73" height="73" viewBox="0 0 73 73" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="37" cy="37" r="26" fill="#EAF6F0"/><path d="M49.53 30.53L33.53 46.53C33.3894 46.6704 33.1988 46.7493 33 46.7493C32.8013 46.7493 32.6107 46.6704 32.47 46.53L25.47 39.53C25.3375 39.3878 25.2654 39.1997 25.2689 39.0054C25.2723 38.8111 25.351 38.6258 25.4884 38.4883C25.6258 38.3509 25.8112 38.2722 26.0055 38.2688C26.1998 38.2654 26.3879 38.3375 26.53 38.47L33 44.9387L48.47 29.47C48.6122 29.3375 48.8003 29.2654 48.9946 29.2688C49.1889 29.2722 49.3742 29.3509 49.5117 29.4883C49.6491 29.6258 49.7278 29.8111 49.7312 30.0054C49.7346 30.1997 49.6625 30.3878 49.53 30.53Z" fill="#77A283"/></svg>
+    </div>
+    <div class="wm-toast-title" id="wm-toast-title">Завдання додано!</div>
+    <div class="wm-toast-sub" id="wm-toast-sub">План стає реальнішим</div>
   </div>
 </div>
 </div><!-- /appShell -->
