@@ -2084,6 +2084,7 @@ function render(){
     const _isMentioned=(t.tags||[]).some(g=>g.startsWith('@')&&managers.find(m=>m.code===curU&&g.slice(1).toLowerCase()===m.name.toLowerCase()));
     const _isParticipant=(t.from===curU||t.to===curU||_isMentioned);
     const _hasChange=t.lastChange&&t.lastChange.by!==curU;
+    const _seenByMe=(t.seenBy||[]).includes(curU);
     const _isUnseen=!_seenByMe&&_isParticipant&&(t.cmts.length>0||t.from!==curU||_hasChange);
     const _unseenCnt=t.cmts.filter(c=>c.by!==curU).length||0;
     const _tipBy=t.lastChange?mgr(t.lastChange.by).name:'';
