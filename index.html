@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Waymark">
 <meta name="theme-color" content="#8b1a1a">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inria+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 // ═══════════════════════════════════════════════
@@ -218,7 +218,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .btn-qk{background:#28a890;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .ta{padding:20px 48px 40px;display:flex;flex-direction:column;gap:8px}
 /* TASK CARD — new design */
-.tc{background:#fff;border-radius:20px;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s;overflow:hidden;border:1px solid #ede9e3;border-left:4px solid #8F1A1A}
+.tc{background:#FCFCFC;border-radius:20px;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s;overflow:hidden;border:1px solid #ede9e3;border-left:4px solid #8F1A1A}
 .tc:hover{box-shadow:0 4px 24px rgba(0,0,0,.1)}
 /* card header strip */
 .tc-header{display:flex;align-items:center;padding:18px 22px 14px;gap:14px}
@@ -272,7 +272,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tg-test{background:#f4f0fd;border-color:#c8b8f0;color:#5830a8}
 .tg-new{background:#f4f4f4;border-color:#ddd;color:#666}
 .tg-label{background:#f0f6fc;border-color:#a8c8e8;color:#2a6090}
-.tc-title{font-size:18px;font-weight:600;color:#8b1a1a;line-height:1.3;margin:0;flex:1}
+.tc-title{font-size:18px;font-weight:700;color:#8b1a1a;line-height:1.3;margin:0;flex:1;font-family:'Inria Serif',Georgia,serif;font-style:italic}
 .tc-url{font-size:12px;color:#333;display:flex;align-items:center;gap:6px;margin-bottom:6px;text-decoration:none;word-break:break-all}
 .tc-url:hover{text-decoration:underline}
 .tc-url-label{font-size:11px;color:#aaa;margin-bottom:3px;font-weight:500}
@@ -299,9 +299,9 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tc-cmt-box textarea{width:100%;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:50px;color:#333}
 .tc-cmt-box button{margin-top:5px;background:#2f52cc;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:11px;cursor:pointer;font-family:inherit}
 .tc-foot{display:flex;align-items:center;justify-content:space-between;background:#BEBECD;padding:10px 18px;margin:0}
-.comm-btn{display:flex;align-items:center;gap:7px;font-size:12px;color:#555;cursor:pointer;border:none;background:transparent;font-family:inherit;padding:5px 0;font-weight:500;transition:color .15s}
-.comm-btn:hover{color:#222}
-.comm-btn svg{stroke:#6B6B7E}
+.comm-btn{display:flex;align-items:center;gap:7px;font-size:12px;color:#fff;cursor:pointer;border:none;background:transparent;font-family:inherit;padding:5px 0;font-weight:500;transition:color .15s}
+.comm-btn:hover{color:rgba(255,255,255,.8)}
+.comm-btn svg{stroke:#fff}
 .cst-btn{background:#fff;color:#333;border:1px solid #d8d5ce;border-radius:20px;padding:5px 16px;font-size:11px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px}
 .cst-btn:hover{background:#f5f3ee}
 /* status dropdown in header */
@@ -315,7 +315,18 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tc-btn-del:hover{background:#fdecea;color:#b83a2a}
 .tc-btn-arch{display:flex;align-items:center;gap:5px;border:1px solid #d8d5ce;background:#fff;border-radius:8px;padding:6px 12px;font-size:11px;color:#666;cursor:pointer;font-family:inherit}
 .tc-btn-arch:hover{background:#f5f3ee}
-/* MENTION */
+/* ── inline status dropdown ── */
+.st-drop{display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e4e0da;border-radius:12px;padding:4px 0;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:200;min-width:150px}
+.st-drop.open{display:block}
+.st-drop-item{padding:8px 16px;font-size:13px;cursor:pointer;color:#444;font-family:'Inter',sans-serif;transition:background .1s}
+.st-drop-item:hover{background:#f5f3ee}
+.st-drop-item.active{color:#8b1a1a;font-weight:600}
+/* ── hours top badge ── */
+.tc-hours-top{display:flex;align-items:center;gap:5px;font-size:11px;color:#679673;font-weight:600;margin-bottom:8px}
+/* ── big edit button ── */
+.edit-btn-main{background:#303030;color:#fff;border:none;border-radius:10px;padding:8px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .13s}
+.edit-btn-main:hover{background:#1c1c1c}
+
 .ment-wrap{position:relative}
 .ment-drop{position:absolute;top:100%;left:0;background:#fff;border:1px solid #e0dcd6;border-radius:10px;padding:4px 0;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;min-width:160px;display:none}
 .ment-drop.show{display:block}
@@ -2097,7 +2108,7 @@ function render(){
     // ── calendar icon SVG ──
     const calSvg=`<svg width="16" height="16" viewBox="0 0 21 21" fill="none"><path d="M17.0625 2.78906H14.9297V1.96875C14.9297 1.83821 14.8778 1.71302 14.7855 1.62072C14.6932 1.52842 14.568 1.47656 14.4375 1.47656C14.307 1.47656 14.1818 1.52842 14.0895 1.62072C13.9972 1.71302 13.9453 1.83821 13.9453 1.96875V2.78906H7.05469V1.96875C7.05469 1.83821 7.00283 1.71302 6.91053 1.62072C6.81823 1.52842 6.69304 1.47656 6.5625 1.47656C6.43196 1.47656 6.30677 1.52842 6.21447 1.62072C6.12217 1.71302 6.07031 1.83821 6.07031 1.96875V2.78906H3.9375C3.63292 2.78906 3.34081 2.91006 3.12543 3.12543C2.91006 3.34081 2.78906 3.63292 2.78906 3.9375V17.0625C2.78906 17.3671 2.91006 17.6592 3.12543 17.8746C3.34081 18.0899 3.63292 18.2109 3.9375 18.2109H17.0625C17.3671 18.2109 17.6592 18.0899 17.8746 17.8746C18.0899 17.6592 18.2109 17.3671 18.2109 17.0625V3.9375C18.2109 3.63292 18.0899 3.34081 17.8746 3.12543C17.6592 2.91006 17.3671 2.78906 17.0625 2.78906ZM3.9375 3.77344H6.07031V4.59375C6.07031 4.72429 6.12217 4.84948 6.21447 4.94178C6.30677 5.03408 6.43196 5.08594 6.5625 5.08594C6.69304 5.08594 6.81823 5.03408 6.91053 4.94178C7.00283 4.84948 7.05469 4.72429 7.05469 4.59375V3.77344H13.9453V4.59375C13.9453 4.72429 13.9972 4.84948 14.0895 4.94178C14.1818 5.03408 14.307 5.08594 14.4375 5.08594C14.568 5.08594 14.6932 5.03408 14.7855 4.94178C14.8778 4.84948 14.9297 4.72429 14.9297 4.59375V3.77344H17.0625C17.106 3.77344 17.1477 3.79072 17.1785 3.82149C17.2093 3.85226 17.2266 3.89399 17.2266 3.9375V6.72656H3.77344V3.9375C3.77344 3.89399 3.79072 3.85226 3.82149 3.82149C3.85226 3.79072 3.89399 3.77344 3.9375 3.77344ZM17.0625 17.2266H3.9375C3.89399 17.2266 3.85226 17.2093 3.82149 17.1785C3.79072 17.1477 3.77344 17.106 3.77344 17.0625V7.71094H17.2266V17.0625C17.2266 17.106 17.2093 17.1477 17.1785 17.1785C17.1477 17.2093 17.106 17.2266 17.0625 17.2266Z" fill="#8F1A1A"/></svg>`;
     // ── clock icon SVG ──
-    const clockSvg=`<svg width="16" height="16" viewBox="0 0 23 23" fill="none"><path d="M11.5 2.33594C9.68752 2.33594 7.91575 2.8734 6.40872 3.88036C4.9017 4.88732 3.72712 6.31855 3.03351 7.99307C2.33991 9.66758 2.15843 11.5102 2.51203 13.2878C2.86562 15.0655 3.73842 16.6984 5.02003 17.98C6.30165 19.2616 7.93453 20.1344 9.71218 20.488C11.4898 20.8416 13.3324 20.6601 15.0069 19.9665C16.6815 19.2729 18.1127 18.0983 19.1196 16.5913C20.1266 15.0843 20.6641 13.3125 20.6641 11.5C20.6612 9.07042 19.6948 6.74116 17.9768 5.02318C16.2588 3.3052 13.9296 2.33879 11.5 2.33594ZM17.0703 11.5C17.0703 11.643 17.0135 11.7801 16.9124 11.8812C16.8113 11.9823 16.6742 12.0391 16.5313 12.0391H11.5C11.357 12.0391 11.2199 11.9823 11.1188 11.8812C11.0177 11.7801 10.9609 11.643 10.9609 11.5V6.46875C10.9609 6.32578 11.0177 6.18867 11.1188 6.08758C11.2199 5.98648 11.357 5.92969 11.5 5.92969C11.643 5.92969 11.7801 5.98648 11.8812 6.08758C11.9823 6.18867 12.0391 6.32578 12.0391 6.46875V10.9609H16.5313C16.6742 10.9609 16.8113 11.0177 16.9124 11.1188C17.0135 11.2199 17.0703 11.357 17.0703 11.5Z" fill="#679673"/></svg>`;
+    const clockSvg=`<svg width="16" height="16" viewBox="0 0 23 23" fill="none"><path d="M11.5 2.33594C9.68752 2.33594 7.91575 2.8734 6.40872 3.88036C4.9017 4.88732 3.72712 6.31855 3.03351 7.99307C2.33991 9.66758 2.15843 11.5102 2.51203 13.2878C2.86562 15.0655 3.73842 16.6984 5.02003 17.98C6.30165 19.2616 7.93453 20.1344 9.71218 20.488C11.4898 20.8416 13.3324 20.6601 15.0069 19.9665C16.6815 19.2729 18.1127 18.0983 19.1196 16.5913C20.1266 15.0843 20.6641 13.3125 20.6641 11.5C20.6612 9.07042 19.6948 6.74116 17.9768 5.02318C16.2588 3.3052 13.9296 2.33879 11.5 2.33594ZM11.5 19.5859C9.90076 19.5859 8.33742 19.1117 7.0077 18.2232C5.67797 17.3347 4.64158 16.0719 4.02957 14.5944C3.41757 13.1168 3.25744 11.491 3.56944 9.92251C3.88143 8.35399 4.65154 6.91322 5.78238 5.78238C6.91322 4.65154 8.354 3.88143 9.92252 3.56943C11.491 3.25743 13.1168 3.41756 14.5944 4.02957C16.0719 4.64157 17.3347 5.67797 18.2232 7.00769C19.1117 8.33742 19.5859 9.90075 19.5859 11.5C19.5836 13.6438 18.7309 15.6991 17.215 17.215C15.6991 18.7309 13.6438 19.5836 11.5 19.5859ZM17.0703 11.5C17.0703 11.643 17.0135 11.7801 16.9124 11.8812C16.8113 11.9823 16.6742 12.0391 16.5313 12.0391H11.5C11.357 12.0391 11.2199 11.9823 11.1188 11.8812C11.0177 11.7801 10.9609 11.643 10.9609 11.5V6.46875C10.9609 6.32578 11.0177 6.18867 11.1188 6.08758C11.2199 5.98648 11.357 5.92969 11.5 5.92969C11.643 5.92969 11.7801 5.98648 11.8812 6.08758C11.9823 6.18867 12.0391 6.32578 12.0391 6.46875V10.9609H16.5313C16.6742 10.9609 16.8113 11.0177 16.9124 11.1188C17.0135 11.2199 17.0703 11.357 17.0703 11.5Z" fill="#8F1A1A"/></svg>`;
     // ── link icon SVG ──
     const linkSvg=`<svg width="22" height="22" viewBox="0 0 31 31" fill="none"><path d="M15.5 0C12.4344 0 9.43763 0.909059 6.88867 2.61222C4.3397 4.31538 2.35303 6.73615 1.17987 9.5684C0.00671564 12.4007 -0.300236 15.5172 0.297835 18.5239C0.895906 21.5306 2.37214 24.2924 4.53985 26.4601C6.70756 28.6279 9.4694 30.1041 12.4761 30.7022C15.4828 31.3002 18.5993 30.9933 21.4316 29.8201C24.2638 28.647 26.6846 26.6603 28.3878 24.1113C30.0909 21.5624 31 18.5656 31 15.5C30.9952 11.3906 29.3606 7.45094 26.4548 4.54517C23.5491 1.63941 19.6094 0.00482605 15.5 0ZM21.2745 10.6373V17.9314C21.2745 18.1732 21.1785 18.4051 21.0075 18.5761C20.8365 18.7471 20.6046 18.8431 20.3627 18.8431C20.1209 18.8431 19.889 18.7471 19.718 18.5761C19.547 18.4051 19.451 18.1732 19.451 17.9314V12.8392L11.2816 21.0071C11.1087 21.1681 10.8801 21.2558 10.6439 21.2516C10.4077 21.2475 10.1823 21.1518 10.0153 20.9847C9.84824 20.8177 9.75255 20.5923 9.74838 20.3561C9.74421 20.1199 9.83189 19.8913 9.99295 19.7184L18.1608 11.549H13.0686C12.8268 11.549 12.5949 11.453 12.4239 11.282C12.2529 11.111 12.1569 10.8791 12.1569 10.6373C12.1569 10.3954 12.2529 10.1635 12.4239 9.99254C12.5949 9.82155 12.8268 9.72549 13.0686 9.72549H20.3627C20.6046 9.72549 20.8365 9.82155 21.0075 9.99254C21.1785 10.1635 21.2745 10.3954 21.2745 10.6373Z" fill="#5FAE9A"/></svg>`;
     // ── trash icon SVG ──
@@ -2107,21 +2118,30 @@ function render(){
     // ── chevron SVG ──
     const chevronSvg=`<svg width="12" height="7" viewBox="0 0 17 9" fill="none"><path d="M16.6104 0.985384L8.79788 8.79788C8.68802 8.90761 8.5391 8.96924 8.38382 8.96924C8.22855 8.96924 8.07962 8.90761 7.96976 8.79788L0.157259 0.985384C0.053759 0.87431 -0.00258701 0.727399 9.1287e-05 0.575602C0.00276958 0.423804 0.0642631 0.278972 0.171617 0.171618C0.278971 0.0642639 0.423803 0.00276958 0.575601 9.12858e-05C0.727399 -0.00258701 0.87431 0.0537598 0.985384 0.15726L8.38382 7.55472L15.7823 0.15726C15.8933 0.0537598 16.0402 -0.00258701 16.192 9.12858e-05C16.3438 0.00276958 16.4887 0.0642639 16.596 0.171618C16.7034 0.278972 16.7649 0.423804 16.7676 0.575602C16.7702 0.727399 16.7139 0.87431 16.6104 0.985384Z" fill="#303030"/></svg>`;
 
-    // ── status button ──
+    // ── status button — inline dropdown (no modal) ──
+    const statusList=Object.entries(SL).map(([k,v])=>`<div class="st-drop-item${t.status===k?' active':''}" onclick="event.stopPropagation();quickSetStatus(${tid},'${k}')">${v}</div>`).join('');
     const stBtnH=canChangeStatus(t)?
-      `<div class="tc-status-wrap"><span class="tc-status-label">Статус</span><button class="tc-status-btn" onclick="event.stopPropagation();openSt(${tid})">${SL[t.status]} ${chevronSvg}</button></div>`
+      `<div class="tc-status-wrap" style="position:relative">
+        <span class="tc-status-label">Статус</span>
+        <button class="tc-status-btn" onclick="event.stopPropagation();toggleStDrop(this)">${SL[t.status]} ${chevronSvg}</button>
+        <div class="st-drop">${statusList}</div>
+      </div>`
       :`<div class="tc-status-wrap"><span class="tg ${SC[t.status]}" style="padding:4px 14px">${SL[t.status]}</span></div>`;
 
     // ── spinH for "in work" ──
     const spinH=isW?`<span class="spin-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e06030" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>`:'';
-    const hoursH=t.hours&&canAccessHours()?`<span style="font-size:11px;background:#e8f0fd;color:#2f52cc;border-radius:10px;padding:2px 9px;font-weight:600">⏱ ${fmtHrs(t.hours)}</span>`:'';
 
-    // ── result block ──
+    // ── wristwatch icon (Frame-3) for hours — top of inner panel ──
+    const wristSvg=`<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12.875 8C12.8747 7.22638 12.6902 6.46395 12.3366 5.77585C11.9831 5.08775 11.4707 4.49377 10.8418 4.04313L10.4437 1.84375C10.4071 1.64203 10.3008 1.45957 10.1434 1.32821C9.98602 1.19685 9.78749 1.12493 9.58247 1.125H6.41747C6.21245 1.12493 6.01392 1.19685 5.85652 1.32821C5.69911 1.45957 5.59283 1.64203 5.55622 1.84375L5.1581 4.04313C4.52908 4.49358 4.01652 5.08751 3.66292 5.77566C3.30933 6.4638 3.12488 7.22633 3.12488 8C3.12488 8.77367 3.30933 9.5362 3.66292 10.2243C4.01652 10.9125 4.52908 11.5064 5.1581 11.9569L5.55622 14.1562C5.59283 14.358 5.69911 14.5404 5.85652 14.6718C6.01392 14.8032 6.21245 14.8751 6.41747 14.875H9.58247C9.78749 14.8751 9.98602 14.8032 10.1434 14.6718C10.3008 14.5404 10.4071 14.358 10.4437 14.1562L10.8418 11.9569C11.4707 11.5062 11.9831 10.9123 12.3366 10.2242C12.6902 9.53605 12.8747 8.77362 12.875 8ZM7.99997 12.125C7.18412 12.125 6.3866 11.8831 5.70824 11.4298C5.02989 10.9766 4.50118 10.3323 4.18897 9.57857C3.87676 8.82482 3.79507 7.99542 3.95423 7.19525C4.1134 6.39508 4.50626 5.66008 5.08316 5.08318C5.66005 4.50629 6.39505 4.11342 7.19522 3.95426C7.99539 3.7951 8.8248 3.87679 9.57854 4.189C10.3323 4.50121 10.9765 5.02992 11.4298 5.70827C11.883 6.38663 12.125 7.18415 12.125 8C12.1236 9.09361 11.6886 10.1421 10.9153 10.9154C10.142 11.6887 9.09358 12.1237 7.99997 12.125Z" fill="#679673"/></svg>`;
+    const hoursH=t.hours&&canAccessHours()?`<div class="tc-hours-top">${wristSvg}<span>${fmtHrs(t.hours)}</span></div>`:'';
+
+    // ── result block with EAF6F0 rect + outline arrow ──
+    const outlineArrowSvg=`<svg width="14" height="14" viewBox="0 0 31 31" fill="none"><path d="M15.5 0C12.4344 0 9.43763 0.909059 6.88867 2.61222C4.3397 4.31538 2.35303 6.73615 1.17987 9.5684C0.00671564 12.4007 -0.300236 15.5172 0.297835 18.5239C0.895906 21.5306 2.37214 24.2924 4.53985 26.4601C6.70756 28.6279 9.4694 30.1041 12.4761 30.7022C15.4828 31.3002 18.5993 30.9933 21.4316 29.8201C24.2638 28.647 26.6846 26.6603 28.3878 24.1113C30.0909 21.5624 31 18.5656 31 15.5C30.9952 11.3906 29.3606 7.45094 26.4548 4.54517C23.5491 1.63941 19.6094 0.00482605 15.5 0ZM15.5 29.1765C12.7951 29.1765 10.1508 28.3744 7.90177 26.8716C5.65268 25.3688 3.89973 23.2328 2.86459 20.7338C1.82946 18.2347 1.55862 15.4848 2.08633 12.8318C2.61403 10.1789 3.91659 7.74196 5.82928 5.82927C7.74197 3.91659 10.1789 2.61403 12.8319 2.08632C15.4848 1.55861 18.2347 1.82945 20.7338 2.86459C23.2328 3.89973 25.3688 5.65267 26.8716 7.90176C28.3744 10.1508 29.1765 12.795 29.1765 15.5C29.1724 19.126 27.7302 22.6023 25.1663 25.1663C22.6023 27.7302 19.126 29.1724 15.5 29.1765ZM21.2745 10.6373V17.9314C21.2745 18.1732 21.1785 18.4051 21.0075 18.5761C20.8365 18.7471 20.6046 18.8431 20.3627 18.8431C20.1209 18.8431 19.889 18.7471 19.718 18.5761C19.547 18.4051 19.451 18.1732 19.451 17.9314V12.8392L11.2816 21.0071C11.1087 21.1681 10.8801 21.2558 10.6439 21.2516C10.4077 21.2475 10.1823 21.1518 10.0153 20.9847C9.84824 20.8177 9.75255 20.5923 9.74838 20.3561C9.74421 20.1199 9.83189 19.8913 9.99295 19.7184L18.1608 11.549H13.0686C12.8268 11.549 12.5949 11.453 12.4239 11.282C12.2529 11.111 12.1569 10.8791 12.1569 10.6373C12.1569 10.3954 12.2529 10.1635 12.4239 9.99254C12.5949 9.82155 12.8268 9.72549 13.0686 9.72549H20.3627C20.6046 9.72549 20.8365 9.82155 21.0075 9.99254C21.1785 10.1635 21.2745 10.3954 21.2745 10.6373Z" fill="#5FAE9A"/></svg>`;
     let resH='';
     if(t.result){
       const safeRes=esc(t.result);
       const resHref=esc(t.result.startsWith('http')?t.result:'https://'+t.result);
-      resH=`<div class="tc-res"><div class="tc-res-label">Результат:</div>${isUrl(t.result)?`<a class="tc-res-link" href="${resHref}" target="_blank" rel="noopener">${safeRes} ${linkSvg}</a>`:safeRes}</div>`;
+      resH=`<div class="tc-res"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><div style="width:4px;height:28px;background:#EAF6F0;border-radius:2px;flex-shrink:0"></div><div><div class="tc-res-label">Результат:</div>${isUrl(t.result)?`<a class="tc-res-link" href="${resHref}" target="_blank" rel="noopener">${safeRes} ${outlineArrowSvg}</a>`:safeRes}</div></div></div>`;
     }
 
     // ── URL block ──
@@ -2158,12 +2178,12 @@ function render(){
       </div>
       <!-- INNER BODY -->
       <div class="tc-inner">
+        ${hoursH}
         ${resH}${urlH}${noteH}${changeHint}${dtH}${overdueH}${fcH}${driveFilesH(t.driveFiles)}${cmtsH}
         ${tagsH?`<div class="tc-tags" style="margin-top:6px">${tagsH}</div>`:''}
-        ${hoursH?`<div style="margin-top:6px">${hoursH}</div>`:''}
         <!-- ACTIONS -->
         <div class="tc-actions">
-          ${canEditTask(t)?`<button class="edit-btn" onclick="event.stopPropagation();openAdd(${tid})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Редагувати</button>`:''}
+          ${canEditTask(t)?`<button class="edit-btn-main" onclick="event.stopPropagation();openAdd(${tid})">Редагувати</button>`:''}
           ${canArchiveTask(t)?`<button class="tc-btn-del" onclick="event.stopPropagation();askDel(${tid})">${trashSvg} Видалити</button>`:''}
           ${t.status==='done'&&canArchiveTask(t)?`<button class="tc-btn-arch" onclick="event.stopPropagation();askDel(${tid})"><svg width="14" height="14" viewBox="0 0 22 22" fill="none"><path d="M18.5625 4.29688H14.9531V3.4375C14.9531 2.93608 14.7539 2.45519 14.3994 2.10063C14.0448 1.74607 13.5639 1.54688 13.0625 1.54688H8.9375C8.43608 1.54688 7.95519 1.74607 7.60063 2.10063C7.24607 2.45519 7.04688 2.93608 7.04688 3.4375V4.29688H3.4375C3.30075 4.29688 3.1696 4.3512 3.0729 4.4479C2.9762 4.5446 2.92188 4.67575 2.92188 4.8125C2.92188 4.94925 2.9762 5.0804 3.0729 5.1771C3.1696 5.2738 3.30075 5.32812 3.4375 5.32812H4.29688V17.875C4.29688 18.1941 4.42363 18.5001 4.64926 18.7257C4.87489 18.9514 5.18091 19.0781 5.5 19.0781H16.5C16.8191 19.0781 17.1251 18.9514 17.3507 18.7257C17.5764 18.5001 17.7031 18.1941 17.7031 17.875V5.32812H18.5625C18.6993 5.32812 18.8304 5.2738 18.9271 5.1771C19.0238 5.0804 19.0781 4.94925 19.0781 4.8125C19.0781 4.67575 19.0238 4.5446 18.9271 4.4479C18.8304 4.3512 18.6993 4.29688 18.5625 4.29688ZM9.45312 14.4375C9.45312 14.5743 9.3988 14.7054 9.3021 14.8021C9.2054 14.8988 9.07425 14.9531 8.9375 14.9531C8.80075 14.9531 8.6696 14.8988 8.5729 14.8021C8.4762 14.7054 8.42188 14.5743 8.42188 14.4375V8.9375C8.42188 8.80075 8.4762 8.6696 8.5729 8.5729C8.6696 8.4762 8.80075 8.42188 8.9375 8.42188C9.07425 8.42188 9.2054 8.4762 9.3021 8.5729C9.3988 8.6696 9.45312 8.80075 9.45312 8.9375V14.4375ZM13.5781 14.4375C13.5781 14.5743 13.5238 14.7054 13.4271 14.8021C13.3304 14.8988 13.1993 14.9531 13.0625 14.9531C12.9257 14.9531 12.7946 14.8988 12.6979 14.8021C12.6012 14.7054 12.5469 14.5743 12.5469 14.4375V8.9375C12.5469 8.80075 12.6012 8.6696 12.6979 8.5729C12.7946 8.4762 12.9257 8.42188 13.0625 8.42188C13.1993 8.42188 13.3304 8.4762 13.4271 8.5729C13.5238 8.6696 13.5781 8.80075 13.5781 8.9375V14.4375Z" fill="#8b1a1a"/></svg> Архівувати</button>`:''}
           ${isSuperAdmin()?`<button onclick="event.stopPropagation();openSAHardDelete(${tid})" style="border:none;background:#fdecea;color:#b83a2a;border-radius:9px;padding:7px 12px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600">🗑 Видалити назавжди</button>`:''}
@@ -3443,6 +3463,31 @@ function apSt(){
   closeM('mSt');eId=null;save();rStats();render();
   showToast('Статус змінено',''+SL[t.status]);
 }
+/* ── INLINE STATUS DROPDOWN ── */
+function toggleStDrop(btn){
+  const drop=btn.nextElementSibling;
+  const isOpen=drop.classList.contains('open');
+  // close all open drops first
+  document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
+  if(!isOpen) drop.classList.add('open');
+}
+// Close dropdown when clicking outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.tc-status-wrap')) document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
+});
+function quickSetStatus(id,newStatus){
+  const t=findTask(id);if(!t)return;
+  document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
+  const oldStatus=t.status;
+  if(oldStatus===newStatus)return;
+  t.status=newStatus;
+  t.lastChange={by:curU,at:new Date().toISOString(),summary:`Статус: ${SL[oldStatus]} → ${SL[newStatus]}`};
+  logEntry('status',t.id,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[newStatus]);
+  tgNotifyStatus(t,oldStatus,curU);
+  save();rStats();render();
+  showToast('Статус змінено',''+SL[newStatus]);
+}
+
 /* ── TOAST ── */
 function showToast(title, sub){
   const el=document.getElementById('wm-toast');
