@@ -334,6 +334,21 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .edit-btn-main{background:#303030;color:#fff;border:none;border-radius:10px;padding:8px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .13s}
 .edit-btn-main:hover{background:#1c1c1c}
 
+/* ── STATUS GROUP SECTIONS (mockup style) ── */
+.task-section{margin-bottom:10px}
+.status-bar{display:flex;align-items:center;gap:8px;padding:6px 16px;border-radius:10px 10px 0 0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.task-section .tc{border-radius:0;border-top:none;border-left:none;margin-bottom:0}
+.task-section .tc:last-child{border-radius:0 0 12px 12px}
+.task-section .tc + .tc{border-top:1px solid #ede9e3}
+/* status bar themes */
+.sb-new{background:#D3D1C7;color:#444441}.sb-new .status-dot{background:#5F5E5A}
+.sb-work{background:#F5C4B3;color:#712B13}.sb-work .status-dot{background:#993C1D}
+.sb-urgent{background:#F7C1C1;color:#791F1F}.sb-urgent .status-dot{background:#A32D2D}
+.sb-done{background:#C0DD97;color:#27500A}.sb-done .status-dot{background:#3B6D11}
+.sb-clarify{background:#FAC775;color:#633806}.sb-clarify .status-dot{background:#854F0B}
+.sb-test{background:#D6CFF5;color:#382870}.sb-test .status-dot{background:#5830a8}
+
 .ment-wrap{position:relative}
 .ment-drop{position:absolute;top:100%;left:0;background:#fff;border:1px solid #e0dcd6;border-radius:10px;padding:4px 0;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;min-width:160px;display:none}
 .ment-drop.show{display:block}
@@ -2095,7 +2110,14 @@ function render(){
 
   renderPagination(list.length,totalPages);
 
-  ta.innerHTML=pageList.map(t=>{
+  // ── group by status ──
+  const STATUS_ORDER=['urgent','work','clarify','new','test','done'];
+  const STATUS_LABELS={urgent:'Терміново',work:'В роботі',clarify:'Уточнення',new:'Нові',test:'Тестування',done:'Виконано'};
+  const STATUS_BAR_CLS={urgent:'sb-urgent',work:'sb-work',clarify:'sb-clarify',new:'sb-new',test:'sb-test',done:'sb-done'};
+  const grouped={};
+  STATUS_ORDER.forEach(s=>grouped[s]=[]);
+  pageList.forEach(t=>{const s=t.status||'new';if(grouped[s])grouped[s].push(t);else grouped['new'].push(t);});
+  const renderCard=(t)=>{
     const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     // Badge visible only to task participants (author, assignee, or @mentioned)
@@ -2215,7 +2237,21 @@ function render(){
         <button class="comm-btn" onclick="event.stopPropagation();togCmt(${tid},event)">${chatSvg} Додати нотатку</button>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  // Build grouped HTML
+  let groupedHtml='';
+  STATUS_ORDER.forEach(s=>{
+    const grp=grouped[s];
+    if(!grp||!grp.length) return;
+    const barCls=STATUS_BAR_CLS[s]||'sb-new';
+    const label=STATUS_LABELS[s]||s;
+    groupedHtml+=`<div class="task-section">
+      <div class="status-bar ${barCls}"><span class="status-dot"></span>${label}</div>
+      ${grp.map(t=>renderCard(t)).join('')}
+    </div>`;
+  });
+  ta.innerHTML=groupedHtml;
 }
 
 function renderPagination(total,totalPages){
