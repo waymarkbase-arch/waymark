@@ -956,8 +956,8 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 <div class="mbg hide" id="mQ">
   <div class="qbox">
     <h3>⚡ Швидке завдання</h3>
-    <input id="qI" placeholder="Посилання або текст (або порожньо)" onkeydown="if(event.key==='Enter')mkQ()">
-    <p class="qhint">Картка буде доповнена виконавцем. Можна залишити порожнім — отримає фразу-заглушку.</p>
+    <input id="qI" placeholder="Посилання або текст..." onkeydown="if(event.key==='Enter')mkQ()">
+    <p class="qhint">Картка буде доповнена виконавцем</p>
     <div class="qbtns"><button onclick="closeM('mQ')">Скасувати</button><button class="qprim" onclick="mkQ()">Додати</button></div>
   </div>
 </div>
@@ -3483,14 +3483,15 @@ function mkT(){
 }
 function openQ(){openM('mQ');setTimeout(()=>document.getElementById('qI').focus(),80);}
 function mkQ(){
-  const v=document.getElementById('qI').value.trim();
-  const iU=v&&(/^https?:\/\//.test(v)||/^www\./.test(v));
+  const v=document.getElementById('qI').value.trim();if(!v)return;
+  const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
   const now=new Date();
   const today=now.toISOString().split('T')[0];
   const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   const defaultTo=(managers.find(m=>m.role==='admin'&&!m.hidden)||managers.find(m=>!m.hidden)||managers[0])?.code||curU;
   const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
-  const newTask={id:newId,title:iU?'':v,url:iU?v.replace(/^https?:\/\//,''):'',note:'',status:'new',tags:[],
+  // Always title:'' so placeholder phrase shows; text goes to url or note
+  const newTask={id:newId,title:'',url:iU?v.replace(/^https?:\/\//,''):'',note:iU?'':v,status:'new',tags:[],
     created:today,createdTime:timeStr,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]};
   tasks.unshift(newTask);
   logEntry('create',newId,v.slice(0,60)||'—');
