@@ -305,7 +305,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tc-cmt-box.show{display:block}
 .tc-cmt-box textarea{width:100%;border:1px solid #e4e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:50px;color:#333}
 .tc-cmt-box button{margin-top:5px;background:#2f52cc;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:11px;cursor:pointer;font-family:inherit}
-.tc-foot{display:flex;align-items:center;justify-content:space-between;background:#BEBECD;padding:10px 18px;margin:0}
+.tc-foot{display:flex;align-items:center;justify-content:space-between;background:#888;padding:10px 18px;margin:0}
 .comm-btn{display:flex;align-items:center;gap:7px;font-size:12px;color:#fff;cursor:pointer;border:none;background:transparent;font-family:inherit;padding:5px 0;font-weight:500;transition:color .15s}
 .comm-btn:hover{color:rgba(255,255,255,.8)}
 .comm-btn svg{stroke:#fff}
@@ -336,16 +336,16 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 
 /* ── STATUS GROUP SECTIONS (mockup style) ── */
 .task-section{margin-bottom:14px}
-.status-bar{display:flex;align-items:center;gap:8px;padding:6px 16px;border-radius:10px 10px 0 0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
-.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.status-bar{height:3px;border-radius:3px 3px 0 0;padding:0;font-size:0;line-height:0;overflow:hidden}
+.status-dot{display:none}
 .task-section .tc{border-radius:0 0 12px 12px;border-top:none;border-left:none;margin-bottom:0}
 /* status bar themes */
-.sb-new{background:#D3D1C7;color:#444441}.sb-new .status-dot{background:#5F5E5A}
-.sb-work{background:#F5C4B3;color:#712B13}.sb-work .status-dot{background:#993C1D}
-.sb-urgent{background:#F7C1C1;color:#791F1F}.sb-urgent .status-dot{background:#A32D2D}
-.sb-done{background:#C0DD97;color:#27500A}.sb-done .status-dot{background:#3B6D11}
-.sb-clarify{background:#FAC775;color:#633806}.sb-clarify .status-dot{background:#854F0B}
-.sb-test{background:#D6CFF5;color:#382870}.sb-test .status-dot{background:#5830a8}
+.sb-new{background:#5F5E5A}
+.sb-work{background:#993C1D}
+.sb-urgent{background:#A32D2D}
+.sb-done{background:#3B6D11}
+.sb-clarify{background:#854F0B}
+.sb-test{background:#5830a8}
 
 .ment-wrap{position:relative}
 .ment-drop{position:absolute;top:100%;left:0;background:#fff;border:1px solid #e0dcd6;border-radius:10px;padding:4px 0;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;min-width:160px;display:none}
