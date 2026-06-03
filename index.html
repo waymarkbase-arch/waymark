@@ -216,9 +216,9 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .btn-cal:hover{background:#f5f3ee}
 .btn-add{background:#2f52cc;color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .btn-qk{background:#28a890;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
-.ta{padding:20px 48px 40px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.ta{padding:20px 48px 40px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 /* TASK CARD — new design */
-.tc{background:#FCFCFC;border-radius:20px;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s;overflow:hidden;border:1px solid #ede9e3;border-left:4px solid #8F1A1A}
+.tc{background:#FCFCFC;border-radius:12px;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s;overflow:hidden;border:1px solid #ede9e3}
 .tc:hover{box-shadow:0 4px 24px rgba(0,0,0,.1)}
 .tc.st-done{background:#EEEEEE}
 /* card header strip */
@@ -335,10 +335,11 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .edit-btn-main:hover{background:#1c1c1c}
 
 /* ── STATUS GROUP SECTIONS (mockup style) ── */
-.task-section{margin-bottom:14px}
-.status-bar{height:3px;border-radius:3px 3px 0 0;padding:0;font-size:0;line-height:0;overflow:hidden}
+.task-section{margin-bottom:0;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.status-bar{height:3px;border-radius:0;padding:0;font-size:0;line-height:0;overflow:hidden;flex-shrink:0}
 .status-dot{display:none}
-.task-section .tc{border-radius:0 0 12px 12px;border-top:none;border-left:none;margin-bottom:0}
+.task-section .tc{border-radius:0;border-top:none;border-left:none;border-right:none;border-bottom:none;box-shadow:none;margin-bottom:0}
+.task-section .tc:hover{box-shadow:none}
 /* status bar themes */
 .sb-new{background:#5F5E5A}
 .sb-work{background:#993C1D}
