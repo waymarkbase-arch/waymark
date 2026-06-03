@@ -2193,13 +2193,13 @@ function render(){
     const tagsH=t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
 
-    // title — fallback to url or note, with rotating funny placeholder
+    // title — fallback to note, then placeholder (url shown separately in body)
     const _placeholders=['Завдання з таємничою місією','Завдання, яке само знає хто воно','Місія без брифінгу',
       'Таємне завдання №'+(String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7+1),
       'Шось треба зробити','Завдання без імені, але з характером','Щось важливе'];
     const _phIdx=String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7;
     const _ph=_placeholders[_phIdx];
-    const titleText=(t.title&&t.title.trim())?t.title:((t.url&&t.url.trim())?t.url:((t.note&&t.note.trim())?t.note:_ph));
+    const titleText=(t.title&&t.title.trim())?t.title:((t.note&&t.note.trim())?t.note:_ph);
 
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
       ${unseenBadge}
