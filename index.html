@@ -2114,7 +2114,7 @@ function render(){
   const grouped={};
   STATUS_ORDER.forEach(s=>grouped[s]=[]);
   pageList.forEach(t=>{const s=t.status||'new';if(grouped[s])grouped[s].push(t);else grouped['new'].push(t);});
-  const renderCard=(t)=>{
+  const renderCard=(t,phIdx)=>{
     const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
     // Badge visible only to task participants (author, assignee, or @mentioned)
@@ -2193,10 +2193,9 @@ function render(){
 
     // title — fallback to note, then placeholder (url shown separately in body)
     const _placeholders=['Завдання з таємничою місією','Завдання, яке само знає хто воно','Місія без брифінгу',
-      'Таємне завдання №'+(String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7+1),
+      'Таємне завдання №'+(phIdx%7+1),
       'Шось треба зробити','Завдання без імені, але з характером','Щось важливе'];
-    const _phIdx=String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7;
-    const _ph=_placeholders[_phIdx];
+    const _ph=_placeholders[phIdx%7];
     const titleText=(t.title&&t.title.trim())?t.title:_ph;
 
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
@@ -2239,15 +2238,17 @@ function render(){
 
   // Build: each task gets its own status-bar header
   let groupedHtml='';
+  let phCounter=0;
   STATUS_ORDER.forEach(s=>{
     const grp=grouped[s];
     if(!grp||!grp.length) return;
     const barCls=STATUS_BAR_CLS[s]||'sb-new';
     const label=STATUS_LABELS[s]||s;
     grp.forEach(t=>{
+      const idx=(!t.title||!t.title.trim())?phCounter++:0;
       groupedHtml+=`<div class="task-section">
         <div class="status-bar ${barCls}"><span class="status-dot"></span>${label}</div>
-        ${renderCard(t)}
+        ${renderCard(t,idx)}
       </div>`;
     });
   });
