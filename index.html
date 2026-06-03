@@ -216,7 +216,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .btn-cal:hover{background:#f5f3ee}
 .btn-add{background:#2f52cc;color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .btn-qk{background:#28a890;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
-.ta{padding:20px 48px 40px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.ta{padding:20px 48px 40px;display:flex;flex-direction:column;gap:16px}
 /* TASK CARD — new design */
 .tc{background:#FCFCFC;border-radius:12px;padding:0;box-shadow:0 2px 12px rgba(0,0,0,.06);position:relative;cursor:pointer;transition:box-shadow .15s;overflow:hidden;border:1px solid #ede9e3}
 .tc:hover{box-shadow:0 4px 24px rgba(0,0,0,.1)}
@@ -2195,10 +2195,11 @@ function render(){
 
     // title — fallback to url or note, with rotating funny placeholder
     const _placeholders=['Завдання з таємничою місією','Завдання, яке само знає хто воно','Місія без брифінгу',
-      'Таємне завдання №'+((typeof t.id==='number'?t.id:parseInt(String(t.id).replace(/\D/g,''))||0)%7+1),
+      'Таємне завдання №'+(String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7+1),
       'Шось треба зробити','Завдання без імені, але з характером','Щось важливе'];
-    const _ph=_placeholders[(typeof t.id==='number'?t.id:parseInt(String(t.id).replace(/\D/g,''))||0)%7];
-    const titleText=t.title?t.title:(t.url?t.url:(t.note?t.note:_ph));
+    const _phIdx=String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7;
+    const _ph=_placeholders[_phIdx];
+    const titleText=(t.title&&t.title.trim())?t.title:((t.url&&t.url.trim())?t.url:((t.note&&t.note.trim())?t.note:_ph));
 
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
       ${unseenBadge}
@@ -3422,7 +3423,6 @@ function openAdd(id){
 }
 function mkT(){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
-  if(!T&&!U&&!N)return;
   const _wasEdit=!!eId;
   const toVal=document.getElementById('fTo').value;
   if(!toVal){alert('Оберіть виконавця.');document.getElementById('fTo').focus();return;}
@@ -3485,8 +3485,8 @@ function mkT(){
 }
 function openQ(){openM('mQ');setTimeout(()=>document.getElementById('qI').focus(),80);}
 function mkQ(){
-  const v=document.getElementById('qI').value.trim();if(!v)return;
-  const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
+  const v=document.getElementById('qI').value.trim();
+  const iU=v&&(/^https?:\/\//.test(v)||/^www\./.test(v));
   const now=new Date();
   const today=now.toISOString().split('T')[0];
   const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
