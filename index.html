@@ -241,6 +241,12 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .wm-tip-arrow{width:10px;height:6px;overflow:visible;display:block;margin:0 auto}
 .wm-tip-arrow polygon{fill:#1c1c1c}
 .tc-collapsed .tc-inner{display:none}
+.tc-collapsed-meta-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tc-collapsed-date{font-size:11px;color:#aaa;white-space:nowrap}
+/* hide meta wrap when expanded */
+.tc:not(.tc-collapsed) .tc-collapsed-meta-wrap{display:none}
+/* hide expand btn arrow when it's also in the header for non-collapsed */
+.tc:not(.tc-collapsed) .tc-expand-btn{transform:rotate(180deg)}
 .tc-preview{display:flex;align-items:center;gap:10px;min-height:0}
 .tc-preview-title{flex:1;font-size:13px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tc-preview-meta{display:flex;align-items:center;gap:6px;flex-shrink:0}
@@ -273,7 +279,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tg-test{background:#f4f0fd;border-color:#c8b8f0;color:#5830a8}
 .tg-new{background:#f4f4f4;border-color:#ddd;color:#666}
 .tg-label{background:#f0f6fc;border-color:#a8c8e8;color:#2a6090}
-.tc-title{font-size:18px;font-weight:700;color:#8b1a1a;line-height:1.3;margin:0;flex:1;font-family:'Inria Serif',Georgia,serif;font-style:italic}
+.tc-title{font-size:18px;font-weight:700;color:#8b1a1a;line-height:1.3;margin:0;flex:1;font-family:'Inria Serif',Georgia,serif;font-style:normal}
 .tc-url{font-size:12px;color:#333;display:flex;align-items:center;gap:6px;margin-bottom:6px;text-decoration:none;word-break:break-all}
 .tc-url:hover{text-decoration:underline}
 .tc-url-label{font-size:11px;color:#aaa;margin-bottom:3px;font-weight:500}
@@ -2135,6 +2141,7 @@ function render(){
     // ── wristwatch icon (Frame-3) for hours — top of inner panel ──
     const wristSvg=`<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12.875 8C12.8747 7.22638 12.6902 6.46395 12.3366 5.77585C11.9831 5.08775 11.4707 4.49377 10.8418 4.04313L10.4437 1.84375C10.4071 1.64203 10.3008 1.45957 10.1434 1.32821C9.98602 1.19685 9.78749 1.12493 9.58247 1.125H6.41747C6.21245 1.12493 6.01392 1.19685 5.85652 1.32821C5.69911 1.45957 5.59283 1.64203 5.55622 1.84375L5.1581 4.04313C4.52908 4.49358 4.01652 5.08751 3.66292 5.77566C3.30933 6.4638 3.12488 7.22633 3.12488 8C3.12488 8.77367 3.30933 9.5362 3.66292 10.2243C4.01652 10.9125 4.52908 11.5064 5.1581 11.9569L5.55622 14.1562C5.59283 14.358 5.69911 14.5404 5.85652 14.6718C6.01392 14.8032 6.21245 14.8751 6.41747 14.875H9.58247C9.78749 14.8751 9.98602 14.8032 10.1434 14.6718C10.3008 14.5404 10.4071 14.358 10.4437 14.1562L10.8418 11.9569C11.4707 11.5062 11.9831 10.9123 12.3366 10.2242C12.6902 9.53605 12.8747 8.77362 12.875 8ZM7.99997 12.125C7.18412 12.125 6.3866 11.8831 5.70824 11.4298C5.02989 10.9766 4.50118 10.3323 4.18897 9.57857C3.87676 8.82482 3.79507 7.99542 3.95423 7.19525C4.1134 6.39508 4.50626 5.66008 5.08316 5.08318C5.66005 4.50629 6.39505 4.11342 7.19522 3.95426C7.99539 3.7951 8.8248 3.87679 9.57854 4.189C10.3323 4.50121 10.9765 5.02992 11.4298 5.70827C11.883 6.38663 12.125 7.18415 12.125 8C12.1236 9.09361 11.6886 10.1421 10.9153 10.9154C10.142 11.6887 9.09358 12.1237 7.99997 12.125Z" fill="#679673"/></svg>`;
     const statusBadgeH=`<span style="background:#EAF6F0;color:#2e7d4f;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600">${SL[t.status]||''}</span>`;
+    const doneBadgeH=t.status==='done'&&!t.hours?`<div style="display:flex;justify-content:flex-end;margin-bottom:8px">${statusBadgeH}</div>`:'';
     const hoursH=t.hours&&canAccessHours()?`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:8px"><div class="tc-hours-top" style="margin-bottom:0">${wristSvg}<span>${fmtHrs(t.hours)}</span></div>${statusBadgeH}</div>`:'';
 
     // ── result block with EAF6F0 rect + outline arrow ──
@@ -2165,22 +2172,30 @@ function render(){
     const tagsH=t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
 
-    // title — fallback to url or note
-    const titleText=t.title||t.url||t.note||'—';
+    // title — fallback to url or note, with rotating funny placeholder
+    const _placeholders=['Завдання з таємничою місією','Завдання, яке само знає хто воно','Місія без брифінгу',
+      'Таємне завдання №'+((typeof t.id==='number'?t.id:parseInt(String(t.id).replace(/\D/g,''))||0)%7+1),
+      'Шось треба зробити','Завдання без імені, але з характером','Щось важливе'];
+    const _ph=_placeholders[(typeof t.id==='number'?t.id:parseInt(String(t.id).replace(/\D/g,''))||0)%7];
+    const titleText=t.title?t.title:(t.url?t.url:(t.note?t.note:_ph));
 
-    return `<div class="tc st-${t.status}${over?' overdue':''}" id="tcard${t.id}">
+    return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
       ${unseenBadge}
       <!-- HEADER -->
-      <div class="tc-header" onclick="if(batchMode){event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))}">
+      <div class="tc-header" onclick="if(batchMode){event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))}else{tcExpand(event,${tid})}">
         <input type="checkbox" class="tc-check" onclick="event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))" ${batchSelected.has(t.id)?'checked':''}>
         <div class="tc-avs">${cavH(t.from)}<span class="cav-arr">${arrowSvg}</span>${cavH(t.to)}</div>
         ${isW?spinH:''}
         <div class="tc-title">${esc(titleText)}</div>
-        ${stBtnH}
+        <div class="tc-collapsed-meta-wrap">
+          <span class="tc-collapsed-date">${t.created?t.created:''}</span>
+          ${stBtnH}
+        </div>
+        <button class="tc-expand-btn" onclick="event.stopPropagation();tcExpand(event,${tid})">▾</button>
       </div>
       <!-- INNER BODY -->
       <div class="tc-inner">
-        ${hoursH}
+        ${hoursH}${doneBadgeH}
         ${resH}${urlH}${noteH}${changeHint}${dtH}${overdueH}${fcH}${driveFilesH(t.driveFiles)}${cmtsH}
         ${tagsH?`<div class="tc-tags" style="margin-top:6px">${tagsH}</div>`:''}
         <!-- ACTIONS -->
