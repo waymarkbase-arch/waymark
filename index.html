@@ -243,9 +243,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tc-collapsed .tc-inner{display:none}
 .tc-collapsed-meta-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .tc-collapsed-date{font-size:11px;color:#aaa;white-space:nowrap}
-/* hide meta wrap when expanded */
-.tc:not(.tc-collapsed) .tc-collapsed-meta-wrap{display:none}
-/* hide expand btn arrow when it's also in the header for non-collapsed */
+/* keep meta wrap visible always — only hide expand btn rotation */
 .tc:not(.tc-collapsed) .tc-expand-btn{transform:rotate(180deg)}
 .tc-preview{display:flex;align-items:center;gap:10px;min-height:0}
 .tc-preview-title{flex:1;font-size:13px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -341,7 +339,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .task-section .tc{border-radius:0;border-top:none;border-left:none;border-right:none;border-bottom:none;box-shadow:none;margin-bottom:0}
 .task-section .tc:hover{box-shadow:none}
 /* status bar themes */
-.sb-new{background:#5F5E5A}
+.sb-new{background:#e8a8a0}
 .sb-work{background:#993C1D}
 .sb-urgent{background:#A32D2D}
 .sb-done{background:#3B6D11}
@@ -958,8 +956,8 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 <div class="mbg hide" id="mQ">
   <div class="qbox">
     <h3>⚡ Швидке завдання</h3>
-    <input id="qI" placeholder="Посилання або текст...">
-    <p class="qhint">Картка буде доповнена виконавцем</p>
+    <input id="qI" placeholder="Посилання або текст (або порожньо)" onkeydown="if(event.key==='Enter')mkQ()">
+    <p class="qhint">Картка буде доповнена виконавцем. Можна залишити порожнім — отримає фразу-заглушку.</p>
     <div class="qbtns"><button onclick="closeM('mQ')">Скасувати</button><button class="qprim" onclick="mkQ()">Додати</button></div>
   </div>
 </div>
