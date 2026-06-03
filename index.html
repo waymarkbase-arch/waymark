@@ -335,12 +335,10 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .edit-btn-main:hover{background:#1c1c1c}
 
 /* ── STATUS GROUP SECTIONS (mockup style) ── */
-.task-section{margin-bottom:10px}
+.task-section{margin-bottom:14px}
 .status-bar{display:flex;align-items:center;gap:8px;padding:6px 16px;border-radius:10px 10px 0 0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.task-section .tc{border-radius:0;border-top:none;border-left:none;margin-bottom:0}
-.task-section .tc:last-child{border-radius:0 0 12px 12px}
-.task-section .tc + .tc{border-top:1px solid #ede9e3}
+.task-section .tc{border-radius:0 0 12px 12px;border-top:none;border-left:none;margin-bottom:0}
 /* status bar themes */
 .sb-new{background:#D3D1C7;color:#444441}.sb-new .status-dot{background:#5F5E5A}
 .sb-work{background:#F5C4B3;color:#712B13}.sb-work .status-dot{background:#993C1D}
@@ -2239,17 +2237,19 @@ function render(){
     </div>`;
   };
 
-  // Build grouped HTML
+  // Build: each task gets its own status-bar header
   let groupedHtml='';
   STATUS_ORDER.forEach(s=>{
     const grp=grouped[s];
     if(!grp||!grp.length) return;
     const barCls=STATUS_BAR_CLS[s]||'sb-new';
     const label=STATUS_LABELS[s]||s;
-    groupedHtml+=`<div class="task-section">
-      <div class="status-bar ${barCls}"><span class="status-dot"></span>${label}</div>
-      ${grp.map(t=>renderCard(t)).join('')}
-    </div>`;
+    grp.forEach(t=>{
+      groupedHtml+=`<div class="task-section">
+        <div class="status-bar ${barCls}"><span class="status-dot"></span>${label}</div>
+        ${renderCard(t)}
+      </div>`;
+    });
   });
   ta.innerHTML=groupedHtml;
 }
