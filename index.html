@@ -2197,7 +2197,7 @@ function render(){
       'Шось треба зробити','Завдання без імені, але з характером','Щось важливе'];
     const _phIdx=String(t.id).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%7;
     const _ph=_placeholders[_phIdx];
-    const titleText=(t.title&&t.title.trim())?t.title:((t.note&&t.note.trim())?t.note:_ph);
+    const titleText=(t.title&&t.title.trim())?t.title:_ph;
 
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
       ${unseenBadge}
