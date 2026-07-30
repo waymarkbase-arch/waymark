@@ -336,7 +336,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tc-btn-arch{display:flex;align-items:center;gap:5px;border:1px solid #d8d5ce;background:#fff;border-radius:8px;padding:6px 12px;font-size:11px;color:#666;cursor:pointer;font-family:inherit}
 .tc-btn-arch:hover{background:#f5f3ee}
 /* ── inline status dropdown ── */
-.st-drop{display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e4e0da;border-radius:12px;padding:4px 0;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:200;min-width:150px}
+.st-drop{display:none;position:fixed;background:#fff;border:1px solid #e4e0da;border-radius:12px;padding:4px 0;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:500;min-width:150px}
 .st-drop.open{display:block}
 .st-drop-item{padding:8px 16px;font-size:13px;cursor:pointer;color:#444;font-family:'Inter',sans-serif;transition:background .1s}
 .st-drop-item:hover{background:#f5f3ee}
@@ -4735,17 +4735,36 @@ function apSt(){
   showToast('Статус змінено',''+SL[t.status]);
 }
 /* ── INLINE STATUS DROPDOWN ── */
+function positionStDrop(btn,drop){
+  const r=btn.getBoundingClientRect();
+  const dw=drop.offsetWidth||150;
+  let left=r.right-dw;
+  if(left<8) left=8;
+  if(left+dw>window.innerWidth-8) left=window.innerWidth-dw-8;
+  let top=r.bottom+6;
+  const dh=drop.offsetHeight||120;
+  if(top+dh>window.innerHeight-8) top=r.top-dh-6; // flip above if no room below
+  drop.style.left=left+'px';
+  drop.style.top=top+'px';
+}
 function toggleStDrop(btn){
   const drop=btn.nextElementSibling;
   const isOpen=drop.classList.contains('open');
   // close all open drops first
   document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
-  if(!isOpen) drop.classList.add('open');
+  if(!isOpen){
+    drop.classList.add('open'); // makes it display:block so offsetWidth/Height are measurable
+    positionStDrop(btn,drop);
+  }
 }
 // Close dropdown when clicking outside
 document.addEventListener('click',function(e){
   if(!e.target.closest('.tc-status-wrap')) document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
 });
+// Fixed-position dropdown won't track scroll — close it instead of leaving it floating in the wrong spot
+document.addEventListener('scroll',function(){
+  document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
+},true);
 function quickSetStatus(id,newStatus){
   const t=findTask(id);if(!t)return;
   document.querySelectorAll('.st-drop.open').forEach(d=>d.classList.remove('open'));
