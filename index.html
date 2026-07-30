@@ -261,10 +261,10 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .tc-expand-btn{background:none;border:none;cursor:pointer;color:#bbb;padding:2px 4px;font-size:16px;line-height:1;display:flex;align-items:center}
 .tc-expand-btn:hover{color:#888}
 .tc-body{padding-top:0}
-@keyframes wglow{0%,100%{box-shadow:0 2px 16px rgba(0,0,0,.07)}50%{box-shadow:0 2px 28px rgba(224,96,48,.3),0 0 0 2px rgba(224,96,48,.12)}}
+@keyframes wglow{0%,100%{box-shadow:0 2px 12px rgba(25,24,22,.05)}50%{box-shadow:0 4px 20px rgba(140,110,74,.18)}}
 @keyframes sp{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes cp{0%,100%{opacity:1}50%{opacity:.5}}
-@keyframes overdue{0%,100%{box-shadow:0 2px 16px rgba(0,0,0,.07)}50%{box-shadow:0 2px 24px rgba(185,30,30,.25),0 0 0 2px rgba(185,30,30,.18)}}
+@keyframes cp{0%,100%{box-shadow:0 2px 12px rgba(25,24,22,.05)}50%{box-shadow:0 4px 20px rgba(192,138,46,.18)}}
+@keyframes overdue{0%,100%{box-shadow:0 2px 12px rgba(25,24,22,.05)}50%{box-shadow:0 4px 20px rgba(176,74,56,.2)}}
 .tc.st-work{animation:wglow 2.5s ease-in-out infinite}
 .tc.st-clarify{animation:cp 2.8s ease-in-out infinite}
 .tc.overdue{border-left:4px solid #c0392b;animation:overdue 2s ease-in-out infinite}
@@ -1076,16 +1076,10 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
    row list — not a grid — by design.
    ══════════════════════════════════════════════════════════ */
 
-/* -- card shell: same radius/border language as .tour-card, slim top accent replaces the thick left stripe -- */
-.tc{border-radius:14px!important;border-left-width:0!important;border-top:3px solid var(--wm-border-strong)!important;transition:box-shadow .2s ease,border-color .2s ease,transform .15s ease!important}
-.tc:hover{transform:translateY(-1px)!important}
-.tc.st-work{border-top-color:#6e8f57!important}
-.tc.st-urgent{border-top-color:#b04a38!important}
-.tc.st-new{border-top-color:var(--wm-bronze)!important}
-.tc.st-clarify{border-top-color:#c08a2e!important}
-.tc.st-test{border-top-color:#8a6bc7!important}
-.tc.st-done{border-top-color:var(--wm-border-strong)!important}
-.tc.overdue{border-top-color:#b04a38!important}
+/* -- card shell: same neutral border language as .tour-card — no colour-coded edge.
+   Status lives only in the dot + label, exactly like the tour dossier badge. -- */
+.tc{border-radius:14px!important;border-left:none!important;border-top:1px solid var(--wm-border)!important;transition:box-shadow .2s ease,border-color .2s ease,transform .15s ease!important}
+.tc:hover{transform:translateY(-1px)!important;border-color:var(--wm-border-strong)!important}
 
 /* -- title: Playfair serif, same as .tour-title -- */
 .tc-title{font-family:var(--wm-serif)!important;font-style:normal!important;font-weight:600!important;font-size:19px!important;letter-spacing:-.01em!important;line-height:1.3!important;color:var(--wm-ink)!important}
@@ -1098,22 +1092,22 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tc-status-label{display:none!important}
 .tg svg,.tc-status-btn svg{opacity:.55}
 
-.tc.st-work .tc-status-btn,.tc.st-work .tg-work{color:#4c6b3f!important}
+.tc.st-work .tc-status-btn,.tc.st-work .tg-work{background:transparent!important;border:none!important;padding:0!important;color:#4c6b3f!important}
 .tc.st-work .tc-status-btn::before,.tc.st-work .tg-work::before{background:#6e8f57}
-.tc.st-urgent .tc-status-btn,.tc.st-urgent .tg-urgent{color:#96382a!important}
+.tc.st-urgent .tc-status-btn,.tc.st-urgent .tg-urgent{background:transparent!important;border:none!important;padding:0!important;color:#96382a!important}
 .tc.st-urgent .tc-status-btn::before,.tc.st-urgent .tg-urgent::before{background:#b04a38}
-.tc.st-done .tc-status-btn,.tc.st-done .tg-done{color:#4c6b3f!important}
+.tc.st-done .tc-status-btn,.tc.st-done .tg-done{background:transparent!important;border:none!important;padding:0!important;color:#4c6b3f!important}
 .tc.st-done .tc-status-btn::before,.tc.st-done .tg-done::before{background:#8fae7f}
-.tc.st-new .tc-status-btn,.tc.st-new .tg-new{color:var(--wm-bronze)!important}
+.tc.st-new .tc-status-btn,.tc.st-new .tg-new{background:transparent!important;border:none!important;padding:0!important;color:var(--wm-bronze)!important}
 .tc.st-new .tc-status-btn::before,.tc.st-new .tg-new::before{background:var(--wm-bronze)}
-.tc.st-clarify .tc-status-btn,.tc.st-clarify .tg-clarify{color:#93630f!important}
+.tc.st-clarify .tc-status-btn,.tc.st-clarify .tg-clarify{background:transparent!important;border:none!important;padding:0!important;color:#93630f!important}
 .tc.st-clarify .tc-status-btn::before,.tc.st-clarify .tg-clarify::before{background:#c08a2e}
-.tc.st-test .tc-status-btn,.tc.st-test .tg-test{color:#5830a8!important}
+.tc.st-test .tc-status-btn,.tc.st-test .tg-test{background:transparent!important;border:none!important;padding:0!important;color:#5830a8!important}
 .tc.st-test .tc-status-btn::before,.tc.st-test .tg-test::before{background:#8a6bc7}
 [data-theme="dark"] .tc-status-btn,[data-theme="dark"] .tg{color:var(--text2)!important}
 
 /* category/project tags: understated underline instead of a filled pill */
-.tg-label{color:var(--wm-muted)!important}
+.tg-label{background:transparent!important;border:none!important;padding:0!important;color:var(--wm-muted)!important}
 .tg-label::before{background:var(--wm-border-strong)!important}
 [data-theme="dark"] .tg-label{color:var(--text3)!important}
 
@@ -2195,6 +2189,7 @@ function goToNotifTask(taskId){
     const card=document.getElementById('tcard'+taskId);
     if(card){
       card.classList.remove('tc-collapsed');
+      expandedTC.add(taskId);
       card.scrollIntoView({behavior:'smooth',block:'center'});
       card.style.boxShadow='0 0 0 3px rgba(140,110,74,.5)';
       setTimeout(()=>{card.style.boxShadow='';},1600);
@@ -2231,6 +2226,7 @@ let tours=[
 ];
 let tourFlt='all',trCurId=null,_presetTourId=null,_driveTargetMode='task';
 let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week',currentTab='main';
+let expandedTC=new Set(); // ids of task cards left expanded — must survive render() rebuilds
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
@@ -3163,6 +3159,7 @@ function tcExpand(e,id){
   if(!card) return;
   const isCollapsed=card.classList.contains('tc-collapsed');
   card.classList.toggle('tc-collapsed');
+  if(isCollapsed) expandedTC.add(id); else expandedTC.delete(id);
   const btn=card.querySelector('.tc-expand-btn');
   if(btn) btn.textContent=isCollapsed?'▴':'▾';
   // mark as seen
@@ -3318,7 +3315,7 @@ function render(){
     if(_linkedTour) footMeta.push(`<span class="tc-meta-item">${linkSvg}Тур: <strong>${esc(_linkedTour.title)}</strong></span>`);
     const footMetaH=footMeta.length?`<div class="tc-meta-group">${footMeta.join('')}</div>`:'<div class="tc-meta-group"></div>';
 
-    return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
+    return `<div class="tc st-${t.status}${over?' overdue':''}${expandedTC.has(t.id)?'':' tc-collapsed'}" id="tcard${t.id}">
       ${unseenBadge}
       <!-- HEADER -->
       <div class="tc-header" onclick="if(batchMode){event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))}else{tcExpand(event,${tid})}">
@@ -3413,7 +3410,15 @@ function goPage(p){
   render();
   document.getElementById('ta').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function togCmt(id,ev){if(ev)ev.stopPropagation();const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();}
+function togCmt(id,ev){
+  if(ev)ev.stopPropagation();
+  const card=document.getElementById('tcard'+id);
+  if(card&&card.classList.contains('tc-collapsed')){
+    card.classList.remove('tc-collapsed');
+    expandedTC.add(id);
+  }
+  const e=document.getElementById('cb'+id);e.classList.toggle('show');if(e.classList.contains('show'))document.getElementById('ct'+id).focus();
+}
 function addCmt(id,ev){
   if(ev)ev.stopPropagation();
   const tx=document.getElementById('ct'+id).value.trim();if(!tx)return;
