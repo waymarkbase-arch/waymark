@@ -940,6 +940,56 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tc-cmt.mine .tc-cmt-bubble{background:var(--wm-ink)!important}
 [data-theme="dark"] .tc{border-color:var(--border)!important}
 [data-theme="dark"] .tc-status-btn{background:var(--surface2)!important;border-color:var(--border)!important}
+
+/* ══════════════════════════════════════════════════════════
+   ROUND 2 FIXES — tabs spacing, clock widget layout,
+   avatar colour, and the task-card header/footer rebuild
+   ══════════════════════════════════════════════════════════ */
+
+/* ---- tabs were rendering with zero gap between them ---- */
+.tabs{gap:32px!important}
+
+/* ---- clock widget: time + a real status "pill" beside it, like the reference ---- */
+.clk{padding:6px 8px 6px 16px!important}
+.clk>div:last-child{display:flex!important;align-items:center;gap:8px!important}
+.clk-l{margin-top:0!important;background:var(--wm-bg)!important;border:1px solid var(--wm-border)!important;border-radius:20px;padding:3px 10px 3px 8px}
+[data-theme="dark"] .clk-l{background:var(--surface2)!important;border-color:var(--border)!important}
+
+/* ---- avatars: neutral dark tone everywhere (no per-person colours) ---- */
+.cav{background:var(--wm-ink)!important;width:26px!important;height:26px!important;font-size:9px!important}
+.cav-arr svg{width:14px!important;height:14px!important}
+.cav-arr svg path{fill:var(--wm-muted)!important}
+.tc-avs{gap:6px!important}
+
+/* ---- header rebuilt as two rows: badges+assignee, then title+chevron ---- */
+.tc-header{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important;padding:18px 22px 14px!important}
+.tc-top-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tc-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tc-assignee{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--wm-ink);background:var(--wm-bg);padding:4px 10px 4px 4px;border-radius:20px;border:1px solid var(--wm-border);flex-shrink:0}
+[data-theme="dark"] .tc-assignee{background:var(--surface2);border-color:var(--border);color:var(--text)}
+.tc-assignee-name{white-space:nowrap}
+.tc-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tc-title{margin:0!important}
+.tc-expand-btn{color:var(--wm-muted)!important;transition:transform .3s ease!important}
+.tc:not(.tc-collapsed) .tc-expand-btn{transform:rotate(180deg)}
+
+/* status badge takes on the status colour (in-progress green / urgent red / etc.) */
+.tc.st-work .tc-status-btn,.tc.st-work .tg-work{background:#f3f7f4!important;border-color:#b8dbc3!important;color:#22643a!important}
+.tc.st-urgent .tc-status-btn,.tc.st-urgent .tg-urgent{background:#fdf2f0!important;border-color:#f2c7c0!important;color:#a83820!important}
+.tc.st-done .tc-status-btn,.tc.st-done .tg-done{background:#f3f7f4!important;border-color:#b8dbc3!important;color:#22643a!important}
+.tc.st-new .tc-status-btn,.tc.st-new .tg-new{background:var(--wm-bronze-light)!important;border-color:var(--wm-bronze)!important;color:var(--wm-bronze)!important}
+.tc.st-clarify .tc-status-btn,.tc.st-clarify .tg-clarify{background:#fffbe8!important;border-color:#e0d898!important;color:#807838!important}
+.tc.st-test .tc-status-btn,.tc.st-test .tg-test{background:#f4f0fd!important;border-color:#c8b8f0!important;color:#5830a8!important}
+
+/* ---- footer: meta (created/deadline/tour) on the left, quick-note on the right ---- */
+.tc-foot{justify-content:space-between!important;flex-wrap:wrap;gap:8px}
+.tc-meta-group{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.tc-meta-item{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--wm-muted)}
+.tc-meta-item svg{width:12px;height:12px}
+.tc-meta-item svg path{fill:var(--wm-muted)!important}
+.tc-meta-item strong{color:var(--wm-ink);font-weight:600}
+.tc-meta-item.overdue-txt,.tc-meta-item.overdue-txt strong{color:#a83820!important}
+[data-theme="dark"] .tc-meta-item strong{color:var(--text)!important}
 </style>
 </head>
 <body>
@@ -2924,25 +2974,42 @@ function render(){
     const _ph=_placeholders[phIdx%7];
     const titleText=(t.title&&t.title.trim())?t.title:_ph;
 
+    // ── assignee name (the person the task is FOR — mirrors reference's single assignee-info pill) ──
+    const _toM=mgr(t.to);
+    const assigneeNameH=_toM.name?esc(_toM.name):esc(t.to);
+
+    // ── footer meta (deadline / linked tour) — always visible, collapsed or not, like the reference footer ──
+    const footMeta=[];
+    if(t.created) footMeta.push(`<span class="tc-meta-item">${calSvg}Створено: <strong>${esc(t.created)}</strong></span>`);
+    if(t.deadline) footMeta.push(`<span class="tc-meta-item${over?' overdue-txt':''}">${calSvg}Дедлайн: <strong>${esc(t.deadline)}</strong></span>`);
+    if(_linkedTour) footMeta.push(`<span class="tc-meta-item">${linkSvg}Тур: <strong>${esc(_linkedTour.title)}</strong></span>`);
+    const footMetaH=footMeta.length?`<div class="tc-meta-group">${footMeta.join('')}</div>`:'<div class="tc-meta-group"></div>';
+
     return `<div class="tc st-${t.status}${over?' overdue':''} tc-collapsed" id="tcard${t.id}">
       ${unseenBadge}
       <!-- HEADER -->
       <div class="tc-header" onclick="if(batchMode){event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))}else{tcExpand(event,${tid})}">
         <input type="checkbox" class="tc-check" onclick="event.stopPropagation();toggleBatchItem(${tid},this.closest('.tc'))" ${batchSelected.has(t.id)?'checked':''}>
-        <div class="tc-avs">${cavH(t.from)}<span class="cav-arr">${arrowSvg}</span>${cavH(t.to)}</div>
-        ${isW?spinH:''}
-        <div class="tc-title">${esc(titleText)}</div>
-        <div class="tc-collapsed-meta-wrap">
-          <span class="tc-collapsed-date">${t.created?t.created:''}</span>
-          ${stBtnH}
+        <div class="tc-top-row">
+          <div class="tc-badges">
+            ${stBtnH}
+            ${isW?spinH:''}
+            ${tagsH}
+          </div>
+          <div class="tc-assignee">
+            <div class="tc-avs">${cavH(t.from)}<span class="cav-arr">${arrowSvg}</span>${cavH(t.to)}</div>
+            <span class="tc-assignee-name">${assigneeNameH}</span>
+          </div>
         </div>
-        <button class="tc-expand-btn" onclick="event.stopPropagation();tcExpand(event,${tid})">▾</button>
+        <div class="tc-title-row">
+          <div class="tc-title">${esc(titleText)}</div>
+          <button class="tc-expand-btn" onclick="event.stopPropagation();tcExpand(event,${tid})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>
+        </div>
       </div>
       <!-- INNER BODY -->
       <div class="tc-inner">
         ${hoursH}${doneBadgeH}
-        ${resH}${urlH}${noteH}${changeHint}${dtH}${overdueH}${fcH}${driveFilesH(t.driveFiles)}${cmtsH}
-        ${tagsH?`<div class="tc-tags" style="margin-top:6px">${tagsH}</div>`:''}
+        ${resH}${urlH}${noteH}${changeHint}${overdueH}${fcH}${driveFilesH(t.driveFiles)}${cmtsH}
         <!-- ACTIONS -->
         <div class="tc-actions" style="flex-direction:column;align-items:flex-end;gap:6px;margin-top:10px">
           ${canEditTask(t)?`<button class="edit-btn-main" style="width:100%;max-width:200px;padding:10px 28px;font-size:13px" onclick="event.stopPropagation();openAdd(${tid})">Редагувати</button>`:''}
@@ -2957,6 +3024,7 @@ function render(){
       </div>
       <!-- FOOTER -->
       <div class="tc-foot">
+        ${footMetaH}
         <button class="comm-btn" onclick="event.stopPropagation();togCmt(${tid},event)">${chatSvg} Додати нотатку</button>
       </div>
     </div>`;
