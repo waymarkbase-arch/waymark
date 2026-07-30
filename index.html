@@ -722,11 +722,20 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tour-btn:hover{background:#f5f3ee}
 .tour-btn.primary{background:var(--wm-ink);color:#fff;border-color:var(--wm-ink)}
 .tour-btn.primary:hover{background:var(--wm-bronze)}
-.badge.trs-active{background:#f3f7f4;border:1px solid #b8dbc3;color:#22643a}
-.badge.trs-draft{background:#f4f4f4;border:1px solid #ddd;color:#666}
-.badge.trs-needs_update{background:#fdf2f0;border:1px solid #f2c7c0;color:#a83820}
-.badge.trs-archived{background:#f0ede8;border:1px solid #ddd8ce;color:#8c8577}
-.badge{border-radius:4px;padding:3px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-family:var(--wm-sans)}
+.badge{display:inline-flex;align-items:center;gap:6px;background:transparent;border:none;padding:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-family:var(--wm-sans);color:var(--wm-ink2)}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--wm-muted);flex-shrink:0}
+.badge.trs-active{color:#4c6b3f}
+.badge.trs-active::before{background:#6e8f57}
+.badge.trs-draft{color:var(--wm-muted)}
+.badge.trs-draft::before{background:var(--wm-muted)}
+.badge.trs-needs_update{color:#96382a}
+.badge.trs-needs_update::before{background:#b04a38}
+.badge.trs-archived{color:#a39b8c}
+.badge.trs-archived::before{background:#a39b8c}
+[data-theme="dark"] .badge{color:var(--text2)}
+[data-theme="dark"] .badge.trs-active{color:#a3c28c}
+[data-theme="dark"] .badge.trs-needs_update{color:#dd9483}
+[data-theme="dark"] .badge.trs-archived{color:var(--text3)}
 
 /* Tour passport modal */
 .tr-mbox{width:480px}
@@ -745,6 +754,37 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tr-task-title{flex:1;color:var(--wm-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-task-to{color:var(--wm-muted);font-size:11px;white-space:nowrap}
 .tr-btn{border:1px solid var(--wm-border);background:#fff;border-radius:9px;padding:8px 16px;font-size:12px;font-family:var(--wm-sans);font-weight:600;color:var(--wm-ink2);cursor:pointer}
+.tr-fees-block{margin-top:2px}
+.tr-fees-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.tr-fee-row{display:flex;gap:8px;align-items:center}
+.tr-fee-row input.tr-fee-name{flex:1;border:1px solid var(--wm-border);background:var(--wm-card);color:var(--wm-ink);border-radius:10px;padding:9px 12px;font-size:13px;font-family:var(--wm-sans)}
+.tr-fee-row input.tr-fee-amount{width:110px;border:1px solid var(--wm-border);background:var(--wm-card);color:var(--wm-ink);border-radius:10px;padding:9px 12px;font-size:13px;font-family:var(--wm-sans)}
+.tr-fee-row input:focus{outline:none;border-color:var(--wm-bronze);box-shadow:0 0 0 3px var(--wm-bronze-light)}
+.tr-fee-remove{border:none;background:transparent;color:var(--wm-muted);cursor:pointer;font-size:16px;line-height:1;width:26px;height:26px;border-radius:50%;flex-shrink:0;transition:color .15s ease,background .15s ease}
+.tr-fee-remove:hover{color:#96382a;background:#faf1ee}
+.tr-fee-add-btn{border:1px dashed var(--wm-border-strong);background:transparent;color:var(--wm-ink2);border-radius:10px;padding:8px 14px;font-size:12px;font-family:var(--wm-sans);font-weight:600;cursor:pointer;width:100%}
+.tr-fee-add-btn:hover{background:var(--wm-bronze-light);border-color:var(--wm-bronze);color:var(--wm-bronze)}
+.tour-detail-val.fees-val{font-weight:600}
+/* ── Bulk tour import ── */
+.tr-bulk-mbox{width:560px}
+.tr-bulk-hint{font-size:12.5px;color:var(--wm-ink2);line-height:1.55;margin:2px 0 14px}
+.tr-bulk-preview{margin-top:14px;max-height:320px;overflow-y:auto}
+.tr-bulk-summary{font-size:12px;color:var(--wm-muted);margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--wm-border)}
+.tr-bulk-rows{display:flex;flex-direction:column;gap:6px}
+.tr-bulk-row{display:flex;gap:10px;align-items:flex-start;background:var(--wm-bg);border:1px solid var(--wm-border);border-radius:10px;padding:10px 12px}
+.tr-bulk-check{padding-top:2px}
+.tr-bulk-check input{cursor:pointer}
+.tr-bulk-row-main{flex:1;min-width:0}
+.tr-bulk-row-title{font-size:13px;font-weight:600;color:var(--wm-ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tr-bulk-code{font-family:var(--wm-sans);font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--wm-bronze);text-transform:uppercase}
+.tr-bulk-tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--wm-muted);border:1px solid var(--wm-border);border-radius:20px;padding:1px 8px}
+.tr-bulk-tag.new{color:#4c6b3f;border-color:#c7dab8}
+.tr-bulk-row-sub{font-size:11.5px;color:var(--wm-muted);margin-top:3px}
+[data-theme="dark"] .tr-bulk-row{background:var(--surface2);border-color:var(--border)}
+[data-theme="dark"] .tr-bulk-row-title{color:var(--text)}
+[data-theme="dark"] .tr-bulk-summary{color:var(--text3);border-color:var(--border)}
+[data-theme="dark"] .tr-fee-row input.tr-fee-name,[data-theme="dark"] .tr-fee-row input.tr-fee-amount{background:var(--surface2);border-color:var(--border);color:var(--text)}
+[data-theme="dark"] .tr-fee-add-btn{border-color:var(--border);color:var(--text2)}
 .tr-btn:hover{background:#f5f3ee}
 .tg-tour{background:var(--wm-bronze-light);border-color:var(--wm-bronze);color:var(--wm-bronze);cursor:pointer;font-weight:600}
 .hide{display:none!important}
@@ -800,19 +840,16 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 [data-theme="dark"] .s-urg.has .sc-n{color:#e08080!important}
 
 /* ── PDF FRESHNESS INDICATOR (tour dossier) ── */
-.pdf-freshness-badge{display:inline-flex;align-items:center;gap:7px;border-radius:20px;padding:5px 13px 5px 11px;font-family:var(--wm-sans,'Plus Jakarta Sans',sans-serif);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;width:fit-content}
-.pdf-pulse-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.pdf-freshness-badge.tier-green{background:#f4f7f1;border:1px solid #d3ddc4;color:#4c6b3f}
+.pdf-freshness-badge{display:inline-flex;align-items:center;gap:7px;background:transparent;border:none;padding:0;font-family:var(--wm-sans,'Plus Jakarta Sans',sans-serif);font-size:11.5px;font-weight:500;font-style:italic;text-transform:none;letter-spacing:0;margin-bottom:12px;width:fit-content;color:var(--wm-ink2)}
+.pdf-pulse-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .pdf-freshness-badge.tier-green .pdf-pulse-dot{background:#6e8f57;animation:pdfBreathe 2.6s ease-in-out infinite}
-.pdf-freshness-badge.tier-orange{background:#fbf5ea;border:1px solid #e8d3ab;color:#93630f}
 .pdf-freshness-badge.tier-orange .pdf-pulse-dot{background:#c08a2e;animation:pdfBreathe 2.6s ease-in-out infinite}
-.pdf-freshness-badge.tier-red{background:#faf1ee;border:1px solid #e6c3ba;color:#96382a}
+.pdf-freshness-badge.tier-red{color:#96382a}
 .pdf-freshness-badge.tier-red .pdf-pulse-dot{background:#b04a38;animation:pdfBreathe 2.6s ease-in-out infinite}
 @keyframes pdfBreathe{0%,100%{opacity:.4}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.pdf-pulse-dot{animation:none!important}}
-[data-theme="dark"] .pdf-freshness-badge.tier-green{background:#1c2419;border-color:#3a4a2e;color:#a3c28c}
-[data-theme="dark"] .pdf-freshness-badge.tier-orange{background:#2a2013;border-color:#57451f;color:#dcae63}
-[data-theme="dark"] .pdf-freshness-badge.tier-red{background:#2c1a16;border-color:#5c352a;color:#dd9483}
+[data-theme="dark"] .pdf-freshness-badge{color:var(--text2)}
+[data-theme="dark"] .pdf-freshness-badge.tier-red{color:#dd9483}
 
 /* ══ NOTIFICATION CENTER ══ */
 .notif-wrap{position:relative}
@@ -954,6 +991,8 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .clk>div:last-child{display:flex!important;align-items:center;gap:8px!important}
 .clk-l{margin-top:0!important;background:var(--wm-bg)!important;border:1px solid var(--wm-border)!important;border-radius:20px;padding:3px 10px 3px 8px}
 [data-theme="dark"] .clk-l{background:var(--surface2)!important;border-color:var(--border)!important}
+.clk-loc{font-family:var(--wm-sans)!important;font-size:10px!important;font-weight:700!important;letter-spacing:.1em!important;text-transform:uppercase;color:var(--wm-muted)!important;white-space:nowrap}
+[data-theme="dark"] .clk-loc{color:var(--text3)!important}
 
 /* ---- avatars: neutral dark tone everywhere (no per-person colours) ---- */
 .cav{background:var(--wm-ink)!important;width:26px!important;height:26px!important;font-size:9px!important}
@@ -1104,7 +1143,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   <div class="hdr-r">
     <div class="clk" id="clk" style="cursor:default">
       <div class="clk-ic"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.3"/><line x1="6" y1="6" x2="6" y2="2.8" stroke="white" stroke-width="1.1"/><line x1="6" y1="6" x2="8.8" y2="6" stroke="white" stroke-width="1.1"/></svg></div>
-      <div><div class="clk-t" id="clkT">--:--</div><div class="clk-l" id="clkL">...</div></div>
+      <div><div class="clk-t" id="clkT">--:--</div><div class="clk-loc" id="clkLoc">Kyiv, UA</div><div class="clk-l" id="clkL">...</div></div>
     </div>
     <div class="notif-wrap">
       <button class="notif-btn" onclick="toggleNotifDD(event)" title="Центр сповіщень">
@@ -1296,6 +1335,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     </div>
     <div class="tr-actionbar">
       <div class="sb" style="max-width:320px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="trSrch" placeholder="Пошук туру за назвою або ID..." oninput="renderTours()"></div>
+      <button class="tr-btn" onclick="openTourBulkImport()">📋 Масовий імпорт</button>
       <button class="btn-add" onclick="openTourAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>ДОДАТИ ТУР</button>
     </div>
   </div>
@@ -1526,7 +1566,13 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     </div>
     <div style="display:flex;gap:10px">
       <div style="flex:1"><label>Ціна чекпоінту</label><input id="trPrice" type="number" min="0" step="0.01" placeholder="36.00"></div>
-      <div style="flex:1"><label>Міста виїзду</label><input id="trCities" placeholder="Львів, Стрий, Мукачево"></div>
+      <div style="flex:1"><label>Міста виїзду</label><input id="trCities" placeholder="Будапешт, Рим, Братислава"></div>
+    </div>
+
+    <div class="tr-fees-block">
+      <label style="margin-bottom:8px">Додаткові платежі</label>
+      <div id="trFeesList" class="tr-fees-list"></div>
+      <button type="button" class="tr-fee-add-btn" onclick="addTourFeeRow()">+ Додати платіж</button>
     </div>
 
     <label>Посилання на PDF-буклет</label>
@@ -1552,6 +1598,32 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
         <button onclick="deleteTourConfirm()" style="border:1px solid #e8a8a0;background:#fff5f5;border-radius:9px;padding:8px 16px;font-size:12px;font-family:inherit;color:#b83a2a;cursor:pointer">🗑 Видалити тур</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- TOURS BULK IMPORT ("вставити таблицю з сайту") -->
+<div class="mbg hide" id="mTourBulk">
+  <div class="mbox tr-mbox tr-bulk-mbox">
+    <h3>📋 Масовий імпорт турів</h3>
+    <p class="tr-bulk-hint">Скопіюйте на сайті оператора таблицю з переліком турів (виділіть увесь блок: країна, код туру, назва, місто виїзду, днів, дата заїздів) і вставте нижче — система сама розпізнає рядки.</p>
+
+    <label>Вставлена таблиця</label>
+    <textarea id="trBulkInput" rows="7" placeholder="Вставте сюди скопійований текст таблиці з сайту..." style="font-family:var(--wm-sans);font-size:12.5px;resize:vertical"></textarea>
+
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-top:12px">
+      <div style="flex:1"><label style="margin:0 0 6px">Статус для нових турів</label>
+        <select id="trBulkStatus">
+          <option value="draft">Чернетка (рекомендовано)</option>
+          <option value="active">У продажу</option>
+          <option value="needs_update">Потребує оновлення</option>
+        </select>
+      </div>
+      <button type="button" class="tr-btn" style="white-space:nowrap" onclick="parseTourBulkInput()">🔎 Розпізнати</button>
+    </div>
+
+    <div id="trBulkPreview" class="tr-bulk-preview"></div>
+
+    <div class="mbtns"><button onclick="closeM('mTourBulk')">Скасувати</button><button class="mprim" id="trBulkCommitBtn" onclick="commitTourBulkImport()" disabled>Створити тури</button></div>
   </div>
 </div>
 
@@ -2085,7 +2157,7 @@ let customLabels=["Об'єкти",'Розсилка','Документи'];
 // ── TOURS DOSSIER ──
 const TOUR_PDF_STALE_DAYS=0;
 let tours=[
-  {id:'t_001',title:'Spiced Europe',status:'active',checkpoint_price:36.00,currency:'EUR',cities_departure:'Львів, Стрий, Мукачево',pdf_url:'',pdf_updated_at:'',site_url:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),log:[]}
+  {id:'t_001',title:'Spiced Europe',status:'active',checkpoint_price:36.00,currency:'EUR',cities_departure:'Будапешт, Рим, Братислава',extra_fees:[],pdf_url:'',pdf_updated_at:'',site_url:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),log:[]}
 ];
 let tourFlt='all',trCurId=null,_presetTourId=null,_driveTargetMode='task';
 let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week',currentTab='main';
@@ -2181,6 +2253,150 @@ function populateTourSelect(){
     tours.filter(t=>t.status!=='archived').map(t=>`<option value="${esc(t.id)}">${esc(t.title)}${t.status==='needs_update'?' ⚠':''}</option>`).join('');
   sel.value=cur;
 }
+// ── Bulk import: paste a copied offers table from the operator site, auto-parse into tours ──
+let _tourBulkParsed=[];
+function openTourBulkImport(){
+  document.getElementById('trBulkInput').value='';
+  document.getElementById('trBulkPreview').innerHTML='';
+  document.getElementById('trBulkStatus').value='draft';
+  const btn=document.getElementById('trBulkCommitBtn');
+  btn.disabled=true; btn.textContent='Створити тури';
+  _tourBulkParsed=[];
+  openM('mTourBulk');
+}
+// Heuristic row-by-row parser for a copy-pasted offers table:
+// Страна / Код тура / Назва тура / Відправлення / Днів / Дата заїздів (repeating, columns become
+// consecutive lines rather than tab-separated cells when a multi-line table is copy-pasted).
+function parseTourTable(raw){
+  const skipRe=/^(страна|країна|код тура|код туру|название тура|назва туру|отправление|відправлення|дней|днів|дата заездов|дата заїздів|пошук|поиск|місце виїзду туру|дата виїзду|страна\/район)$/i;
+  const codeRe=/^[A-ZА-ЯЁІЇЄ]{2,6}-\d+$/i;
+  const dateRe=/^\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}$/;
+  const daysRe=/^\d{1,3}$/;
+  const lines=raw.split(/\r?\n/).map(l=>l.replace(/^[✈🚌🚍🛫🛬🚗🚂]+\s*/,'').trim()).filter(l=>l.length&&!skipRe.test(l));
+
+  const rows=[];
+  let countries=[];
+  let cur=null, state='country';
+  for(const line of lines){
+    if(codeRe.test(line)){
+      cur={code:line.toUpperCase(),countries:countries.slice(),title:'',departure:[],days:'',date:''};
+      countries=[];
+      rows.push(cur);
+      state='title';
+      continue;
+    }
+    if(!cur){ countries.push(line); continue; }
+    if(state==='title'){ cur.title=line; state='departure'; continue; }
+    if(state==='departure'){
+      if(daysRe.test(line)&&Number(line)>=1&&Number(line)<=60){ cur.days=line; state='date'; }
+      else if(dateRe.test(line)){ cur.date=line; state='country'; cur=null; }
+      else cur.departure.push(line);
+      continue;
+    }
+    if(state==='date'){
+      if(dateRe.test(line)) cur.date=line;
+      else countries.push(line);
+      state='country'; cur=null;
+      continue;
+    }
+  }
+  return rows.filter(r=>r.code&&r.title);
+}
+function parseTourBulkInput(){
+  const raw=document.getElementById('trBulkInput').value;
+  const rows=parseTourTable(raw);
+  _tourBulkParsed=rows.map(r=>({
+    id:r.code,
+    title:r.title,
+    cities_departure:r.departure.join(', '),
+    countries:r.countries.join(' • '),
+    duration_days:r.days,
+    next_departure:r.date
+  }));
+  renderTourBulkPreview();
+}
+function renderTourBulkPreview(){
+  const wrap=document.getElementById('trBulkPreview');
+  const btn=document.getElementById('trBulkCommitBtn');
+  if(!_tourBulkParsed.length){
+    wrap.innerHTML='<div style="font-size:12.5px;color:var(--wm-muted);padding:10px 0">Нічого не розпізнано. Перевірте, що скопійовано весь блок таблиці (країна, код туру, назва, місто виїзду, днів, дата заїздів для кожного рядка).</div>';
+    btn.disabled=true; btn.textContent='Створити тури';
+    return;
+  }
+  const existingIds=new Set(tours.map(t=>t.id));
+  const newCount=_tourBulkParsed.filter(r=>!existingIds.has(r.id)).length;
+  const updCount=_tourBulkParsed.length-newCount;
+  wrap.innerHTML=`<div class="tr-bulk-summary">Розпізнано ${_tourBulkParsed.length} тур(и/ів): ${newCount} нові, ${updCount} вже існують (буде оновлено маршрут/дати).</div>`+
+    `<div class="tr-bulk-rows">`+_tourBulkParsed.map((r,i)=>`
+    <div class="tr-bulk-row">
+      <label class="tr-bulk-check"><input type="checkbox" checked data-i="${i}" class="trBulkRowChk"></label>
+      <div class="tr-bulk-row-main">
+        <div class="tr-bulk-row-title"><span class="tr-bulk-code">${esc(r.id)}</span>${esc(r.title)}${existingIds.has(r.id)?'<span class="tr-bulk-tag">оновлення</span>':'<span class="tr-bulk-tag new">нове</span>'}</div>
+        <div class="tr-bulk-row-sub">${esc(r.cities_departure||'—')}${r.duration_days?' · '+esc(r.duration_days)+' дн.':''}${r.next_departure?' · '+esc(r.next_departure):''}${r.countries?' · '+esc(r.countries):''}</div>
+      </div>
+    </div>`).join('')+`</div>`;
+  btn.disabled=false;
+  btn.textContent='Створити / оновити '+_tourBulkParsed.length+' тур(и/ів)';
+}
+function commitTourBulkImport(){
+  const statusSel=document.getElementById('trBulkStatus').value;
+  const now=new Date().toISOString();
+  let created=0, updated=0;
+  document.querySelectorAll('.trBulkRowChk').forEach(chk=>{
+    if(!chk.checked) return;
+    const r=_tourBulkParsed[Number(chk.dataset.i)];
+    if(!r) return;
+    const existing=tours.find(t=>t.id===r.id);
+    if(existing){
+      tourLogEntry(existing,'масовий імпорт','—','оновлено маршрут/дати з сайту');
+      Object.assign(existing,{cities_departure:r.cities_departure||existing.cities_departure,countries:r.countries||existing.countries,duration_days:r.duration_days||existing.duration_days,next_departure:r.next_departure||existing.next_departure,updated_at:now});
+      updated++;
+    } else {
+      const t={id:r.id,title:r.title,status:statusSel,currency:'EUR',checkpoint_price:0,extra_fees:[],
+        cities_departure:r.cities_departure,countries:r.countries,duration_days:r.duration_days,next_departure:r.next_departure,
+        pdf_url:'',pdf_updated_at:'',site_url:'',created_at:now,updated_at:now,log:[]};
+      tourLogEntry(t,'створення туру','—','масовий імпорт з таблиці сайту');
+      tours.unshift(t);
+      created++;
+    }
+  });
+  save();
+  renderTours();
+  populateTourSelect();
+  closeM('mTourBulk');
+  showToast('Імпорт завершено!',`Створено: ${created} · Оновлено: ${updated}`);
+}
+// ── Custom additional fees (extra_fees) ──
+function tourFeesTotal(t){
+  return (t.extra_fees||[]).reduce((s,f)=>s+(Number(f.amount)||0),0);
+}
+function renderTourFeeRows(fees){
+  const list=document.getElementById('trFeesList');
+  if(!list) return;
+  const rows=(fees&&fees.length?fees:[]);
+  list.innerHTML=rows.map((f,i)=>`<div class="tr-fee-row" data-i="${i}">
+      <input class="tr-fee-name" placeholder="Напр. Віза, Страхування, Одномісне розміщення..." value="${esc(f.name||'')}">
+      <input class="tr-fee-amount" type="number" min="0" step="0.01" placeholder="0.00" value="${f.amount||f.amount===0?f.amount:''}">
+      <button type="button" class="tr-fee-remove" onclick="this.closest('.tr-fee-row').remove()" title="Видалити платіж">✕</button>
+    </div>`).join('');
+}
+function addTourFeeRow(name,amount){
+  const list=document.getElementById('trFeesList');
+  if(!list) return;
+  const row=document.createElement('div');
+  row.className='tr-fee-row';
+  row.innerHTML=`<input class="tr-fee-name" placeholder="Напр. Віза, Страхування, Одномісне розміщення..." value="${esc(name||'')}">
+    <input class="tr-fee-amount" type="number" min="0" step="0.01" placeholder="0.00" value="${amount||amount===0?amount:''}">
+    <button type="button" class="tr-fee-remove" onclick="this.closest('.tr-fee-row').remove()" title="Видалити платіж">✕</button>`;
+  list.appendChild(row);
+  row.querySelector('.tr-fee-name').focus();
+}
+function collectTourFees(){
+  return Array.from(document.querySelectorAll('#trFeesList .tr-fee-row')).map(row=>({
+    name:row.querySelector('.tr-fee-name').value.trim(),
+    amount:parseFloat(row.querySelector('.tr-fee-amount').value)||0
+  })).filter(f=>f.name);
+}
 function renderTours(){
   const grid=document.getElementById('trGrid');
   if(!grid) return;
@@ -2211,7 +2427,11 @@ function renderTours(){
         ${tier?`<div class="pdf-freshness-badge tier-${tier}"><span class="pdf-pulse-dot"></span>${tourStaleLabel(t)}</div>`:''}
         <div class="tour-details-list">
           <div class="tour-detail-row"><span class="tour-detail-label">Чекпоінт:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency:'—'}</span></div>
+          ${(t.extra_fees&&t.extra_fees.length)?`<div class="tour-detail-row"><span class="tour-detail-label">Додаткові платежі:</span><span class="tour-detail-val fees-val" title="${t.extra_fees.map(f=>esc(f.name)+': '+Number(f.amount).toFixed(2)+' '+t.currency).join(' • ')}">${t.extra_fees.length} · ${tourFeesTotal(t).toFixed(2)} ${t.currency}</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
+          ${t.countries?`<div class="tour-detail-row"><span class="tour-detail-label">Маршрут:</span><span class="tour-detail-val">${esc(t.countries)}</span></div>`:''}
+          ${t.duration_days?`<div class="tour-detail-row"><span class="tour-detail-label">Тривалість:</span><span class="tour-detail-val">${esc(t.duration_days)} дн.</span></div>`:''}
+          ${t.next_departure?`<div class="tour-detail-row"><span class="tour-detail-label">Найближчий виїзд:</span><span class="tour-detail-val">${esc(t.next_departure)}</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Буклет оновлено:</span><span class="tour-detail-val">${t.pdf_updated_at?fmtTourDate(t.pdf_updated_at):'ще не завантажено'}</span></div>
           <div class="tour-detail-row"><span class="tour-detail-label">Завдання:</span><span class="tour-detail-val">${linkedCount}</span></div>
         </div>
@@ -2238,6 +2458,7 @@ function openTourAdd(id){
     document.getElementById('trCurrency').value=t.currency||'EUR';
     document.getElementById('trPrice').value=t.checkpoint_price||'';
     document.getElementById('trCities').value=t.cities_departure||'';
+    renderTourFeeRows(t.extra_fees);
     document.getElementById('trPdfUrl').value=t.pdf_url||'';
     document.getElementById('trSiteUrl').value=t.site_url||'';
     document.getElementById('trBtn').textContent='Зберегти';
@@ -2255,6 +2476,7 @@ function openTourAdd(id){
     document.getElementById('trStatus').value='draft';
     document.getElementById('trCurrency').value='EUR';
     document.getElementById('trPrice').value='';
+    renderTourFeeRows([]);
     document.getElementById('trBtn').textContent='Створити';
     document.getElementById('trPdfMeta').textContent='';
     staleFlag.classList.add('hide');
@@ -2270,6 +2492,7 @@ function saveTourPassport(){
   const currency=document.getElementById('trCurrency').value;
   const price=parseFloat(document.getElementById('trPrice').value)||0;
   const cities=document.getElementById('trCities').value.trim();
+  const extraFees=collectTourFees();
   const pdfUrl=document.getElementById('trPdfUrl').value.trim();
   const siteUrl=document.getElementById('trSiteUrl').value.trim();
   const now=new Date().toISOString();
@@ -2282,16 +2505,19 @@ function saveTourPassport(){
     if(Number(t.checkpoint_price||0)!==price) tourLogEntry(t,'checkpoint_price',(t.checkpoint_price||0).toFixed(2)+' '+t.currency,price.toFixed(2)+' '+currency);
     else if(t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
     if((t.cities_departure||'')!==cities) tourLogEntry(t,'міста виїзду',t.cities_departure||'—',cities||'—');
+    const oldFeesStr=(t.extra_fees||[]).map(f=>f.name+': '+Number(f.amount).toFixed(2)).join(', ')||'—';
+    const newFeesStr=extraFees.map(f=>f.name+': '+Number(f.amount).toFixed(2)).join(', ')||'—';
+    if(oldFeesStr!==newFeesStr) tourLogEntry(t,'додаткові платежі',oldFeesStr,newFeesStr);
     if((t.site_url||'')!==siteUrl) tourLogEntry(t,'посилання на сайт',t.site_url||'—',siteUrl||'—');
     if((t.pdf_url||'')!==pdfUrl){
       tourLogEntry(t,'PDF-буклет',t.pdf_url||'—',pdfUrl||'—');
       t.pdf_updated_at=pdfUrl?now:'';
     }
-    Object.assign(t,{title,status,currency,checkpoint_price:price,cities_departure:cities,pdf_url:pdfUrl,site_url:siteUrl,updated_at:now});
+    Object.assign(t,{title,status,currency,checkpoint_price:price,cities_departure:cities,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,updated_at:now});
     showToast('Тур збережено!','Зміни зафіксовано в історії');
   } else {
     const newId='t_'+Date.now().toString(36);
-    const t={id:newId,title,status,currency,checkpoint_price:price,cities_departure:cities,
+    const t={id:newId,title,status,currency,checkpoint_price:price,cities_departure:cities,extra_fees:extraFees,
       pdf_url:pdfUrl,pdf_updated_at:pdfUrl?now:'',site_url:siteUrl,
       created_at:now,updated_at:now,log:[]};
     tourLogEntry(t,'створення туру','—',title);
