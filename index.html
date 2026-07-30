@@ -990,6 +990,43 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tc-meta-item strong{color:var(--wm-ink);font-weight:600}
 .tc-meta-item.overdue-txt,.tc-meta-item.overdue-txt strong{color:#a83820!important}
 [data-theme="dark"] .tc-meta-item strong{color:var(--text)!important}
+
+/* ══════════════════════════════════════════════════════════
+   ROUND 3 — bring the expanded card body and the add/edit
+   task modal into the "quiet luxury" palette (no more default
+   blue accents / plain grey panels)
+   ══════════════════════════════════════════════════════════ */
+
+/* ---- expanded card inner panel ---- */
+.tc-inner{background:var(--wm-bg)!important;border:1px solid var(--wm-border)!important}
+[data-theme="dark"] .tc-inner{background:var(--surface2)!important;border-color:var(--border)!important}
+.tc-note{border:1px solid var(--wm-border)!important;background:var(--wm-card)!important;color:var(--wm-ink2)!important}
+.tc-url-label,.tc-res-label{font-size:10px!important;font-weight:700!important;letter-spacing:.06em!important;text-transform:uppercase;color:var(--wm-muted)!important}
+.tc-url,.tc-res-link{color:var(--wm-ink)!important}
+.tc-forecast{background:var(--wm-bronze-light)!important;color:var(--wm-bronze)!important}
+.tc-hours-top{color:#22643a!important}
+
+/* comment / note box inside the expanded card */
+.tc-cmt-box textarea{border:1px solid var(--wm-border)!important;background:var(--wm-card)!important;color:var(--wm-ink)!important;border-radius:10px!important}
+.tc-cmt-box textarea:focus{border-color:var(--wm-bronze)!important;box-shadow:0 0 0 3px var(--wm-bronze-light)!important}
+.tc-cmt-box button{background:var(--wm-ink)!important;font-family:var(--wm-sans)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.05em;border-radius:8px!important}
+.tc-cmt-box button:hover{background:var(--wm-bronze)!important}
+
+/* ---- add / edit task modal (and its siblings: qbox/cbox/sbox/lbox/cal-box) ---- */
+.mbox{border:1px solid var(--wm-border)!important}
+.mbox h3{border-bottom:1px solid var(--wm-border)!important;padding-bottom:14px!important;margin-bottom:18px!important;font-size:19px!important;color:var(--wm-ink)!important}
+.mbox label{font-size:10px!important;font-weight:700!important;letter-spacing:.08em!important;text-transform:uppercase;color:var(--wm-muted)!important;margin:14px 0 6px!important}
+.mbox input,.mbox select,.mbox textarea{border:1px solid var(--wm-border)!important;background:var(--wm-card)!important;color:var(--wm-ink)!important;border-radius:10px!important;font-family:var(--wm-sans)!important;transition:border-color .15s ease,box-shadow .15s ease!important}
+.mbox input:focus,.mbox select:focus,.mbox textarea:focus{border-color:var(--wm-bronze)!important;box-shadow:0 0 0 3px var(--wm-bronze-light)!important}
+[data-theme="dark"] .mbox{border-color:var(--border)!important}
+[data-theme="dark"] .mbox h3{border-color:var(--border)!important}
+
+.lprim{background:var(--wm-ink)!important;border-color:var(--wm-ink)!important}
+.lprim:hover{background:var(--wm-bronze)!important;border-color:var(--wm-bronze)!important}
+.mgr-add-row button{background:var(--wm-ink)!important;font-family:var(--wm-sans)!important}
+.mgr-add-row button:hover{background:var(--wm-bronze)!important}
+.cal-d.selected{background:var(--wm-ink)!important}
+.cal-select-btn{background:var(--wm-ink)!important}
 </style>
 </head>
 <body>
