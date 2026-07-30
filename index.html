@@ -1150,6 +1150,55 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 [data-theme="dark"] .atab{background:var(--surface2)!important;border-color:var(--border)!important;color:var(--text2)!important}
 [data-theme="dark"] .anlyt-fp{background:var(--surface2)!important;border-color:var(--border)!important;color:var(--text2)!important}
 
+/* ══════════════════════════════════════════════════════════
+   ROUND 6 — STRUCTURE PASS
+   1) trade full "pill" radii for a quieter, editorial rounded-
+      rectangle language (8-10px), keep circles only for true
+      icon-only buttons and avatars
+   2) give the two header CTAs a real hierarchy — one solid,
+      one outline — instead of two competing black pills
+   3) soften the pagination "on" state from a solid disc to a
+      bordered mark
+   4) more breathing room between filter rows / stat cards /
+      the toolbar / the task list
+   ══════════════════════════════════════════════════════════ */
+
+/* -- rounded-rectangle language for every text-bearing chip/button -- */
+.fp,.fp-label,.fp-add-label,.atab,.anlyt-fp,.tr-pill{border-radius:9px!important}
+.sb,.btn-cal,.btn-add,.btn-qk,.edit-btn-main{border-radius:9px!important}
+.clk,.btn-exp,.btn-logout{border-radius:9px!important}
+.pag-btn{border-radius:7px!important}
+.batch-bar{border-radius:12px!important}
+.tc-status-btn,.tc-assignee,.clk-l,.tour-stale-badge,.tr-stale-flag,.overdue-badge{border-radius:6px!important}
+/* icon-only circular buttons stay circular on purpose */
+.btn-gear,#themeBtn,.notif-btn{border-radius:50%!important}
+
+/* -- CTA hierarchy: "Завдання" stays the solid primary action;
+      "Швидке завдання" becomes an outline secondary so the two
+      buttons don't compete as two equal black blocks -- */
+.btn-qk{background:transparent!important;color:var(--wm-ink)!important;border:1px solid var(--wm-border-strong)!important;box-shadow:none!important}
+.btn-qk svg{stroke:var(--wm-ink)!important}
+.btn-qk:hover{background:var(--wm-bg)!important;border-color:var(--wm-ink)!important}
+[data-theme="dark"] .btn-qk{color:var(--text)!important;border-color:var(--border)!important}
+
+/* -- pagination: bordered mark instead of a solid black disc -- */
+.pag-btn.on{background:transparent!important;border-color:var(--wm-ink)!important;color:var(--wm-ink)!important;font-weight:700!important}
+[data-theme="dark"] .pag-btn.on{border-color:var(--text)!important;color:var(--text)!important}
+
+/* -- breathing room -- */
+.stats-w{padding-top:28px!important}
+.stats-g{gap:14px!important}
+.filt-w{padding-top:28px!important}
+.frow{gap:10px!important;margin-bottom:12px!important}
+.sa{padding-top:24px!important;gap:20px!important}
+.ta{padding-top:28px!important;gap:20px!important}
+@media(max-width:768px){
+  .stats-w{padding-top:16px!important}
+  .filt-w{padding-top:16px!important}
+  .sa{padding-top:14px!important}
+  .ta{padding-top:16px!important}
+}
+
 </style>
 </head>
 <body>
@@ -1239,11 +1288,11 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
         <div class="notif-list" id="notifList"></div>
       </div>
     </div>
-    <button class="btn-exp" onclick="doExp()">Експорт <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <button class="btn-exp" onclick="doExp()">Експорт <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
     <button id="themeBtn" onclick="toggleTheme()" title="Перемкнути тему" style="width:40px;height:40px;border:1px solid #d8d5ce;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">🌙</button>
     <div id="saIndicator" onclick="saLogout()" title="Суперадмін активний. Клік для виходу." style="display:none;align-items:center;gap:5px;background:#faf0dc;border:1px solid #dcc48a;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#8a6a2e;cursor:pointer">👑 SA</div>
     <button class="btn-logout" onclick="doLogout()" title="Вийти"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Вийти</button>
-    <button class="btn-gear" onclick="showSet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="btn-gear" onclick="showSet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <div class="av-wrap" onclick="avClick()" title="Профіль акаунту"><div class="av" id="avU" style="background:#3a9e6a">МК</div><div class="av-vacation" id="avVacBadge" style="display:none">🏖</div></div>
   </div>
 </div>
@@ -1279,15 +1328,15 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     </div>
   </div>
   <div class="sa">
-    <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="ЗНАЙТИ" oninput="currentPage=1;render()"></div>
-    <button class="btn-cal" onclick="openCal(null,null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Календар</button>
+    <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="Знайти" oninput="currentPage=1;render()"></div>
+    <button class="btn-cal" onclick="openCal(null,null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Календар</button>
     <div style="display:flex;gap:4px;background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:4px">
       <button class="sort-btn on" data-s="created" onclick="toggleSort('created')" title="За датою створення" style="border:none;background:none;border-radius:7px;padding:5px 10px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500">Дата <span id="sort-created-icon">↓</span></button>
       <button class="sort-btn" data-s="deadline" onclick="toggleSort('deadline')" title="За дедлайном" style="border:none;background:none;border-radius:7px;padding:5px 10px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500">Дедлайн <span id="sort-deadline-icon">↑</span></button>
     </div>
-    <button class="btn-add" onclick="openAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>ЗАВДАННЯ</button>
+    <button class="btn-add" onclick="openAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Завдання</button>
     <button onclick="toggleBatchMode()" title="Пакетне редагування (☑)" id="batchModeBtn" style="background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:11px 13px;font-size:14px;cursor:pointer">☑</button>
-    <button class="btn-qk" onclick="openQ()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>ШВИДКЕ ЗАВДАННЯ</button>
+    <button class="btn-qk" onclick="openQ()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Швидке завдання</button>
   </div>
   <div class="pag-bar" id="pagTop"></div>
   <div class="ta" id="ta"></div>
@@ -1420,7 +1469,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     <div class="tr-actionbar">
       <div class="sb" style="max-width:320px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="trSrch" placeholder="Пошук туру за назвою або ID..." oninput="renderTours()"></div>
       <button class="tr-btn" onclick="openTourBulkImport()">📋 Масовий імпорт</button>
-      <button class="btn-add" onclick="openTourAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>ДОДАТИ ТУР</button>
+      <button class="btn-add" onclick="openTourAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Додати тур</button>
     </div>
   </div>
   <div class="tr-grid" id="trGrid"></div>
