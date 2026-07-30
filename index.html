@@ -742,7 +742,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tr-btn{border:1px solid var(--wm-border);background:#fff;border-radius:9px;padding:8px 16px;font-size:12px;font-family:var(--wm-sans);font-weight:600;color:var(--wm-ink2);cursor:pointer}
 .tr-btn:hover{background:#f5f3ee}
 .tg-tour{background:var(--wm-bronze-light);border-color:var(--wm-bronze);color:var(--wm-bronze);cursor:pointer;font-weight:600}
-.hide{display:none}
+.hide{display:none!important}
 
 @media(max-width:768px){
   .tr-controls{padding:14px 16px 0}
@@ -757,15 +757,68 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 [data-theme="dark"] .tour-detail-val{color:var(--text)}
 [data-theme="dark"] .tour-btn{background:var(--surface2);border-color:var(--border);color:var(--text2)}
 [data-theme="dark"] .tr-log-item,[data-theme="dark"] .tr-task-row{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+
+/* ══ HEADER RESTYLE (bronze/ink brand pass) ══ */
+.hdr{border-bottom:1px solid var(--wm-border);padding-bottom:18px}
+.logo-sub{font-family:var(--wm-sans)!important;font-size:10px!important;font-weight:700;color:var(--wm-muted)!important;text-transform:uppercase;letter-spacing:.2em;margin-top:2px}
+.clk{background:var(--wm-card)!important;border:1px solid var(--wm-border);box-shadow:0 2px 8px rgba(25,24,22,.04);padding:6px 20px 6px 6px;min-width:0}
+.clk-ic{width:30px;height:30px;background:var(--wm-bg);border-color:var(--wm-border)!important}
+.clk-ic svg circle,.clk-ic svg line{stroke:var(--wm-ink2)!important}
+.clk-t{color:var(--wm-ink)!important;font-family:var(--wm-serif);font-weight:600;font-size:18px!important;letter-spacing:-.01em}
+.clk-l{color:var(--wm-muted)!important;opacity:1!important;font-size:10px!important;font-weight:700;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:5px}
+.clk-l::before{content:'';width:6px;height:6px;border-radius:50%;background:#c0392b;flex-shrink:0}
+.clk.work .clk-l::before{background:#2e8653}
+.btn-exp,.btn-gear,#themeBtn,.btn-logout{background:var(--wm-card)!important;border:1px solid var(--wm-border)!important;color:var(--wm-ink2)!important;box-shadow:0 2px 8px rgba(25,24,22,.04)}
+.btn-exp:hover,.btn-gear:hover,#themeBtn:hover,.btn-logout:hover{border-color:var(--wm-border-strong)!important;background:#f5f3ee!important}
+.btn-exp{border-radius:40px!important;font-family:var(--wm-sans)}
+.btn-gear,#themeBtn{border-radius:50%!important}
+.btn-logout{border-radius:40px!important;font-family:var(--wm-sans)!important;display:flex;align-items:center;gap:6px;padding:9px 16px;font-size:12px;cursor:pointer}
+.av{font-weight:700!important}
+/* ── STAT CARDS: clean bordered cards instead of pastel fills ── */
+.sc{background:var(--wm-card)!important;border:1px solid var(--wm-border);box-shadow:0 1px 4px rgba(25,24,22,.03)!important;color:var(--wm-ink)!important}
+.sc:hover{filter:none!important;border-color:var(--wm-border-strong);box-shadow:0 6px 18px rgba(25,24,22,.07)!important}
+.sc-n{color:var(--wm-ink)!important}
+.sc-l{color:var(--wm-muted)!important;opacity:1!important}
+.s-new,.s-work,.s-cla,.s-don,.s-tst{background:var(--wm-card)!important;color:var(--wm-ink)!important}
+.s-urg{background:var(--wm-card)!important;color:var(--wm-ink)!important}
+.s-urg.has{background:#fdf2f0!important;border-color:#f2c7c0!important}
+.s-urg.has .sc-n{color:#a83820!important}
+[data-theme="dark"] .hdr{border-bottom-color:var(--border)}
+[data-theme="dark"] .clk{background:var(--surface)!important;border-color:var(--border)}
+[data-theme="dark"] .clk-ic{background:var(--surface2)}
+[data-theme="dark"] .clk-t{color:var(--text)!important}
+[data-theme="dark"] .clk-l{color:var(--text3)!important}
+[data-theme="dark"] .sc{background:var(--surface)!important;border-color:var(--border)}
+[data-theme="dark"] .sc-n{color:var(--text)!important}
+[data-theme="dark"] .sc-l{color:var(--text3)!important}
+[data-theme="dark"] .s-urg.has{background:#3a1818!important;border-color:#8b4040!important}
+[data-theme="dark"] .s-urg.has .sc-n{color:#e08080!important}
+
+/* ── PDF FRESHNESS INDICATOR (tour dossier) ── */
+.pdf-freshness-badge{display:inline-flex;align-items:center;gap:8px;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;margin-bottom:12px;width:fit-content}
+.pdf-pulse-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pdf-freshness-badge.tier-green{background:#f0f8f2;border:1px solid #b8dbc3;color:#22643a}
+.pdf-freshness-badge.tier-green .pdf-pulse-dot{background:#2e8653;animation:pdfPulseGreen 1.8s ease-in-out infinite}
+.pdf-freshness-badge.tier-orange{background:#fdf6ec;border:1px solid #f0d0a0;color:#a3690f}
+.pdf-freshness-badge.tier-orange .pdf-pulse-dot{background:#d98c1a;animation:pdfPulseOrange 1.8s ease-in-out infinite}
+.pdf-freshness-badge.tier-red{background:#fdf2f0;border:1px solid #f2c7c0;color:#a83820}
+.pdf-freshness-badge.tier-red .pdf-pulse-dot{background:#c0392b;animation:pdfPulseRed 1.8s ease-in-out infinite}
+@keyframes pdfPulseGreen{0%,100%{box-shadow:0 0 0 0 rgba(46,134,83,.45)}50%{box-shadow:0 0 0 5px rgba(46,134,83,0)}}
+@keyframes pdfPulseOrange{0%,100%{box-shadow:0 0 0 0 rgba(217,140,26,.45)}50%{box-shadow:0 0 0 5px rgba(217,140,26,0)}}
+@keyframes pdfPulseRed{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.45)}50%{box-shadow:0 0 0 5px rgba(192,57,43,0)}}
+@media (prefers-reduced-motion:reduce){.pdf-pulse-dot{animation:none!important}}
+[data-theme="dark"] .pdf-freshness-badge.tier-green{background:#16281c;border-color:#2a5038;color:#7fc99a}
+[data-theme="dark"] .pdf-freshness-badge.tier-orange{background:#2e2210;border-color:#5c4520;color:#e0ab5c}
+[data-theme="dark"] .pdf-freshness-badge.tier-red{background:#3a1818;border-color:#8b4040;color:#e08080}
 </style>
 </head>
 <body>
 <!-- ══ LOGIN SCREEN ══ -->
-<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f2f1ec">
+<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f4f0">
   <div style="background:#fff;border-radius:20px;padding:44px 40px 36px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.08)">
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:28px;font-weight:800;color:#8b1a1a;font-style:italic;letter-spacing:-0.5px">Waymark</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px">Task Management</div>
+      <div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:600;color:#191816;letter-spacing:-0.01em">Waymark</div>
+      <div style="font-size:10px;font-weight:700;color:#8c8577;margin-top:6px;text-transform:uppercase;letter-spacing:.2em">Task Management</div>
     </div>
     <div style="margin-bottom:14px">
       <label style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em">Email</label>
@@ -781,8 +834,8 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     </div>
     <div id="loginErr" style="font-size:12px;color:#c0392b;min-height:18px;margin-bottom:10px;text-align:center"></div>
     <button onclick="doLogin()"
-      style="width:100%;background:#8b1a1a;color:#fff;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s"
-      onmouseover="this.style.background='#6e1414'" onmouseout="this.style.background='#8b1a1a'">
+      style="width:100%;background:#191816;color:#fff;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s"
+      onmouseover="this.style.background='#8c6e4a'" onmouseout="this.style.background='#191816'">
       Увійти
     </button>
     <div style="display:flex;align-items:center;gap:10px;margin:18px 0">
@@ -803,18 +856,18 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <div style="text-align:center;margin-bottom:14px">
         <div style="display:inline-block;position:relative;width:48px;height:48px">
           <svg viewBox="0 0 48 48" style="width:48px;height:48px;animation:wm-spin 2s linear infinite">
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#f0e8e8" stroke-width="3"/>
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#8b1a1a" stroke-width="3"
+            <circle cx="24" cy="24" r="20" fill="none" stroke="#ede8e0" stroke-width="3"/>
+            <circle cx="24" cy="24" r="20" fill="none" stroke="#8c6e4a" stroke-width="3"
               stroke-dasharray="31 95" stroke-linecap="round"
               style="animation:wm-dash 1.5s ease-in-out infinite;transform-origin:center"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#8b1a1a;font-style:italic">W</div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:600;color:#191816">W</div>
         </div>
       </div>
       <div style="font-size:13px;font-weight:600;color:#555;text-align:center;margin-bottom:4px" id="loginSpinnerMsg">Авторизація...</div>
       <div style="font-size:11px;color:#bbb;text-align:center;line-height:1.5">Перше завантаження може зайняти<br>кілька секунд — зачекайте, будь ласка</div>
-      <div style="margin-top:12px;height:3px;background:#f0e8e8;border-radius:4px;overflow:hidden">
-        <div style="height:100%;background:linear-gradient(90deg,#8b1a1a,#d4504a);border-radius:4px;animation:wm-progress 2s ease-in-out infinite"></div>
+      <div style="margin-top:12px;height:3px;background:#ede8e0;border-radius:4px;overflow:hidden">
+        <div style="height:100%;background:linear-gradient(90deg,#191816,#8c6e4a);border-radius:4px;animation:wm-progress 2s ease-in-out infinite"></div>
       </div>
     </div>
     <style>
@@ -839,7 +892,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     <button class="btn-exp" onclick="doExp()">Експорт <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
     <button id="themeBtn" onclick="toggleTheme()" title="Перемкнути тему" style="width:40px;height:40px;border:1px solid #d8d5ce;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">🌙</button>
     <div id="saIndicator" onclick="saLogout()" title="Суперадмін активний. Клік для виходу." style="display:none;align-items:center;gap:5px;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#92400e;cursor:pointer">👑 SA</div>
-    <button onclick="doLogout()" title="Вийти" style="display:flex;align-items:center;gap:6px;border:1px solid #d8d5ce;background:#fff;border-radius:10px;padding:9px 14px;font-size:12px;font-family:inherit;color:#888;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Вийти</button>
+    <button class="btn-logout" onclick="doLogout()" title="Вийти"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Вийти</button>
     <button class="btn-gear" onclick="showSet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <div class="av-wrap" onclick="avClick()" title="Профіль акаунту"><div class="av" id="avU" style="background:#3a9e6a">МК</div><div class="av-vacation" id="avVacBadge" style="display:none">🏖</div></div>
   </div>
@@ -1227,7 +1280,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
         <span class="tr-modal-code" id="trModalCode">Новий тур</span>
         <h3 id="trH" style="margin-top:2px">🏛 Паспорт туру</h3>
       </div>
-      <span class="tr-stale-flag hide" id="trStaleFlag">⚠ Потребує ревізії буклету</span>
+      <span class="pdf-freshness-badge hide" id="trStaleFlag"><span class="pdf-pulse-dot"></span><span id="trStaleFlagText"></span></span>
     </div>
 
     <label>Назва туру</label><input id="trTitle" placeholder="Напр. Alpine Relax...">
@@ -1706,7 +1759,7 @@ let tasks=[
 ];
 let customLabels=["Об'єкти",'Розсилка','Документи'];
 // ── TOURS DOSSIER ──
-const TOUR_PDF_STALE_DAYS=180;
+const TOUR_PDF_STALE_DAYS=0;
 let tours=[
   {id:'t_001',title:'Spiced Europe',status:'active',checkpoint_price:36.00,currency:'EUR',cities_departure:'Львів, Стрий, Мукачево',pdf_url:'',pdf_updated_at:'',site_url:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),log:[]}
 ];
@@ -1758,6 +1811,33 @@ function tourStale(tour){
   const days=(Date.now()-new Date(tour.pdf_updated_at).getTime())/86400000;
   return days>TOUR_PDF_STALE_DAYS;
 }
+function tourPdfDaysAgo(tour){
+  if(!tour.pdf_updated_at) return null;
+  return Math.floor((Date.now()-new Date(tour.pdf_updated_at).getTime())/86400000);
+}
+function uaDaysWord(n){
+  const n10=n%10,n100=n%100;
+  if(n100>=11&&n100<=14) return 'днів';
+  if(n10===1) return 'день';
+  if(n10>=2&&n10<=4) return 'дні';
+  return 'днів';
+}
+// Freshness tier of the tour PDF booklet, shown from day 1 onward.
+// green: 1–90 days · orange: 91–180 days · red: 180+ days · null: no PDF uploaded yet
+function tourPdfTier(tour){
+  if(!tour.pdf_url) return null;
+  const days=tourPdfDaysAgo(tour);
+  if(days===null) return 'red';
+  if(days<=90) return 'green';
+  if(days<=180) return 'orange';
+  return 'red';
+}
+function tourStaleLabel(tour){
+  const days=tourPdfDaysAgo(tour);
+  if(days===null) return 'Буклет ще не завантажено';
+  if(days===0) return 'Програма PDF оновлена сьогодні';
+  return `Програма PDF не оновлювалася ${days} ${uaDaysWord(days)}`;
+}
 const TOUR_STATUS_LABELS={active:'У продажу',draft:'Чернетка',needs_update:'Потребує оновлення',archived:'Архів'};
 function tourLogEntry(tour,field,from,to){
   tour.log=tour.log||[];
@@ -1794,7 +1874,7 @@ function renderTours(){
   }
 
   grid.innerHTML=list.map(t=>{
-    const stale=tourStale(t);
+    const tier=tourPdfTier(t);
     const linkedCount=tasks.filter(x=>x.tourId===t.id&&!x.arch).length;
     const statusCls='trs-'+t.status;
     return `<article class="tour-card" onclick="openTourDetail('${t.id}')">
@@ -1804,7 +1884,7 @@ function renderTours(){
       </div>
       <div class="tour-card-body">
         <h3 class="tour-title">${esc(t.title||'Без назви')}</h3>
-        ${stale?`<div class="tour-stale-badge">⚠ Потребує ревізії буклету</div>`:''}
+        ${tier?`<div class="pdf-freshness-badge tier-${tier}"><span class="pdf-pulse-dot"></span>${tourStaleLabel(t)}</div>`:''}
         <div class="tour-details-list">
           <div class="tour-detail-row"><span class="tour-detail-label">Чекпоінт:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency:'—'}</span></div>
           <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
@@ -1838,7 +1918,9 @@ function openTourAdd(id){
     document.getElementById('trSiteUrl').value=t.site_url||'';
     document.getElementById('trBtn').textContent='Зберегти';
     document.getElementById('trPdfMeta').textContent=t.pdf_updated_at?('Буклет оновлено: '+fmtTourDateTime(t.pdf_updated_at)):'Буклет ще не завантажено';
-    staleFlag.classList.toggle('hide',!tourStale(t));
+    const tier=tourPdfTier(t);
+    document.getElementById('trStaleFlagText').textContent=tier?tourStaleLabel(t):'';
+    staleFlag.className='pdf-freshness-badge'+(tier?' tier-'+tier:' hide');
     existingBlocks.classList.remove('hide');
     renderTourLog(t);
     renderTourLinkedTasks(t);
@@ -2364,7 +2446,8 @@ function rStats(){
   const ks=['new','work','clarify','done','urgent','test'],ls=['НОВІ ЗАВДАННЯ','В РОБОТІ','УТОЧНЕННЯ','ВИКОНАНО','ТЕРМІНОВО','ТЕСТУВАННЯ'],cs=['s-new','s-work','s-cla','s-don','s-urg','s-tst'];
   document.getElementById('sg').innerHTML=ks.map((k,i)=>{
     const n=tasks.filter(t=>!t.arch&&t.status===k).length;
-    return `<div class="sc ${cs[i]}" onclick="sf('${k}',null)"><div class="sc-n">${n}</div><div class="sc-l">${ls[i]}</div></div>`;
+    const hasCls=(k==='urgent'&&n>0)?' has':'';
+    return `<div class="sc ${cs[i]}${hasCls}" onclick="sf('${k}',null)"><div class="sc-n">${n}</div><div class="sc-l">${ls[i]}</div></div>`;
   }).join('');
 }
 
