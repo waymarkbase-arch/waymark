@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Waymark">
 <meta name="theme-color" content="#8b1a1a">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inria+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inria+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 // ═══════════════════════════════════════════════
@@ -146,6 +146,16 @@ function pickerCallback(data){
   if(data.action !== google.picker.Action.PICKED) return;
   const docs = data[google.picker.Response.DOCUMENTS];
   if(!docs || !docs.length) return;
+
+  if(typeof _driveTargetMode!=='undefined' && _driveTargetMode==='tour'){
+    const d0=docs[0];
+    const id0=d0[google.picker.Document.ID];
+    const viewUrl0=`https://drive.google.com/file/d/${id0}/view`;
+    const trPdfInput=document.getElementById('trPdfUrl');
+    if(trPdfInput) trPdfInput.value=viewUrl0;
+    _driveTargetMode='task';
+    return;
+  }
 
   let fs = JSON.parse(document.getElementById('fDriveFiles').value || '[]');
   docs.forEach(doc => {
@@ -645,6 +655,109 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 #mntDot{animation:mntPulse 1.4s ease-in-out infinite}
 @keyframes mntPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 </style>
+
+<!-- ══════════════════════════════════════════════
+     REDESIGN SKIN — warm/bronze identity (per prototype)
+     + TOURS DOSSIER MODULE STYLES
+     ══════════════════════════════════════════════ -->
+<style>
+:root{
+  --wm-bg:#f6f4f0; --wm-card:#ffffff; --wm-border:#ded8ce; --wm-border-strong:#c2b8aa;
+  --wm-ink:#191816; --wm-ink2:#545048; --wm-muted:#8c8577;
+  --wm-bronze:#8c6e4a; --wm-bronze-light:rgba(140,110,74,.12);
+  --wm-serif:'Playfair Display',Georgia,serif; --wm-sans:'Plus Jakarta Sans','Inter',sans-serif;
+}
+html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
+[data-theme="dark"] html,[data-theme="dark"] body{background:var(--bg)}
+.logo-name{font-family:var(--wm-serif)!important;color:var(--wm-ink)!important;font-style:normal!important;letter-spacing:-.01em}
+[data-theme="dark"] .logo-name{color:#e8c9a0!important}
+.tabs{border-bottom:1px solid var(--wm-border)}
+.tab{color:var(--wm-muted);font-family:var(--wm-sans);font-weight:600;letter-spacing:.02em}
+.tab.on{color:var(--wm-ink);border-bottom-color:var(--wm-ink)}
+.tab.tab-tours{color:var(--wm-bronze)}
+.tab.tab-tours.on{border-bottom-color:var(--wm-bronze);color:var(--wm-bronze)}
+[data-theme="dark"] .tab.tab-tours{color:#c9a876}
+.sc{border-radius:14px;font-family:var(--wm-sans)}
+.sc-n{font-family:var(--wm-serif)}
+.tc-title{font-family:var(--wm-serif)!important;color:var(--wm-ink)!important;font-style:normal!important;font-weight:600}
+[data-theme="dark"] .tc-title{color:#e8c9a0!important}
+.pag-btn.on{background:var(--wm-ink)!important;border-color:var(--wm-ink)!important}
+.btn-add,.btn-qk{background:var(--wm-ink)!important;border-radius:30px!important;text-transform:uppercase;letter-spacing:.06em;font-size:11px!important;font-weight:700}
+.btn-add:hover,.btn-qk:hover{background:var(--wm-bronze)!important}
+.fp.on{background:var(--wm-bronze-light)!important;color:var(--wm-bronze)!important;border-color:var(--wm-bronze)!important}
+.edit-btn-main{background:var(--wm-ink)!important;border-radius:30px!important}
+.edit-btn-main:hover{background:var(--wm-bronze)!important}
+.cyes-v{background:var(--wm-ink)!important;border-color:var(--wm-ink)!important}
+.cyes-v:hover{background:#000!important}
+.mbox h3,.qbox h3,.sbox h3,.lbox h3{font-family:var(--wm-serif)}
+.anlyt-hdr{font-family:var(--wm-serif)}
+.av,.mgr-av,.cav,.md-av{font-family:var(--wm-sans)}
+
+/* ══ TOURS DOSSIER MODULE ══ */
+.tr-controls{padding:20px 48px 0}
+.tr-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tr-pill{border:1px solid var(--wm-border);background:#fff;border-radius:50px;padding:7px 18px;font-size:12.5px;font-family:var(--wm-sans);font-weight:600;color:var(--wm-ink2);cursor:pointer;white-space:nowrap;transition:all .12s}
+.tr-pill:hover{background:#f5f3ee}
+.tr-pill.on{background:var(--wm-ink);border-color:var(--wm-ink);color:#fff}
+.tr-actionbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;padding:20px 48px 48px}
+.tour-card{background:var(--wm-card);border:1px solid var(--wm-border);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(25,24,22,.05);transition:all .2s ease;display:flex;flex-direction:column;cursor:pointer}
+.tour-card:hover{border-color:var(--wm-bronze);box-shadow:0 8px 24px rgba(25,24,22,.09);transform:translateY(-1px)}
+.tour-card-header{background:var(--wm-bg);padding:14px 20px;border-bottom:1px solid var(--wm-border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tour-code{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--wm-bronze);text-transform:uppercase;font-family:var(--wm-sans)}
+.tour-card-body{padding:20px;flex:1;display:flex;flex-direction:column}
+.tour-title{font-family:var(--wm-serif);font-size:19px;font-weight:600;color:var(--wm-ink);margin-bottom:10px;line-height:1.3}
+.tour-stale-badge{display:inline-flex;align-items:center;gap:5px;background:#fdf2f0;border:1px solid #f2c7c0;color:#a83820;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;margin-bottom:12px;width:fit-content}
+.tour-details-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;font-size:12.5px}
+.tour-detail-row{display:flex;justify-content:space-between;gap:10px;padding-bottom:6px;border-bottom:1px dashed var(--wm-border)}
+.tour-detail-label{color:var(--wm-muted);white-space:nowrap}
+.tour-detail-val{font-weight:600;color:var(--wm-ink);text-align:right}
+.tour-card-footer{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+.tour-btn{flex:1;min-width:90px;padding:9px 8px;border-radius:8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;text-align:center;border:1px solid var(--wm-border);background:#fff;color:var(--wm-ink);text-decoration:none;font-family:var(--wm-sans)}
+.tour-btn:hover{background:#f5f3ee}
+.tour-btn.primary{background:var(--wm-ink);color:#fff;border-color:var(--wm-ink)}
+.tour-btn.primary:hover{background:var(--wm-bronze)}
+.badge.trs-active{background:#f3f7f4;border:1px solid #b8dbc3;color:#22643a}
+.badge.trs-draft{background:#f4f4f4;border:1px solid #ddd;color:#666}
+.badge.trs-needs_update{background:#fdf2f0;border:1px solid #f2c7c0;color:#a83820}
+.badge.trs-archived{background:#f0ede8;border:1px solid #ddd8ce;color:#8c8577}
+.badge{border-radius:4px;padding:3px 9px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-family:var(--wm-sans)}
+
+/* Tour passport modal */
+.tr-mbox{width:480px}
+.tr-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
+.tr-modal-code{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--wm-bronze);text-transform:uppercase}
+.tr-stale-flag{background:#fdf2f0;border:1px solid #f2c7c0;color:#a83820;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;white-space:nowrap}
+.tr-stale-flag.hide{display:none}
+.tr-pdf-meta{font-size:11px;color:var(--wm-muted);margin:4px 0 12px}
+.tr-sec-title{font-size:12px;font-weight:700;color:var(--wm-ink2);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px;padding-top:16px;border-top:1px solid #f0ede8}
+.tr-log{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto}
+.tr-log-item{background:var(--wm-bg);border:1px solid var(--wm-border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--wm-ink2);line-height:1.5}
+.tr-log-ts{color:var(--wm-muted);font-weight:600}
+.tr-tasks{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}
+.tr-task-row{display:flex;align-items:center;gap:10px;background:var(--wm-bg);border:1px solid var(--wm-border);border-radius:8px;padding:8px 12px;font-size:12.5px;cursor:pointer;transition:background .12s}
+.tr-task-row:hover{background:#efece6}
+.tr-task-title{flex:1;color:var(--wm-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-task-to{color:var(--wm-muted);font-size:11px;white-space:nowrap}
+.tr-btn{border:1px solid var(--wm-border);background:#fff;border-radius:9px;padding:8px 16px;font-size:12px;font-family:var(--wm-sans);font-weight:600;color:var(--wm-ink2);cursor:pointer}
+.tr-btn:hover{background:#f5f3ee}
+.tg-tour{background:var(--wm-bronze-light);border-color:var(--wm-bronze);color:var(--wm-bronze);cursor:pointer;font-weight:600}
+.hide{display:none}
+
+@media(max-width:768px){
+  .tr-controls{padding:14px 16px 0}
+  .tr-grid{padding:14px 16px 24px;grid-template-columns:1fr;gap:14px}
+  .tr-mbox{width:95vw}
+}
+[data-theme="dark"] .tr-pill{background:var(--surface);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] .tr-pill.on{background:var(--text);color:var(--bg)}
+[data-theme="dark"] .tour-card{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] .tour-card-header{background:var(--surface2);border-color:var(--border)}
+[data-theme="dark"] .tour-title{color:var(--text)}
+[data-theme="dark"] .tour-detail-val{color:var(--text)}
+[data-theme="dark"] .tour-btn{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] .tr-log-item,[data-theme="dark"] .tr-task-row{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+</style>
 </head>
 <body>
 <!-- ══ LOGIN SCREEN ══ -->
@@ -738,6 +851,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 </div>
 <div class="tabs">
   <button class="tab on" onclick="goTab('main',this)">Завдання</button>
+  <button class="tab tab-tours" onclick="goTab('tours',this)">🏛 Досьє турів</button>
   <button class="tab" onclick="goTab('arch',this)">Архів</button>
   <button class="tab" onclick="goTab('anlyt',this)">Аналітика</button>
   <button class="tab" onclick="goTab('log',this)">Журнал</button>
@@ -890,6 +1004,23 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
     <div id="logList"></div>
   </div>
 </div>
+<!-- TOURS DOSSIER -->
+<div id="vTours" style="display:none">
+  <div class="tr-controls">
+    <div class="tr-pills" id="trPills">
+      <button class="tr-pill on" data-tf="all" onclick="tf('all',this)">Усі тури</button>
+      <button class="tr-pill" data-tf="active" onclick="tf('active',this)">У продажу</button>
+      <button class="tr-pill" data-tf="draft" onclick="tf('draft',this)">Чернетки</button>
+      <button class="tr-pill" data-tf="needs_update" onclick="tf('needs_update',this)">Потребує оновлення</button>
+      <button class="tr-pill" data-tf="archived" onclick="tf('archived',this)">Архів</button>
+    </div>
+    <div class="tr-actionbar">
+      <div class="sb" style="max-width:320px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="trSrch" placeholder="Пошук туру за назвою або ID..." oninput="renderTours()"></div>
+      <button class="btn-add" onclick="openTourAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>ДОДАТИ ТУР</button>
+    </div>
+  </div>
+  <div class="tr-grid" id="trGrid"></div>
+</div>
 </div>
 
 <div class="pg-foot">© Made by Kovach</div>
@@ -932,6 +1063,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
     </div>
     <label>Прогноз виконання</label><input id="fFc" placeholder="15:30 / 2026-04-21">
     <label>Виконавець</label><select id="fTo"></select>
+    <label>🏛 Прив'язати до туру</label><select id="fTourSel"><option value="">— не прив'язано —</option></select>
     <label>Результат (зелена смужка)</label><input id="fR" placeholder="Посилання або опис...">
     <label>📎 Файли</label>
     <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
@@ -1088,6 +1220,62 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
   </div>
 </div>
 
+<!-- TOUR PASSPORT / DOSSIER -->
+<div class="mbg hide" id="mTour">
+  <div class="mbox tr-mbox">
+    <div class="tr-modal-head">
+      <div>
+        <span class="tr-modal-code" id="trModalCode">Новий тур</span>
+        <h3 id="trH" style="margin-top:2px">🏛 Паспорт туру</h3>
+      </div>
+      <span class="tr-stale-flag hide" id="trStaleFlag">⚠ Потребує ревізії буклету</span>
+    </div>
+
+    <label>Назва туру</label><input id="trTitle" placeholder="Напр. Alpine Relax...">
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label>Статус</label>
+        <select id="trStatus">
+          <option value="active">У продажу</option>
+          <option value="draft">Чернетка</option>
+          <option value="needs_update">Потребує оновлення</option>
+          <option value="archived">Архів</option>
+        </select>
+      </div>
+      <div style="flex:1"><label>Валюта</label>
+        <select id="trCurrency"><option value="EUR">EUR</option><option value="USD">USD</option><option value="UAH">UAH</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label>Ціна чекпоінту</label><input id="trPrice" type="number" min="0" step="0.01" placeholder="36.00"></div>
+      <div style="flex:1"><label>Міста виїзду</label><input id="trCities" placeholder="Львів, Стрий, Мукачево"></div>
+    </div>
+
+    <label>Посилання на PDF-буклет</label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input id="trPdfUrl" placeholder="https://..." style="flex:1;min-width:180px">
+      <button type="button" onclick="_driveTargetMode='tour';openGooglePicker()" style="border:1px solid #c8ddf0;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f0f6fc;color:#2a6090;white-space:nowrap">📎 Drive</button>
+    </div>
+    <div class="tr-pdf-meta" id="trPdfMeta"></div>
+
+    <label>Посилання на сторінку туру на сайті</label><input id="trSiteUrl" placeholder="https://...">
+
+    <div class="mbtns"><button onclick="closeM('mTour')">Скасувати</button><button class="mprim" id="trBtn" onclick="saveTourPassport()">Створити</button></div>
+
+    <div id="trExistingBlocks" class="hide">
+      <div class="tr-sec-title">Історія змін</div>
+      <div id="trLog" class="tr-log"></div>
+
+      <div class="tr-sec-title">Пов'язані завдання</div>
+      <div id="trTasks" class="tr-tasks"></div>
+      <button class="tr-btn" style="margin-top:8px" onclick="createTaskForTour()">+ Створити завдання по туру</button>
+
+      <div style="text-align:right;margin-top:18px">
+        <button onclick="deleteTourConfirm()" style="border:1px solid #e8a8a0;background:#fff5f5;border-radius:9px;padding:8px 16px;font-size:12px;font-family:inherit;color:#b83a2a;cursor:pointer">🗑 Видалити тур</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SL={new:'Нові',work:'В роботі',clarify:'Уточнення',done:'Виконано',urgent:'Терміново',test:'Тестування'};
 function fmtHrs(h){if(!h)return'';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
@@ -1233,6 +1421,7 @@ async function save(){
     localStorage.setItem('wm_labels',   JSON.stringify(customLabels));
     localStorage.setItem('wm_cfg',      JSON.stringify(cfg));
     localStorage.setItem('wm_log',      JSON.stringify(auditLog));
+    localStorage.setItem('wm_tours',    JSON.stringify(tours));
   }catch(e){}
   // Push to Firestore.
   // IMPORTANT: For production — add Firestore Security Rules in Firebase Console:
@@ -1247,7 +1436,7 @@ async function save(){
   try{
     const {db, doc, setDoc, serverTimestamp} = window._fb;
     await setDoc(doc(db, 'waymark','main'), {
-      tasks: activeTasks, managers, customLabels, cfg,
+      tasks: activeTasks, managers, customLabels, cfg, tours,
       auditLog: auditLog.slice(0,500),
       updatedAt: serverTimestamp(),
       updatedBy: curU
@@ -1283,6 +1472,7 @@ async function loadFromFirestore(){
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
+      if(d.tours)        tours        = d.tours;
     }
     // ── завантажити архівні завдання з окремої колекції ──
     try{
@@ -1307,6 +1497,7 @@ function loadFromLocalStorage(){
     const l=localStorage.getItem('wm_labels');   if(l) customLabels = JSON.parse(l);
     const c=localStorage.getItem('wm_cfg');      if(c) cfg          = JSON.parse(c);
     const lg=localStorage.getItem('wm_log');     if(lg) auditLog    = JSON.parse(lg);
+    const tr=localStorage.getItem('wm_tours');   if(tr) tours       = JSON.parse(tr);
   }catch(e){}
 }
 
@@ -1330,6 +1521,7 @@ function startRealtimeSync(){
       if(d.customLabels) customLabels = d.customLabels;
       if(d.cfg){cfg=d.cfg;applyMaintenance();}
       if(d.auditLog)     auditLog     = d.auditLog;
+      if(d.tours)        tours        = d.tours;
       // Re-fetch archive collection to pick up tasks newly archived by other users
       getDocs(collection(db,'waymark_archive')).then(archSnap=>{
         const activeIds=new Set(tasks.filter(t=>!t.arch).map(t=>String(t.id)));
@@ -1344,11 +1536,13 @@ function startRealtimeSync(){
         if(currentTab==='arch') rArch();
         if(currentTab==='anlyt') renderAnalytics();
         if(currentTab==='log') renderLog();
+        if(currentTab==='tours') renderTours();
       }).catch(()=>{
         rStats(); render(); renderVacBanner(); renderLabelPills();
         if(currentTab==='arch') rArch();
         if(currentTab==='anlyt') renderAnalytics();
         if(currentTab==='log') renderLog();
+        if(currentTab==='tours') renderTours();
       });
       showSyncToast(d.updatedBy);
     }
@@ -1512,6 +1706,12 @@ let tasks=[
   {id:'6ba7b812-9dad-11d1-80b4-00c04fd430ca',title:'Звіт по бронюванням за квітень',url:'',note:'',status:'done',tags:["Об'єкти"],created:'2026-04-10',deadline:'2026-04-15',forecast:'',from:'TD',to:'TD',result:'PDF надіслано. 14 бронювань.',hours:3,arch:true,archAt:'2026-04-15',cmts:[],seenBy:[]}
 ];
 let customLabels=["Об'єкти",'Розсилка','Документи'];
+// ── TOURS DOSSIER ──
+const TOUR_PDF_STALE_DAYS=180;
+let tours=[
+  {id:'t_001',title:'Spiced Europe',status:'active',checkpoint_price:36.00,currency:'EUR',cities_departure:'Львів, Стрий, Мукачево',pdf_url:'',pdf_updated_at:'',site_url:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),log:[]}
+];
+let tourFlt='all',trCurId=null,_presetTourId=null,_driveTargetMode='task';
 let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week',currentTab='main';
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
@@ -1536,6 +1736,211 @@ function migrateMgrRoles(){
   if(td&&td.role==='basic') td.role='admin';
   const mk=managers.find(m=>m.code==='MK');
   if(mk&&(mk.role==='basic'||mk.role==='extended')) mk.role='admin';
+}
+
+/* ══════════════════════════════════════════════
+   TOURS DOSSIER MODULE («Досьє турів»)
+   ══════════════════════════════════════════════ */
+function fmtTourDate(iso){
+  if(!iso) return '';
+  const d=new Date(iso);
+  if(isNaN(d)) return '';
+  return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function fmtTourDateTime(iso){
+  if(!iso) return '';
+  const d=new Date(iso);
+  if(isNaN(d)) return '';
+  return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
+}
+function tourStale(tour){
+  if(!tour.pdf_url) return false; // no PDF yet — separate empty-state, not "stale"
+  if(!tour.pdf_updated_at) return true;
+  const days=(Date.now()-new Date(tour.pdf_updated_at).getTime())/86400000;
+  return days>TOUR_PDF_STALE_DAYS;
+}
+const TOUR_STATUS_LABELS={active:'У продажу',draft:'Чернетка',needs_update:'Потребує оновлення',archived:'Архів'};
+function tourLogEntry(tour,field,from,to){
+  tour.log=tour.log||[];
+  tour.log.unshift({ts:new Date().toISOString(),by:curU,field,from:from===undefined||from===null||from===''?'—':String(from),to:to===undefined||to===null||to===''?'—':String(to)});
+}
+function tf(f,el){
+  tourFlt=f;
+  document.querySelectorAll('#trPills .tr-pill').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  renderTours();
+}
+function populateTourSelect(){
+  const sel=document.getElementById('fTourSel');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— не прив\'язано —</option>'+
+    tours.filter(t=>t.status!=='archived').map(t=>`<option value="${esc(t.id)}">${esc(t.title)}${t.status==='needs_update'?' ⚠':''}</option>`).join('');
+  sel.value=cur;
+}
+function renderTours(){
+  const grid=document.getElementById('trGrid');
+  if(!grid) return;
+  const q=(document.getElementById('trSrch')?.value||'').toLowerCase();
+  let list=tours.slice();
+  if(tourFlt==='needs_update') list=list.filter(t=>t.status==='needs_update'||tourStale(t));
+  else if(tourFlt!=='all') list=list.filter(t=>t.status===tourFlt);
+  if(tourFlt!=='archived') list=list.filter(t=>t.status!=='archived'||tourFlt==='archived');
+  if(q) list=list.filter(t=>(t.title+' '+t.id+' '+(t.cities_departure||'')).toLowerCase().includes(q));
+  list.sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||''));
+
+  if(!list.length){
+    grid.innerHTML=`<div class="empty-s" style="grid-column:1/-1">Турів за цим фільтром не знайдено</div>`;
+    return;
+  }
+
+  grid.innerHTML=list.map(t=>{
+    const stale=tourStale(t);
+    const linkedCount=tasks.filter(x=>x.tourId===t.id&&!x.arch).length;
+    const statusCls='trs-'+t.status;
+    return `<article class="tour-card" onclick="openTourDetail('${t.id}')">
+      <div class="tour-card-header">
+        <span class="tour-code">${esc(t.id)}</span>
+        <span class="badge ${statusCls}">${TOUR_STATUS_LABELS[t.status]||t.status}</span>
+      </div>
+      <div class="tour-card-body">
+        <h3 class="tour-title">${esc(t.title||'Без назви')}</h3>
+        ${stale?`<div class="tour-stale-badge">⚠ Потребує ревізії буклету</div>`:''}
+        <div class="tour-details-list">
+          <div class="tour-detail-row"><span class="tour-detail-label">Чекпоінт:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency:'—'}</span></div>
+          <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
+          <div class="tour-detail-row"><span class="tour-detail-label">Буклет оновлено:</span><span class="tour-detail-val">${t.pdf_updated_at?fmtTourDate(t.pdf_updated_at):'ще не завантажено'}</span></div>
+          <div class="tour-detail-row"><span class="tour-detail-label">Завдання:</span><span class="tour-detail-val">${linkedCount}</span></div>
+        </div>
+        <div class="tour-card-footer">
+          <button class="tour-btn primary" onclick="event.stopPropagation();openTourDetail('${t.id}')">Переглянути досьє</button>
+          ${t.pdf_url?`<a class="tour-btn" href="${esc(t.pdf_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Буклет PDF</a>`:''}
+          ${t.site_url?`<a class="tour-btn" href="${esc(t.site_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Сайт</a>`:''}
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+}
+function openTourAdd(id){
+  trCurId=id;
+  const existingBlocks=document.getElementById('trExistingBlocks');
+  const staleFlag=document.getElementById('trStaleFlag');
+  if(id){
+    const t=tours.find(x=>x.id===id);
+    if(!t) return;
+    document.getElementById('trH').textContent='🏛 Паспорт туру';
+    document.getElementById('trModalCode').textContent=t.id;
+    document.getElementById('trTitle').value=t.title||'';
+    document.getElementById('trStatus').value=t.status||'draft';
+    document.getElementById('trCurrency').value=t.currency||'EUR';
+    document.getElementById('trPrice').value=t.checkpoint_price||'';
+    document.getElementById('trCities').value=t.cities_departure||'';
+    document.getElementById('trPdfUrl').value=t.pdf_url||'';
+    document.getElementById('trSiteUrl').value=t.site_url||'';
+    document.getElementById('trBtn').textContent='Зберегти';
+    document.getElementById('trPdfMeta').textContent=t.pdf_updated_at?('Буклет оновлено: '+fmtTourDateTime(t.pdf_updated_at)):'Буклет ще не завантажено';
+    staleFlag.classList.toggle('hide',!tourStale(t));
+    existingBlocks.classList.remove('hide');
+    renderTourLog(t);
+    renderTourLinkedTasks(t);
+  } else {
+    document.getElementById('trH').textContent='🏛 Новий тур';
+    document.getElementById('trModalCode').textContent='Новий тур';
+    ['trTitle','trCities','trPdfUrl','trSiteUrl'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('trStatus').value='draft';
+    document.getElementById('trCurrency').value='EUR';
+    document.getElementById('trPrice').value='';
+    document.getElementById('trBtn').textContent='Створити';
+    document.getElementById('trPdfMeta').textContent='';
+    staleFlag.classList.add('hide');
+    existingBlocks.classList.add('hide');
+  }
+  openM('mTour');
+}
+function openTourDetail(id){ openTourAdd(id); }
+function saveTourPassport(){
+  const title=document.getElementById('trTitle').value.trim();
+  if(!title){alert('Вкажіть назву туру.');document.getElementById('trTitle').focus();return;}
+  const status=document.getElementById('trStatus').value;
+  const currency=document.getElementById('trCurrency').value;
+  const price=parseFloat(document.getElementById('trPrice').value)||0;
+  const cities=document.getElementById('trCities').value.trim();
+  const pdfUrl=document.getElementById('trPdfUrl').value.trim();
+  const siteUrl=document.getElementById('trSiteUrl').value.trim();
+  const now=new Date().toISOString();
+
+  if(trCurId){
+    const t=tours.find(x=>x.id===trCurId);
+    if(!t) return;
+    if(t.title!==title) tourLogEntry(t,'назва',t.title,title);
+    if(t.status!==status) tourLogEntry(t,'статус',TOUR_STATUS_LABELS[t.status],TOUR_STATUS_LABELS[status]);
+    if(Number(t.checkpoint_price||0)!==price) tourLogEntry(t,'checkpoint_price',(t.checkpoint_price||0).toFixed(2)+' '+t.currency,price.toFixed(2)+' '+currency);
+    else if(t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
+    if((t.cities_departure||'')!==cities) tourLogEntry(t,'міста виїзду',t.cities_departure||'—',cities||'—');
+    if((t.site_url||'')!==siteUrl) tourLogEntry(t,'посилання на сайт',t.site_url||'—',siteUrl||'—');
+    if((t.pdf_url||'')!==pdfUrl){
+      tourLogEntry(t,'PDF-буклет',t.pdf_url||'—',pdfUrl||'—');
+      t.pdf_updated_at=pdfUrl?now:'';
+    }
+    Object.assign(t,{title,status,currency,checkpoint_price:price,cities_departure:cities,pdf_url:pdfUrl,site_url:siteUrl,updated_at:now});
+    showToast('Тур збережено!','Зміни зафіксовано в історії');
+  } else {
+    const newId='t_'+Date.now().toString(36);
+    const t={id:newId,title,status,currency,checkpoint_price:price,cities_departure:cities,
+      pdf_url:pdfUrl,pdf_updated_at:pdfUrl?now:'',site_url:siteUrl,
+      created_at:now,updated_at:now,log:[]};
+    tourLogEntry(t,'створення туру','—',title);
+    tours.unshift(t);
+    trCurId=newId;
+    showToast('Тур створено!','Досьє тепер відстежується');
+  }
+  save();
+  renderTours();
+  populateTourSelect();
+  closeM('mTour');
+}
+function renderTourLog(t){
+  const el=document.getElementById('trLog');
+  if(!el) return;
+  const log=t.log||[];
+  if(!log.length){ el.innerHTML='<div style="font-size:12px;color:#aaa">Історія змін порожня</div>'; return; }
+  el.innerHTML=log.map(e=>`<div class="tr-log-item"><span class="tr-log-ts">${fmtTourDateTime(e.ts)}</span> — <strong>${esc(mgr(e.by).name||e.by)}</strong> змінив(-ла) «${esc(e.field)}» з <em>${esc(e.from)}</em> на <em>${esc(e.to)}</em>.</div>`).join('');
+}
+function renderTourLinkedTasks(t){
+  const el=document.getElementById('trTasks');
+  if(!el) return;
+  const linked=tasks.filter(x=>x.tourId===t.id);
+  if(!linked.length){ el.innerHTML='<div style="font-size:12px;color:#aaa">Ще немає завдань, привʼязаних до цього туру</div>'; return; }
+  el.innerHTML=linked.map(x=>`<div class="tr-task-row" onclick="closeM('mTour');goTab('main',document.querySelector('.tab[onclick*=main]'));openAdd('${x.id}')">
+      <span class="tg ${SC[x.status]||''}">${SL[x.status]||x.status}</span>
+      <span class="tr-task-title">${esc(x.title||x.note||'Без назви')}</span>
+      <span class="tr-task-to">${esc(mgr(x.to).name||x.to)}</span>
+    </div>`).join('');
+}
+function createTaskForTour(){
+  if(!trCurId) return;
+  _presetTourId=trCurId;
+  closeM('mTour');
+  goTab('main',document.querySelector('.tab[onclick*="main"]'));
+  openAdd(null);
+}
+function deleteTourConfirm(){
+  if(!trCurId) return;
+  const t=tours.find(x=>x.id===trCurId);
+  if(!t) return;
+  const linkedCount=tasks.filter(x=>x.tourId===t.id).length;
+  const msg=linkedCount>0
+    ? `Видалити тур «${t.title}»? З ним пов'язано завдань: ${linkedCount}. Завдання залишаться, але втратять прив'язку до туру.`
+    : `Видалити тур «${t.title}»?`;
+  if(!confirm(msg)) return;
+  tasks.forEach(x=>{ if(x.tourId===t.id) x.tourId=null; });
+  tours=tours.filter(x=>x.id!==t.id);
+  trCurId=null;
+  save();
+  closeM('mTour');
+  renderTours();
+  populateTourSelect();
+  showToast('Тур видалено','Пов\'язані завдання збережено');
 }
 
 function bootApp(){
@@ -2188,7 +2593,9 @@ function render(){
     const overdueH=over?`<div class="overdue-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Дедлайн прострочено</div>`:'';
     const fcH=t.forecast?`<div class="tc-forecast"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M12.875 8C12.8747 7.22638 12.6902 6.46395 12.3366 5.77585C11.9831 5.08775 11.4707 4.49377 10.8418 4.04313L10.4437 1.84375C10.4071 1.64203 10.3008 1.45957 10.1434 1.32821C9.98602 1.19685 9.78749 1.12493 9.58247 1.125H6.41747C6.21245 1.12493 6.01392 1.19685 5.85652 1.32821C5.69911 1.45957 5.59283 1.64203 5.55622 1.84375L5.1581 4.04313C4.52908 4.49358 4.01652 5.08751 3.66292 5.77566C3.30933 6.4638 3.12488 7.22633 3.12488 8C3.12488 8.77367 3.30933 9.5362 3.66292 10.2243C4.01652 10.9125 4.52908 11.5064 5.1581 11.9569L5.55622 14.1562C5.59283 14.358 5.69911 14.5404 5.85652 14.6718C6.01392 14.8032 6.21245 14.8751 6.41747 14.875H9.58247C9.78749 14.8751 9.98602 14.8032 10.1434 14.6718C10.3008 14.5404 10.4071 14.358 10.4437 14.1562L10.8418 11.9569C11.4707 11.5062 11.9831 10.9123 12.3366 10.2242C12.6902 9.53605 12.8747 8.77362 12.875 8Z" fill="#679673"/></svg> ${esc(t.forecast)}</div>`:'';
 
-    const tagsH=t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
+    const _linkedTour=t.tourId?tours.find(x=>x.id===t.tourId):null;
+    const tourBadgeH=_linkedTour?`<span class="tg tg-tour" onclick="event.stopPropagation();goTab('tours',document.querySelector('.tab-tours'));openTourDetail('${_linkedTour.id}')">🏛 ${esc(_linkedTour.title)}</span>`:'';
+    const tagsH=tourBadgeH+t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
 
     // title — fallback to note, then placeholder (url shown separately in body)
@@ -2633,14 +3040,16 @@ function goTab(tab,el){
   if(el&&el.classList&&el.classList.contains('tab')) el.classList.add('on');
   else {const dt=document.querySelector(`.tab[onclick*="'${tab}'"]`);if(dt)dt.classList.add('on');}
   // mobile nav
-  ['mnMain','mnArch','mnAnlyt','mnLog'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});
-  const mnMap={main:'mnMain',arch:'mnArch',anlyt:'mnAnlyt',log:'mnLog'};
+  ['mnMain','mnTours','mnArch','mnAnlyt','mnLog'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});
+  const mnMap={main:'mnMain',tours:'mnTours',arch:'mnArch',anlyt:'mnAnlyt',log:'mnLog'};
   if(mnMap[tab]){const mb=document.getElementById(mnMap[tab]);if(mb)mb.classList.add('on');}
   document.getElementById('vMain').style.display=tab==='main'?'':'none';
+  document.getElementById('vTours').style.display=tab==='tours'?'':'none';
   document.getElementById('vArch').style.display=tab==='arch'?'':'none';
   document.getElementById('vAnlyt').style.display=tab==='anlyt'?'':'none';
   document.getElementById('vLog').style.display=tab==='log'?'':'none';
   currentTab=tab;
+  if(tab==='tours') renderTours();
   if(tab==='arch') rArch();
   if(tab==='anlyt') renderAnalytics();
   if(tab==='log') renderLog();
@@ -3378,7 +3787,7 @@ function canChangeStatus(t){
 }
 
 function openAdd(id){
-  eId=id;populateTo();populateFrom();
+  eId=id;populateTo();populateFrom();populateTourSelect();
   // Show "author" field only for admins/superadmin (and only when editing)
   const isAdminOrSA=canDo('admin')||isSuperAdmin();
   const fromWrap=document.getElementById('fFromWrap');
@@ -3395,6 +3804,7 @@ function openAdd(id){
     const dt=document.getElementById('fDlTxt');dt.textContent=t.deadline||'Оберіть дату...';dt.className=t.deadline?'':'placeholder';
     document.getElementById('fFc').value=t.forecast;document.getElementById('fTo').value=t.to;document.getElementById('fR').value=t.result;
     document.getElementById('fHours').value=t.hours||0;
+    const fTourSelEdit=document.getElementById('fTourSel');if(fTourSelEdit)fTourSelEdit.value=t.tourId||'';
     const df=t.driveFiles||[];document.getElementById('fDriveFiles').value=JSON.stringify(df);renderDriveLinks(df);
     // populate author field for admins
     if(isAdminOrSA){
@@ -3410,6 +3820,8 @@ function openAdd(id){
     document.getElementById('fTo').value=firstVisible?firstVisible.code:(managers[0]?.code||'');
     document.getElementById('fHours').value=0;
     document.getElementById('fDriveFiles').value='[]';renderDriveLinks([]);
+    const fTourSelNew=document.getElementById('fTourSel');if(fTourSelNew)fTourSelNew.value=_presetTourId||'';
+    _presetTourId=null;
   }
   openM('mAdd');
   // show hours field only to those with access
@@ -3438,12 +3850,14 @@ function mkT(){
     const newFrom=isAdminOrSA&&document.getElementById('fFromWrap').style.display!=='none'
       ? (document.getElementById('fFrom').value||t.from)
       : t.from;
+    const oldTourId=t.tourId||'',newTourId=document.getElementById('fTourSel')?document.getElementById('fTourSel').value:'';
     Object.assign(t,{title:T,url:U.replace(/^https?:\/\//,''),note:N,status:newStatus,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       deadline:newDl,forecast:document.getElementById('fFc').value,
       from:newFrom,
       to:newTo,result:document.getElementById('fR').value,
       hours:parseFloat(document.getElementById('fHours').value)||0,
+      tourId:newTourId||null,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]')});
     const label=T||U||N||'—';
     // Collect what changed for lastChange summary
@@ -3453,6 +3867,11 @@ function mkT(){
     if(oldDl!==newDl){ logEntry('edit',eId,label,'дедлайн',oldDl||'—',newDl||'—'); changes.push(`дедлайн: ${oldDl||'—'} → ${newDl||'—'}`); }
     if(oldTitle!==T&&T){ logEntry('edit',eId,label,'назва',oldTitle||'—',T); changes.push(`назва: «${(oldTitle||'—').slice(0,25)+(oldTitle&&oldTitle.length>25?'…':'')}» → «${T.slice(0,25)+(T.length>25?'…':'')}»`); }
     if(oldFrom!==newFrom){ logEntry('edit',eId,label,'автор',mgr(oldFrom).name,mgr(newFrom).name); changes.push(`автор: ${mgr(oldFrom).name} → ${mgr(newFrom).name}`); }
+    if(oldTourId!==newTourId){
+      const oldTr=tours.find(x=>x.id===oldTourId),newTr=tours.find(x=>x.id===newTourId);
+      logEntry('edit',eId,label,'тур',oldTr?oldTr.title:'—',newTr?newTr.title:'—');
+      changes.push(`тур: ${oldTr?oldTr.title:'—'} → ${newTr?newTr.title:'—'}`);
+    }
     if(changes.length>0){
       t.seenBy=(t.seenBy||[]).filter(c=>c===curU);
       t.lastChange={by:curU,summary:changes.join('; '),ts:new Date().toISOString()};
@@ -3466,12 +3885,14 @@ function mkT(){
     const today=now.toISOString().split('T')[0];
     const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
+    const _fTourSelC=document.getElementById('fTourSel');
     tasks.unshift({id:newId,title:T,url:U.replace(/^https?:\/\//,''),note:N,
       status:document.getElementById('fS').value,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
       created:today,createdTime:timeStr,deadline:document.getElementById('fDl').value,forecast:document.getElementById('fFc').value,
       from:curU,to:document.getElementById('fTo').value,result:document.getElementById('fR').value,
       hours:parseFloat(document.getElementById('fHours').value)||0,
+      tourId:(_fTourSelC&&_fTourSelC.value)?_fTourSelC.value:null,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]'),
       arch:false,archAt:'',cmts:[]});
     logEntry('create',newId,T||U||N||'—');
@@ -3961,6 +4382,10 @@ async function tgNotifyDeadline(task, daysLeft){
   <button onclick="goTab('main',this)" class="on" id="mnMain">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Завдання
+  </button>
+  <button onclick="goTab('tours',this)" id="mnTours">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+    Тури
   </button>
   <button onclick="goTab('arch',this)" id="mnArch">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
