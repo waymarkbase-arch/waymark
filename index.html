@@ -1469,8 +1469,8 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     </div>
     <div class="tr-actionbar">
       <div class="sb" style="max-width:320px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="trSrch" placeholder="Пошук туру за назвою або ID..." oninput="renderTours()"></div>
-      <button class="tr-btn" onclick="openTourBulkImport()">📋 Масовий імпорт</button>
-      <button class="tr-btn" onclick="openTourDatesBulkImport()">📅 Оновити дати</button>
+      <button class="tr-btn" style="display:inline-flex;align-items:center;gap:7px" onclick="openTourBulkImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>Масовий імпорт</button>
+      <button class="tr-btn" style="display:inline-flex;align-items:center;gap:7px" onclick="openTourDatesBulkImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Оновити дати</button>
       <button class="btn-add" onclick="openTourAdd(null)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Додати тур</button>
     </div>
   </div>
@@ -1700,17 +1700,31 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       </div>
     </div>
     <div style="display:flex;gap:10px">
-      <div style="flex:1"><label>Ціна чекпоінту</label><input id="trPrice" type="number" min="0" step="0.01" placeholder="36.00"></div>
+      <div style="flex:1"><label>Ціна Check point</label><input id="trPrice" type="number" min="0" step="0.01" placeholder="36.00"></div>
+      <div style="flex:1"><label>Ціна City Tax</label><input id="trCityTax" type="number" min="0" step="0.01" placeholder="30.00"></div>
+    </div>
+    <div style="display:flex;gap:10px">
       <div style="flex:1"><label>Міста виїзду</label><input id="trCities" placeholder="Будапешт, Рим, Братислава"></div>
     </div>
     <div style="display:flex;gap:10px">
-      <div style="flex:1"><label>Дата найближчого виїзду</label><input id="trNextDate" type="date"></div>
+      <div style="flex:1"><label>Дата найближчого виїзду</label>
+        <div class="date-field">
+          <div class="date-display" id="trNextDateDisp" onclick="openCal('trNextDate','trNextDateDisp')">
+            <span id="trNextDateTxt" class="placeholder">Оберіть дату...</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <input type="hidden" id="trNextDate">
+        </div>
+      </div>
     </div>
 
     <div class="tr-fees-block">
       <label style="margin-bottom:8px">Додаткові платежі</label>
       <div id="trFeesList" class="tr-fees-list"></div>
-      <button type="button" class="tr-fee-add-btn" onclick="addTourFeeRow()">+ Додати платіж</button>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="tr-fee-add-btn" style="width:auto;flex:1" onclick="addTourFeeRow()">+ Додати платіж</button>
+        <button type="button" class="tr-fee-add-btn" style="width:auto;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px" onclick="openTourFeesBulkImport()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>Вставити з таблиці</button>
+      </div>
     </div>
 
     <label>Посилання на PDF-буклет</label>
@@ -1742,7 +1756,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 <!-- TOURS BULK IMPORT ("вставити таблицю з сайту") -->
 <div class="mbg hide" id="mTourBulk">
   <div class="mbox tr-mbox tr-bulk-mbox">
-    <h3>📋 Масовий імпорт турів</h3>
+    <h3 style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>Масовий імпорт турів</h3>
     <p class="tr-bulk-hint">Скопіюйте на сайті оператора таблицю з переліком турів (виділіть увесь блок: країна, код туру, назва, місто виїзду, днів, дата заїздів) і вставте нижче — система сама розпізнає рядки.</p>
 
     <label>Вставлена таблиця</label>
@@ -1768,7 +1782,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 <!-- TOURS BULK DATE UPDATE ("оновити тільки дати виїзду") -->
 <div class="mbg hide" id="mTourDatesBulk">
   <div class="mbox tr-mbox tr-bulk-mbox">
-    <h3>📅 Масове оновлення дат</h3>
+    <h3 style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Масове оновлення дат</h3>
     <p class="tr-bulk-hint">По одному туру на рядок: <strong>код туру</strong> і <strong>нова дата виїзду</strong> через пробіл або кому. Наприклад: <code>T_001 15.08.2026</code>. Оновлюються тільки вже наявні тури — за кодом; коди, яких нема в системі, будуть позначені окремо.</p>
 
     <label>Список дат</label>
@@ -1779,6 +1793,23 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     <div id="trDatesBulkPreview" class="tr-bulk-preview"></div>
 
     <div class="mbtns"><button onclick="closeM('mTourDatesBulk')">Скасувати</button><button class="mprim" id="trDatesBulkCommitBtn" onclick="commitTourDatesBulkImport()" disabled>Оновити дати</button></div>
+  </div>
+</div>
+
+<!-- TOUR FEES BULK PASTE ("вставити таблицю доплат з сайту") -->
+<div class="mbg hide" id="mTourFeesBulk">
+  <div class="mbox tr-mbox tr-bulk-mbox">
+    <h3 style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>Вставити таблицю доплат</h3>
+    <p class="tr-bulk-hint">Скопіюйте на сайті оператора таблицю «В стоимость не входит» (назва доплати і сума) та вставте нижче — система сама розпізнає рядки. Якщо в рядку є дві суми (доросла/дитяча), береться перша. Рядки «Check point» та «City Tax» автоматично підставляться у відповідні поля вище, решта додасться як окремі платежі.</p>
+
+    <label>Вставлена таблиця</label>
+    <textarea id="trFeesBulkInput" rows="7" placeholder="Чекпоинт	36.00 EUR	30.00 EUR&#10;City tax (Городской налог)	30.00 EUR	0.00 EUR&#10;Поездка на озеро Комо	30.00 EUR	15.00 EUR" style="font-family:var(--wm-sans);font-size:12.5px;resize:vertical"></textarea>
+
+    <div style="margin-top:12px"><button type="button" class="tr-btn" onclick="parseTourFeesBulkInput()">🔎 Розпізнати</button></div>
+
+    <div id="trFeesBulkPreview" class="tr-bulk-preview"></div>
+
+    <div class="mbtns"><button onclick="closeM('mTourFeesBulk')">Скасувати</button><button class="mprim" id="trFeesBulkCommitBtn" onclick="commitTourFeesBulkImport()" disabled>Додати платежі</button></div>
   </div>
 </div>
 
@@ -2313,7 +2344,7 @@ let customLabels=["Об'єкти",'Розсилка','Документи'];
 // ── TOURS DOSSIER ──
 const TOUR_PDF_STALE_DAYS=0;
 let tours=[
-  {id:'t_001',title:'Spiced Europe',status:'active',checkpoint_price:36.00,currency:'EUR',cities_departure:'Будапешт, Рим, Братислава',extra_fees:[],pdf_url:'',pdf_updated_at:'',site_url:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),log:[]}
+  {id:'t_001',title:'Spiced Europe',status:'active',checkpoint_price:36.00,city_tax_price:30.00,currency:'EUR',cities_departure:'Будапешт, Рим, Братислава',extra_fees:[],pdf_url:'',pdf_updated_at:'',site_url:'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),log:[]}
 ];
 let tourFlt='all',trCurId=null,_presetTourId=null,_driveTargetMode='task';
 let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week',currentTab='main';
@@ -2543,7 +2574,7 @@ function commitTourBulkImport(){
       Object.assign(existing,{cities_departure:r.cities_departure||existing.cities_departure,countries:r.countries||existing.countries,duration_days:r.duration_days||existing.duration_days,next_departure:r.next_departure||existing.next_departure,updated_at:now});
       updated++;
     } else {
-      const t={id:r.id,title:r.title,status:statusSel,currency:'EUR',checkpoint_price:0,extra_fees:[],
+      const t={id:r.id,title:r.title,status:statusSel,currency:'EUR',checkpoint_price:0,city_tax_price:0,extra_fees:[],
         cities_departure:r.cities_departure,countries:r.countries,duration_days:r.duration_days,next_departure:r.next_departure,
         pdf_url:'',pdf_updated_at:'',site_url:'',created_at:now,updated_at:now,log:[]};
       tourLogEntry(t,'створення туру','—','масовий імпорт з таблиці сайту');
@@ -2651,6 +2682,70 @@ function collectTourFees(){
     amount:parseFloat(row.querySelector('.tr-fee-amount').value)||0
   })).filter(f=>f.name);
 }
+// ── Bulk paste of extra-fees table (copy-paste from operator site) ──
+let _tourFeesBulkParsed=[];
+function openTourFeesBulkImport(){
+  document.getElementById('trFeesBulkInput').value='';
+  document.getElementById('trFeesBulkPreview').innerHTML='';
+  const btn=document.getElementById('trFeesBulkCommitBtn');
+  btn.disabled=true; btn.textContent='Додати платежі';
+  _tourFeesBulkParsed=[];
+  openM('mTourFeesBulk');
+}
+function _tourFeeRowKind(name){
+  const n=name.toLowerCase();
+  if(n.includes('check point')||n.includes('чекпоинт')||n.includes('чекпоінт')) return 'checkpoint';
+  if(n.includes('city tax')||n.includes('городск')||n.includes('міськ')) return 'citytax';
+  return 'fee';
+}
+function parseTourFeesBulkInput(){
+  const raw=document.getElementById('trFeesBulkInput').value;
+  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  _tourFeesBulkParsed=lines.map(line=>{
+    const nums=line.match(/\d+[.,]\d{1,2}|\d+/g);
+    if(!nums||!nums.length) return null;
+    const amount=parseFloat(nums[0].replace(',','.'));
+    if(isNaN(amount)) return null;
+    let name=line.split(nums[0])[0].replace(/[\t;:|]+$/,'').trim();
+    if(!name) return null;
+    return {name,amount,kind:_tourFeeRowKind(name)};
+  }).filter(Boolean);
+  renderTourFeesBulkPreview();
+}
+function renderTourFeesBulkPreview(){
+  const wrap=document.getElementById('trFeesBulkPreview');
+  const btn=document.getElementById('trFeesBulkCommitBtn');
+  if(!_tourFeesBulkParsed.length){
+    wrap.innerHTML='<div style="font-size:12.5px;color:var(--wm-muted);padding:10px 0">Нічого не розпізнано. Формат рядка: назва доплати, далі сума (напр. Поездка на озеро Комо  30.00 EUR).</div>';
+    btn.disabled=true; btn.textContent='Додати платежі';
+    return;
+  }
+  const kindLabel={checkpoint:'→ Check point',citytax:'→ City Tax',fee:'→ додатковий платіж'};
+  wrap.innerHTML=`<div class="tr-bulk-summary">Розпізнано рядків: ${_tourFeesBulkParsed.length}.</div>`+
+    `<div class="tr-bulk-rows">`+_tourFeesBulkParsed.map((r,i)=>`<div class="tr-bulk-row">
+        <label class="tr-bulk-check"><input type="checkbox" checked data-i="${i}" class="trFeesBulkRowChk"></label>
+        <div class="tr-bulk-row-main">
+          <div class="tr-bulk-row-title">${esc(r.name)}<span class="tr-bulk-tag${r.kind!=='fee'?' new':''}">${kindLabel[r.kind]}</span></div>
+          <div class="tr-bulk-row-sub">${r.amount.toFixed(2)} ${document.getElementById('trCurrency').value}</div>
+        </div>
+      </div>`).join('')+`</div>`;
+  btn.disabled=false;
+  btn.textContent='Додати '+_tourFeesBulkParsed.length+' '+(_tourFeesBulkParsed.length===1?'платіж':(_tourFeesBulkParsed.length>=2&&_tourFeesBulkParsed.length<=4?'платежі':'платежів'));
+}
+function commitTourFeesBulkImport(){
+  let added=0;
+  document.querySelectorAll('.trFeesBulkRowChk').forEach(chk=>{
+    if(!chk.checked) return;
+    const r=_tourFeesBulkParsed[Number(chk.dataset.i)];
+    if(!r) return;
+    if(r.kind==='checkpoint') document.getElementById('trPrice').value=r.amount;
+    else if(r.kind==='citytax') document.getElementById('trCityTax').value=r.amount;
+    else addTourFeeRow(r.name,r.amount);
+    added++;
+  });
+  closeM('mTourFeesBulk');
+  showToast('Платежі додано!',`Оброблено рядків: ${added}`);
+}
 function renderTours(){
   const grid=document.getElementById('trGrid');
   if(!grid) return;
@@ -2685,7 +2780,8 @@ function renderTours(){
         <h3 class="tour-title">${esc(t.title||'Без назви')}</h3>
         ${tier?`<div class="pdf-freshness-badge tier-${tier}"><span class="pdf-pulse-dot"></span>${tourStaleLabel(t)}</div>`:''}
         <div class="tour-details-list">
-          <div class="tour-detail-row"><span class="tour-detail-label">Чекпоінт:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency:'—'}</span></div>
+          <div class="tour-detail-row"><span class="tour-detail-label">Check point:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency:'—'}</span></div>
+          <div class="tour-detail-row"><span class="tour-detail-label">City Tax:</span><span class="tour-detail-val">${t.city_tax_price?Number(t.city_tax_price).toFixed(2)+' '+t.currency:'—'}</span></div>
           ${(t.extra_fees&&t.extra_fees.length)?`<div class="tour-detail-row"><span class="tour-detail-label">Додаткові платежі:</span><span class="tour-detail-val fees-val" title="${t.extra_fees.map(f=>esc(f.name)+': '+Number(f.amount).toFixed(2)+' '+t.currency).join(' • ')}">${t.extra_fees.length} · ${tourFeesTotal(t).toFixed(2)} ${t.currency}</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
           ${t.countries?`<div class="tour-detail-row"><span class="tour-detail-label">Маршрут:</span><span class="tour-detail-val">${esc(t.countries)}</span></div>`:''}
@@ -2717,7 +2813,11 @@ function openTourAdd(id){
     document.getElementById('trCurrency').value=t.currency||'EUR';
     document.getElementById('trPrice').value=t.checkpoint_price||'';
     document.getElementById('trCities').value=t.cities_departure||'';
+    document.getElementById('trCityTax').value=t.city_tax_price||'';
     document.getElementById('trNextDate').value=t.next_departure||'';
+    const trNdTxt=document.getElementById('trNextDateTxt');
+    if(t.next_departure){trNdTxt.textContent=fmtTourDateShort(t.next_departure);trNdTxt.className='';}
+    else{trNdTxt.textContent='Оберіть дату...';trNdTxt.className='placeholder';}
     renderTourFeeRows(t.extra_fees);
     document.getElementById('trPdfUrl').value=t.pdf_url||'';
     document.getElementById('trSiteUrl').value=t.site_url||'';
@@ -2736,6 +2836,9 @@ function openTourAdd(id){
     document.getElementById('trStatus').value='draft';
     document.getElementById('trCurrency').value='EUR';
     document.getElementById('trPrice').value='';
+    document.getElementById('trCityTax').value='';
+    const trNdTxt0=document.getElementById('trNextDateTxt');
+    trNdTxt0.textContent='Оберіть дату...';trNdTxt0.className='placeholder';
     renderTourFeeRows([]);
     document.getElementById('trBtn').textContent='Створити';
     document.getElementById('trPdfMeta').textContent='';
@@ -2751,6 +2854,7 @@ function saveTourPassport(){
   const status=document.getElementById('trStatus').value;
   const currency=document.getElementById('trCurrency').value;
   const price=parseFloat(document.getElementById('trPrice').value)||0;
+  const cityTax=parseFloat(document.getElementById('trCityTax').value)||0;
   const cities=document.getElementById('trCities').value.trim();
   const nextDate=document.getElementById('trNextDate').value;
   const extraFees=collectTourFees();
@@ -2763,8 +2867,9 @@ function saveTourPassport(){
     if(!t) return;
     if(t.title!==title) tourLogEntry(t,'назва',t.title,title);
     if(t.status!==status) tourLogEntry(t,'статус',TOUR_STATUS_LABELS[t.status],TOUR_STATUS_LABELS[status]);
-    if(Number(t.checkpoint_price||0)!==price) tourLogEntry(t,'checkpoint_price',(t.checkpoint_price||0).toFixed(2)+' '+t.currency,price.toFixed(2)+' '+currency);
-    else if(t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
+    if(Number(t.checkpoint_price||0)!==price) tourLogEntry(t,'Check point',(t.checkpoint_price||0).toFixed(2)+' '+t.currency,price.toFixed(2)+' '+currency);
+    if(Number(t.city_tax_price||0)!==cityTax) tourLogEntry(t,'City Tax',(t.city_tax_price||0).toFixed(2)+' '+t.currency,cityTax.toFixed(2)+' '+currency);
+    if(Number(t.checkpoint_price||0)===price&&Number(t.city_tax_price||0)===cityTax&&t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
     if((t.cities_departure||'')!==cities) tourLogEntry(t,'міста виїзду',t.cities_departure||'—',cities||'—');
     if((t.next_departure||'')!==nextDate) tourLogEntry(t,'дата виїзду',fmtTourDateShort(t.next_departure)||'—',fmtTourDateShort(nextDate)||'—');
     const oldFeesStr=(t.extra_fees||[]).map(f=>f.name+': '+Number(f.amount).toFixed(2)).join(', ')||'—';
@@ -2775,11 +2880,11 @@ function saveTourPassport(){
       tourLogEntry(t,'PDF-буклет',t.pdf_url||'—',pdfUrl||'—');
       t.pdf_updated_at=pdfUrl?now:'';
     }
-    Object.assign(t,{title,status,currency,checkpoint_price:price,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,updated_at:now});
+    Object.assign(t,{title,status,currency,checkpoint_price:price,city_tax_price:cityTax,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,updated_at:now});
     showToast('Тур збережено!','Зміни зафіксовано в історії');
   } else {
     const newId='t_'+Date.now().toString(36);
-    const t={id:newId,title,status,currency,checkpoint_price:price,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,
+    const t={id:newId,title,status,currency,checkpoint_price:price,city_tax_price:cityTax,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,
       pdf_url:pdfUrl,pdf_updated_at:pdfUrl?now:'',site_url:siteUrl,
       created_at:now,updated_at:now,log:[]};
     tourLogEntry(t,'створення туру','—',title);
@@ -3180,12 +3285,13 @@ function renderVacBanner(){
 /* ── CALENDAR ── */
 function openCal(mode,targetId){
   calMode=mode;calTarget=targetId;calSelected=null;
-  const picks=['deadline','pFrom','pTo','vacFrom','vacTo'];
+  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate'];
   if(picks.includes(mode)){
     let existVal='';
     if(mode==='deadline') existVal=document.getElementById('fDl').value;
     else if(mode==='pFrom') existVal=document.getElementById('pFrom').value;
     else if(mode==='pTo') existVal=document.getElementById('pTo').value;
+    else if(mode==='trNextDate') existVal=document.getElementById('trNextDate').value;
     else if(mode.startsWith('vac')){
       // calTarget holds code+field
       const [code,field]=calTarget.split('|');
@@ -3220,6 +3326,9 @@ function calConfirmDate(){
     const [code,field]=calTarget.split('|');
     const m=managers.find(x=>x.code===code);
     if(m){m[field]=iso;save();renderMgrList();renderVacBanner();}
+  } else if(calMode==='trNextDate'){
+    document.getElementById('trNextDate').value=iso;
+    const t=document.getElementById('trNextDateTxt');t.textContent=fmtTourDateShort(iso);t.className='';
   }
   closeCal();
 }
@@ -3245,11 +3354,11 @@ function renderCal(){
   document.getElementById('calGrid').innerHTML=html;
 }
 function calPickDay(iso){
-  const picks=['deadline','pFrom','pTo','vacFrom','vacTo'];
+  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate'];
   if(picks.includes(calMode)){calSelected=iso;calDate=new Date(iso+'T12:00:00');renderCal();}
 }
 document.getElementById('calOv').addEventListener('click',function(e){
-  const picks=['deadline','pFrom','pTo','vacFrom','vacTo'];
+  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate'];
   if(e.target===this&&!picks.includes(calMode)) closeCal();
 });
 
