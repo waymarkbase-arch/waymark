@@ -2339,12 +2339,17 @@ function fmtTourDateTime(iso){
 function tourStale(tour){
   if(!tour.pdf_url) return false; // no PDF yet — separate empty-state, not "stale"
   if(!tour.pdf_updated_at) return true;
-  const days=(Date.now()-new Date(tour.pdf_updated_at).getTime())/86400000;
-  return days>TOUR_PDF_STALE_DAYS;
+  return tourPdfDaysAgo(tour)>TOUR_PDF_STALE_DAYS;
 }
 function tourPdfDaysAgo(tour){
   if(!tour.pdf_updated_at) return null;
-  return Math.floor((Date.now()-new Date(tour.pdf_updated_at).getTime())/86400000);
+  const upd=new Date(tour.pdf_updated_at);
+  const now=new Date();
+  // compare calendar dates, not raw 24h chunks — "updated yesterday at 23:59,
+  // now 00:01" should read as 1 day ago, not 0, even though <24h have passed
+  const updMidnight=new Date(upd.getFullYear(),upd.getMonth(),upd.getDate());
+  const nowMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  return Math.round((nowMidnight-updMidnight)/86400000);
 }
 function uaDaysWord(n){
   const n10=n%10,n100=n%100;
