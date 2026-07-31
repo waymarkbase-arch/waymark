@@ -1188,7 +1188,18 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .pag-btn.on{background:transparent!important;border-color:var(--wm-ink)!important;color:var(--wm-ink)!important;font-weight:700!important}
 [data-theme="dark"] .pag-btn.on{border-color:var(--text)!important;color:var(--text)!important}
 
-/* -- breathing room -- */
+/* -- date-group dividers in task list (e.g. "СЬОГОДНІ ────") -- */
+.date-divider{display:flex;align-items:center;gap:14px}
+.date-divider-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--wm-muted);white-space:nowrap;font-family:var(--wm-sans)}
+.date-divider::after{content:'';flex:1;height:1px;background:var(--wm-border)}
+
+/* -- segmented tab track (reference style: floating white pill on a cream track) -- */
+.tab-track{display:inline-flex;flex-wrap:wrap;align-items:center;background:#eee8dd;border-radius:999px;padding:5px;gap:2px}
+[data-theme="dark"] .tab-track{background:var(--surface2)}
+.tab-track .fp{border:none!important;background:transparent!important;box-shadow:none!important;border-radius:999px!important;padding:9px 20px!important;font-weight:700!important;font-size:13px!important;color:var(--wm-ink2)!important;text-transform:none!important;letter-spacing:0!important}
+.tab-track .fp:hover{background:rgba(25,24,22,.05)!important}
+.tab-track .fp.on{background:var(--wm-card)!important;color:var(--wm-ink)!important;box-shadow:0 2px 6px rgba(25,24,22,.1)!important}
+[data-theme="dark"] .tab-track .fp.on{background:var(--surface)!important;color:var(--text)!important}
 .stats-w{padding-top:28px!important}
 .stats-g{gap:14px!important}
 .filt-w{padding-top:28px!important}
@@ -1316,16 +1327,20 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   <div class="stats-w"><div class="stats-g" id="sg"></div></div>
   <div class="filt-w">
     <div class="frow">
-      <button class="fp" data-f="new" onclick="sf('new',this)">Нові</button>
-      <button class="fp" data-f="work" onclick="sf('work',this)">В роботі</button>
-      <button class="fp" data-f="clarify" onclick="sf('clarify',this)">Уточнення</button>
-      <button class="fp" data-f="done" onclick="sf('done',this)">Виконано</button>
-      <button class="fp" data-f="urgent" onclick="sf('urgent',this)">Терміново</button>
-      <button class="fp" data-f="test" onclick="sf('test',this)">Тестування</button>
+      <div class="tab-track">
+        <button class="fp" data-f="new" onclick="sf('new',this)">Нові</button>
+        <button class="fp" data-f="work" onclick="sf('work',this)">В роботі</button>
+        <button class="fp" data-f="clarify" onclick="sf('clarify',this)">Уточнення</button>
+        <button class="fp" data-f="done" onclick="sf('done',this)">Виконано</button>
+        <button class="fp" data-f="urgent" onclick="sf('urgent',this)">Терміново</button>
+        <button class="fp" data-f="test" onclick="sf('test',this)">Тестування</button>
+      </div>
     </div>
     <div class="frow">
-      <button class="fp on" data-f="all" onclick="sf('all',this)">Всі</button>
-      <button class="fp" data-f="mine" id="fpMine" onclick="sfMine(this)">Мої</button>
+      <div class="tab-track">
+        <button class="fp on" data-f="all" onclick="sf('all',this)">Всі</button>
+        <button class="fp" data-f="mine" id="fpMine" onclick="sfMine(this)">Мої</button>
+      </div>
       <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
@@ -1832,6 +1847,20 @@ const SC={new:'tg-new',work:'tg-work',clarify:'tg-clarify',done:'tg-done',urgent
 const STCOL={new:'#c8cdd6',work:'#dfc9b0',clarify:'#d5d4b8',done:'#c4d8c8',urgent:'#d4c4bc',test:'#c6c6d6'};
 const STCOL_CH={new:'#9ca3b0',work:'#c09060',clarify:'#a8a870',done:'#60a878',urgent:'#b07060',test:'#8878b0'};
 const MK_UK=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const MK_UK_GEN=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+function taskDateGroupLabel(iso){
+  if(!iso) return 'Без дати';
+  const today=new Date();
+  const d=new Date(iso+'T12:00:00');
+  const todayOnly=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const dOnly=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const diffDays=Math.round((todayOnly-dOnly)/86400000);
+  if(diffDays===0) return 'Сьогодні';
+  if(diffDays===1) return 'Вчора';
+  if(diffDays===-1) return 'Завтра';
+  const sameYear=d.getFullYear()===today.getFullYear();
+  return d.getDate()+' '+MK_UK_GEN[d.getMonth()]+(sameYear?'':' '+d.getFullYear());
+}
 const DS=['SAN','MON','TUE','WED','THU','FRI','SAT'];
 const MGR_COLORS=['#e06030','#3a9e6a','#2f52cc','#a040b0','#c09020','#207090','#b83a2a','#388060'];
 
@@ -3545,13 +3574,10 @@ function render(){
 
   renderPagination(list.length,totalPages);
 
-  // ── group by status ──
+  // ── per-card status labels ──
   const STATUS_ORDER=['urgent','work','clarify','new','test','done'];
   const STATUS_LABELS={urgent:'Терміново',work:'В роботі',clarify:'Уточнення',new:'Нові',test:'Тестування',done:'Виконано'};
   const STATUS_BAR_CLS={urgent:'sb-urgent',work:'sb-work',clarify:'sb-clarify',new:'sb-new',test:'sb-test',done:'sb-done'};
-  const grouped={};
-  STATUS_ORDER.forEach(s=>grouped[s]=[]);
-  pageList.forEach(t=>{const s=t.status||'new';if(grouped[s])grouped[s].push(t);else grouped['new'].push(t);});
   const renderCard=(t,phIdx)=>{
     const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
@@ -3694,21 +3720,27 @@ function render(){
     </div>`;
   };
 
-  // Build: each task gets its own status-bar header
+  // Build: each task gets its own status-bar header, plus date dividers when sorted by creation date
   let groupedHtml='';
   let phCounter=0;
-  STATUS_ORDER.forEach(s=>{
-    const grp=grouped[s];
-    if(!grp||!grp.length) return;
+  let lastDateGroup=null;
+  const showDateDividers=sortBy!=='deadline';
+  pageList.forEach(t=>{
+    const s=t.status||'new';
     const barCls=STATUS_BAR_CLS[s]||'sb-new';
     const label=STATUS_LABELS[s]||s;
-    grp.forEach(t=>{
-      const idx=(!t.title||!t.title.trim())?phCounter++:0;
-      groupedHtml+=`<div class="task-section">
-        <div class="status-bar ${barCls}"><span class="status-dot"></span>${label}</div>
-        ${renderCard(t,idx)}
-      </div>`;
-    });
+    const idx=(!t.title||!t.title.trim())?phCounter++:0;
+    if(showDateDividers){
+      const dg=taskDateGroupLabel(t.created);
+      if(dg!==lastDateGroup){
+        groupedHtml+=`<div class="date-divider"><span class="date-divider-label">${esc(dg)}</span></div>`;
+        lastDateGroup=dg;
+      }
+    }
+    groupedHtml+=`<div class="task-section">
+      <div class="status-bar ${barCls}"><span class="status-dot"></span>${label}</div>
+      ${renderCard(t,idx)}
+    </div>`;
   });
   ta.innerHTML=groupedHtml;
 }
