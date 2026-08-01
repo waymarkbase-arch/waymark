@@ -757,7 +757,10 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tr-btn{border:1px solid var(--wm-border);background:#fff;border-radius:9px;padding:8px 16px;font-size:12px;font-family:var(--wm-sans);font-weight:600;color:var(--wm-ink2);cursor:pointer}
 .tr-fees-block{margin-top:2px}
 .tr-fees-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.tr-fee-row-wrap{display:flex;flex-direction:column;gap:6px}
 .tr-fee-row{display:flex;gap:8px;align-items:center}
+.tr-fee-warn{align-items:center;gap:7px;font-size:11.5px;line-height:1.4;color:#8a5a10;background:#fdf2e0;border:1px solid #edd6a3;border-radius:8px;padding:6px 10px}
+[data-theme="dark"] .tr-fee-warn{color:#e0b060;background:#332711;border-color:#5a4520}
 .tr-fee-row input.tr-fee-name{flex:1;border:1px solid var(--wm-border);background:var(--wm-card);color:var(--wm-ink);border-radius:10px;padding:9px 12px;font-size:13px;font-family:var(--wm-sans)}
 .tr-fee-row input.tr-fee-amount{width:100px;border:1px solid var(--wm-border);background:var(--wm-card);color:var(--wm-ink);border-radius:10px;padding:9px 12px;font-size:13px;font-family:var(--wm-sans)}
 .tr-fee-row input.tr-fee-amount-child{width:88px;border:1px solid var(--wm-border);background:var(--wm-card);color:var(--wm-ink);border-radius:10px;padding:9px 12px;font-size:13px;font-family:var(--wm-sans)}
@@ -2696,35 +2699,57 @@ function commitTourDatesBulkImport(){
 function tourFeesTotal(t){
   return (t.extra_fees||[]).reduce((s,f)=>s+(Number(f.amount)||0),0);
 }
+function tourFeesTotalChild(t){
+  return (t.extra_fees||[]).reduce((s,f)=>s+(Number(f.amount_child)||0),0);
+}
 function renderTourFeeRows(fees){
   const list=document.getElementById('trFeesList');
   if(!list) return;
   const rows=(fees&&fees.length?fees:[]);
-  list.innerHTML=rows.map((f,i)=>`<div class="tr-fee-row" data-i="${i}">
-      <input class="tr-fee-name" placeholder="Напр. Віза, Страхування, Одномісне розміщення..." value="${esc(f.name||'')}">
-      <input class="tr-fee-amount" type="number" min="0" step="0.01" placeholder="Дорослий" value="${f.amount||f.amount===0?f.amount:''}">
-      <input class="tr-fee-amount-child" type="number" min="0" step="0.01" placeholder="Дитячий" value="${f.amount_child||f.amount_child===0?f.amount_child:''}">
-      <button type="button" class="tr-fee-remove" onclick="this.closest('.tr-fee-row').remove()" title="Видалити платіж">✕</button>
-    </div>`).join('');
+  list.innerHTML=rows.map((f,i)=>{
+    const dup=_tourFeeRowKind(f.name||'')!=='fee';
+    return `<div class="tr-fee-row-wrap" data-i="${i}">
+      <div class="tr-fee-row">
+        <input class="tr-fee-name" placeholder="Напр. Віза, Страхування, Одномісне розміщення..." value="${esc(f.name||'')}" oninput="checkTourFeeDup(this)">
+        <input class="tr-fee-amount" type="number" min="0" step="0.01" placeholder="Дорослий" value="${f.amount||f.amount===0?f.amount:''}">
+        <input class="tr-fee-amount-child" type="number" min="0" step="0.01" placeholder="Дитячий" value="${f.amount_child||f.amount_child===0?f.amount_child:''}">
+        <button type="button" class="tr-fee-remove" onclick="this.closest('.tr-fee-row-wrap').remove()" title="Видалити платіж">✕</button>
+      </div>
+      <div class="tr-fee-warn" style="display:${dup?'flex':'none'}">⚠️ Схоже, це дублює поле «Check point» / «City Tax» вище — перенесіть суму туди й видаліть цей рядок, інакше платіж порахується двічі.</div>
+    </div>`;
+  }).join('');
+}
+function checkTourFeeDup(input){
+  const wrap=input.closest('.tr-fee-row-wrap');
+  if(!wrap) return;
+  const warn=wrap.querySelector('.tr-fee-warn');
+  if(warn) warn.style.display=_tourFeeRowKind(input.value.trim())!=='fee'?'flex':'none';
 }
 function addTourFeeRow(name,amount,amountChild){
   const list=document.getElementById('trFeesList');
   if(!list) return;
-  const row=document.createElement('div');
-  row.className='tr-fee-row';
-  row.innerHTML=`<input class="tr-fee-name" placeholder="Напр. Віза, Страхування, Одномісне розміщення..." value="${esc(name||'')}">
+  const dup=_tourFeeRowKind(name||'')!=='fee';
+  const wrap=document.createElement('div');
+  wrap.className='tr-fee-row-wrap';
+  wrap.innerHTML=`<div class="tr-fee-row">
+    <input class="tr-fee-name" placeholder="Напр. Віза, Страхування, Одномісне розміщення..." value="${esc(name||'')}" oninput="checkTourFeeDup(this)">
     <input class="tr-fee-amount" type="number" min="0" step="0.01" placeholder="Дорослий" value="${amount||amount===0?amount:''}">
     <input class="tr-fee-amount-child" type="number" min="0" step="0.01" placeholder="Дитячий" value="${amountChild||amountChild===0?amountChild:''}">
-    <button type="button" class="tr-fee-remove" onclick="this.closest('.tr-fee-row').remove()" title="Видалити платіж">✕</button>`;
-  list.appendChild(row);
-  row.querySelector('.tr-fee-name').focus();
+    <button type="button" class="tr-fee-remove" onclick="this.closest('.tr-fee-row-wrap').remove()" title="Видалити платіж">✕</button>
+  </div>
+  <div class="tr-fee-warn" style="display:${dup?'flex':'none'}">⚠️ Схоже, це дублює поле «Check point» / «City Tax» вище — перенесіть суму туди й видаліть цей рядок, інакше платіж порахується двічі.</div>`;
+  list.appendChild(wrap);
+  wrap.querySelector('.tr-fee-name').focus();
 }
 function collectTourFees(){
-  return Array.from(document.querySelectorAll('#trFeesList .tr-fee-row')).map(row=>({
-    name:row.querySelector('.tr-fee-name').value.trim(),
-    amount:parseFloat(row.querySelector('.tr-fee-amount').value)||0,
-    amount_child:parseFloat(row.querySelector('.tr-fee-amount-child').value)||0
-  })).filter(f=>f.name);
+  return Array.from(document.querySelectorAll('#trFeesList .tr-fee-row')).map(row=>{
+    const childRaw=row.querySelector('.tr-fee-amount-child').value;
+    return {
+      name:row.querySelector('.tr-fee-name').value.trim(),
+      amount:parseFloat(row.querySelector('.tr-fee-amount').value)||0,
+      amount_child:String(childRaw).trim()===''?null:(parseFloat(childRaw)||0)
+    };
+  }).filter(f=>f.name);
 }
 // ── Bulk paste of extra-fees table (copy-paste from operator site) ──
 let _tourFeesBulkParsed=[];
@@ -2750,10 +2775,10 @@ function parseTourFeesBulkInput(){
     if(!nums||!nums.length) return null;
     const amount=parseFloat(nums[0].replace(',','.'));
     if(isNaN(amount)) return null;
-    const amountChild=nums.length>1?parseFloat(nums[1].replace(',','.')):0;
+    const amountChild=nums.length>1?parseFloat(nums[1].replace(',','.')):null;
     let name=line.split(nums[0])[0].replace(/[\t;:|]+$/,'').trim();
     if(!name) return null;
-    return {name,amount,amountChild:isNaN(amountChild)?0:amountChild,kind:_tourFeeRowKind(name)};
+    return {name,amount,amountChild:(amountChild!=null&&isNaN(amountChild))?null:amountChild,kind:_tourFeeRowKind(name)};
   }).filter(Boolean);
   renderTourFeesBulkPreview();
 }
@@ -2772,7 +2797,7 @@ function renderTourFeesBulkPreview(){
         <label class="tr-bulk-check"><input type="checkbox" checked data-i="${i}" class="trFeesBulkRowChk"></label>
         <div class="tr-bulk-row-main">
           <div class="tr-bulk-row-title">${esc(r.name)}<span class="tr-bulk-tag${r.kind!=='fee'?' new':''}">${kindLabel[r.kind]}</span></div>
-          <div class="tr-bulk-row-sub">дор. ${r.amount.toFixed(2)} ${cur}${r.amountChild?' · дит. '+r.amountChild.toFixed(2)+' '+cur:''}</div>
+          <div class="tr-bulk-row-sub">дор. ${r.amount.toFixed(2)} ${cur}${r.amountChild!=null?' · дит. '+r.amountChild.toFixed(2)+' '+cur:''}</div>
         </div>
       </div>`).join('')+`</div>`;
   btn.disabled=false;
@@ -2786,10 +2811,10 @@ function commitTourFeesBulkImport(){
     if(!r) return;
     if(r.kind==='checkpoint'){
       document.getElementById('trPrice').value=r.amount;
-      document.getElementById('trPriceChild').value=r.amountChild||'';
+      document.getElementById('trPriceChild').value=(r.amountChild||r.amountChild===0)?r.amountChild:'';
     } else if(r.kind==='citytax'){
       document.getElementById('trCityTax').value=r.amount;
-      document.getElementById('trCityTaxChild').value=r.amountChild||'';
+      document.getElementById('trCityTaxChild').value=(r.amountChild||r.amountChild===0)?r.amountChild:'';
     } else addTourFeeRow(r.name,r.amount,r.amountChild);
     added++;
   });
@@ -2830,9 +2855,9 @@ function renderTours(){
         <h3 class="tour-title">${esc(t.title||'Без назви')}</h3>
         ${tier?`<div class="pdf-freshness-badge tier-${tier}"><span class="pdf-pulse-dot"></span>${tourStaleLabel(t)}</div>`:''}
         <div class="tour-details-list">
-          <div class="tour-detail-row"><span class="tour-detail-label">Check point:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency+(t.checkpoint_price_child?' <span class="tour-detail-sub">(дит. '+Number(t.checkpoint_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
-          <div class="tour-detail-row"><span class="tour-detail-label">City Tax:</span><span class="tour-detail-val">${t.city_tax_price?Number(t.city_tax_price).toFixed(2)+' '+t.currency+(t.city_tax_price_child?' <span class="tour-detail-sub">(дит. '+Number(t.city_tax_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
-          ${(t.extra_fees&&t.extra_fees.length)?`<div class="tour-detail-row"><span class="tour-detail-label">Додаткові платежі:</span><span class="tour-detail-val fees-val" title="${t.extra_fees.map(f=>esc(f.name)+': '+Number(f.amount).toFixed(2)+(f.amount_child?' / дит. '+Number(f.amount_child).toFixed(2):'')+' '+t.currency).join(' • ')}">${t.extra_fees.length} · ${tourFeesTotal(t).toFixed(2)} ${t.currency}</span></div>`:''}
+          <div class="tour-detail-row"><span class="tour-detail-label">Check point:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency+(t.checkpoint_price_child!=null?' <span class="tour-detail-sub">(дит. '+Number(t.checkpoint_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
+          <div class="tour-detail-row"><span class="tour-detail-label">City Tax:</span><span class="tour-detail-val">${t.city_tax_price?Number(t.city_tax_price).toFixed(2)+' '+t.currency+(t.city_tax_price_child!=null?' <span class="tour-detail-sub">(дит. '+Number(t.city_tax_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
+          ${(t.extra_fees&&t.extra_fees.length)?`<div class="tour-detail-row"><span class="tour-detail-label">Додаткові платежі:</span><span class="tour-detail-val fees-val" title="${t.extra_fees.map(f=>esc(f.name)+': '+Number(f.amount).toFixed(2)+(f.amount_child?' / дит. '+Number(f.amount_child).toFixed(2):'')+' '+t.currency).join(' • ')}">${t.extra_fees.length} · ${tourFeesTotal(t).toFixed(2)} ${t.currency}${tourFeesTotalChild(t)?' <span class="tour-detail-sub">(дит. '+tourFeesTotalChild(t).toFixed(2)+')</span>':''}</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
           ${t.countries?`<div class="tour-detail-row"><span class="tour-detail-label">Маршрут:</span><span class="tour-detail-val">${esc(t.countries)}</span></div>`:''}
           ${t.duration_days?`<div class="tour-detail-row"><span class="tour-detail-label">Тривалість:</span><span class="tour-detail-val">${esc(t.duration_days)} дн.</span></div>`:''}
@@ -2862,10 +2887,10 @@ function openTourAdd(id){
     document.getElementById('trStatus').value=t.status||'draft';
     document.getElementById('trCurrency').value=t.currency||'EUR';
     document.getElementById('trPrice').value=t.checkpoint_price||'';
-    document.getElementById('trPriceChild').value=t.checkpoint_price_child||'';
+    document.getElementById('trPriceChild').value=t.checkpoint_price_child!=null?t.checkpoint_price_child:'';
     document.getElementById('trCities').value=t.cities_departure||'';
     document.getElementById('trCityTax').value=t.city_tax_price||'';
-    document.getElementById('trCityTaxChild').value=t.city_tax_price_child||'';
+    document.getElementById('trCityTaxChild').value=t.city_tax_price_child!=null?t.city_tax_price_child:'';
     document.getElementById('trNextDate').value=t.next_departure||'';
     const trNdTxt=document.getElementById('trNextDateTxt');
     if(t.next_departure){trNdTxt.textContent=fmtTourDateShort(t.next_departure);trNdTxt.className='';}
@@ -2908,9 +2933,9 @@ function saveTourPassport(){
   const status=document.getElementById('trStatus').value;
   const currency=document.getElementById('trCurrency').value;
   const price=parseFloat(document.getElementById('trPrice').value)||0;
-  const priceChild=parseFloat(document.getElementById('trPriceChild').value)||0;
+  const priceChild=numOrNull('trPriceChild');
   const cityTax=parseFloat(document.getElementById('trCityTax').value)||0;
-  const cityTaxChild=parseFloat(document.getElementById('trCityTaxChild').value)||0;
+  const cityTaxChild=numOrNull('trCityTaxChild');
   const cities=document.getElementById('trCities').value.trim();
   const nextDate=document.getElementById('trNextDate').value;
   const extraFees=collectTourFees();
@@ -2923,13 +2948,14 @@ function saveTourPassport(){
     if(!t) return;
     if(t.title!==title) tourLogEntry(t,'назва',t.title,title);
     if(t.status!==status) tourLogEntry(t,'статус',TOUR_STATUS_LABELS[t.status],TOUR_STATUS_LABELS[status]);
-    const priceLbl=(a,c,cur)=>Number(a||0).toFixed(2)+(c?' / дит. '+Number(c).toFixed(2):'')+' '+cur;
-    if(Number(t.checkpoint_price||0)!==price||Number(t.checkpoint_price_child||0)!==priceChild) tourLogEntry(t,'Check point',priceLbl(t.checkpoint_price,t.checkpoint_price_child,t.currency),priceLbl(price,priceChild,currency));
-    if(Number(t.city_tax_price||0)!==cityTax||Number(t.city_tax_price_child||0)!==cityTaxChild) tourLogEntry(t,'City Tax',priceLbl(t.city_tax_price,t.city_tax_price_child,t.currency),priceLbl(cityTax,cityTaxChild,currency));
-    if(Number(t.checkpoint_price||0)===price&&Number(t.checkpoint_price_child||0)===priceChild&&Number(t.city_tax_price||0)===cityTax&&Number(t.city_tax_price_child||0)===cityTaxChild&&t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
+    const priceLbl=(a,c,cur)=>Number(a||0).toFixed(2)+(c!=null?' / дит. '+Number(c).toFixed(2):'')+' '+cur;
+    const childEq=(a,b)=>(a==null?null:Number(a))===(b==null?null:Number(b));
+    if(Number(t.checkpoint_price||0)!==price||!childEq(t.checkpoint_price_child,priceChild)) tourLogEntry(t,'Check point',priceLbl(t.checkpoint_price,t.checkpoint_price_child,t.currency),priceLbl(price,priceChild,currency));
+    if(Number(t.city_tax_price||0)!==cityTax||!childEq(t.city_tax_price_child,cityTaxChild)) tourLogEntry(t,'City Tax',priceLbl(t.city_tax_price,t.city_tax_price_child,t.currency),priceLbl(cityTax,cityTaxChild,currency));
+    if(Number(t.checkpoint_price||0)===price&&childEq(t.checkpoint_price_child,priceChild)&&Number(t.city_tax_price||0)===cityTax&&childEq(t.city_tax_price_child,cityTaxChild)&&t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
     if((t.cities_departure||'')!==cities) tourLogEntry(t,'міста виїзду',t.cities_departure||'—',cities||'—');
     if((t.next_departure||'')!==nextDate) tourLogEntry(t,'дата виїзду',fmtTourDateShort(t.next_departure)||'—',fmtTourDateShort(nextDate)||'—');
-    const feeStr=f=>f.name+': '+Number(f.amount).toFixed(2)+(f.amount_child?'/'+Number(f.amount_child).toFixed(2):'');
+    const feeStr=f=>f.name+': '+Number(f.amount).toFixed(2)+(f.amount_child!=null?'/'+Number(f.amount_child).toFixed(2):'');
     const oldFeesStr=(t.extra_fees||[]).map(feeStr).join(', ')||'—';
     const newFeesStr=extraFees.map(feeStr).join(', ')||'—';
     if(oldFeesStr!==newFeesStr) tourLogEntry(t,'додаткові платежі',oldFeesStr,newFeesStr);
@@ -3484,6 +3510,14 @@ function sfMine(el){
 
 /* ── XSS ESCAPE ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');}
+// Reads a number input, preserving the distinction between "left empty" (null, not applicable)
+// and "explicitly entered 0" (0, should still be shown as a value).
+function numOrNull(elId){
+  const raw=document.getElementById(elId).value;
+  if(raw===null||raw===undefined||String(raw).trim()==='') return null;
+  const n=parseFloat(raw);
+  return isNaN(n)?null:n;
+}
 
 /* ── SORT ── */
 let sortBy='created'; // 'created' | 'deadline'
