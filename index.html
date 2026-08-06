@@ -3027,6 +3027,8 @@ function saveTourPassport(){
   const extraFees=collectTourFees();
   const pdfUrl=document.getElementById('trPdfUrl').value.trim();
   const siteUrl=document.getElementById('trSiteUrl').value.trim();
+  const notes=document.getElementById('trNotes').value.trim();
+  const pdfYear=document.getElementById('trPdfYear').value.trim();
   const now=new Date().toISOString();
 
   if(trCurId){
@@ -3046,16 +3048,18 @@ function saveTourPassport(){
     const newFeesStr=extraFees.map(feeStr).join(', ')||'—';
     if(oldFeesStr!==newFeesStr) tourLogEntry(t,'додаткові платежі',oldFeesStr,newFeesStr);
     if((t.site_url||'')!==siteUrl) tourLogEntry(t,'посилання на сайт',t.site_url||'—',siteUrl||'—');
+    if((t.notes||'')!==notes) tourLogEntry(t,'нотатки',t.notes?'змінено':'—',notes?'змінено':'—');
     if((t.pdf_url||'')!==pdfUrl){
       tourLogEntry(t,'PDF-буклет',t.pdf_url||'—',pdfUrl||'—');
       t.pdf_updated_at=pdfUrl?now:'';
     }
-    Object.assign(t,{title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,updated_at:now});
+    if((t.pdf_design_year||'')!==pdfYear) tourLogEntry(t,'дизайн буклету',t.pdf_design_year||'—',pdfYear||'—');
+    Object.assign(t,{title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,notes,pdf_design_year:pdfYear,updated_at:now});
     showToast('Тур збережено!','Зміни зафіксовано в історії');
   } else {
     const newId='t_'+Date.now().toString(36);
     const t={id:newId,title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,
-      pdf_url:pdfUrl,pdf_updated_at:pdfUrl?now:'',site_url:siteUrl,
+      pdf_url:pdfUrl,pdf_updated_at:pdfUrl?now:'',site_url:siteUrl,notes,pdf_design_year:pdfYear,
       created_at:now,updated_at:now,log:[]};
     tourLogEntry(t,'створення туру','—',title);
     tours.unshift(t);
@@ -3079,11 +3083,98 @@ function renderTourLinkedTasks(t){
   if(!el) return;
   const linked=tasks.filter(x=>x.tourId===t.id);
   if(!linked.length){ el.innerHTML='<div style="font-size:12px;color:#aaa">Ще немає завдань, привʼязаних до цього туру</div>'; return; }
-  el.innerHTML=linked.map(x=>`<div class="tr-task-row" onclick="closeM('mTour');goTab('main',document.querySelector('.tab[onclick*=main]'));openAdd('${x.id}')">
+  el.innerHTML=linked.map(x=>`<div class="tr-task-row" onclick="openTourTaskDetail('${x.id}')">
       <span class="tg ${SC[x.status]||''}">${SL[x.status]||x.status}</span>
       <span class="tr-task-title">${esc(x.title||x.note||'Без назви')}</span>
+      ${x.arch?'<span class="tr-task-arch-tag">Архів</span>':''}
       <span class="tr-task-to">${esc(mgr(x.to).name||x.to)}</span>
     </div>`).join('');
+}
+// ── Task detail (read-only) — opened from Паспорт туру, works for archived tasks too ──
+let _tdCurId=null;
+function openTourTaskDetail(id){
+  const t=findTask(id);
+  if(!t) return;
+  _tdCurId=id;
+  document.getElementById('tdTitle').textContent=t.title||t.note||'Без назви';
+  document.getElementById('tdStatus').className='tg '+(SC[t.status]||'');
+  document.getElementById('tdStatus').textContent=SL[t.status]||t.status;
+  const archFlag=document.getElementById('tdArchFlag');
+  if(t.arch){
+    archFlag.classList.remove('hide');
+    document.getElementById('tdArchFlagText').textContent='В архіві'+(t.archAt?(' з '+fmtTourDate(t.archAt)):'');
+  } else archFlag.classList.add('hide');
+  document.getElementById('tdCreated').textContent=t.created?(fmtTourDate(t.created)+(t.createdTime?' '+t.createdTime:'')):'—';
+  document.getElementById('tdAuthor').textContent=mgr(t.from).name||t.from||'—';
+  document.getElementById('tdAssignee').textContent=mgr(t.to).name||t.to||'—';
+  document.getElementById('tdDeadline').textContent=t.deadline?fmtTourDateShort(t.deadline):'—';
+  const noteBlock=document.getElementById('tdNoteBlock');
+  if(t.note){ noteBlock.classList.remove('hide'); document.getElementById('tdNote').textContent=t.note; }
+  else noteBlock.classList.add('hide');
+  const resBlock=document.getElementById('tdResultBlock');
+  if(t.result){ resBlock.classList.remove('hide'); document.getElementById('tdResult').textContent=t.result; }
+  else resBlock.classList.add('hide');
+  const hist=(t.statusLog||[]).slice().sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  const histEl=document.getElementById('tdHistory');
+  if(!hist.length){
+    histEl.innerHTML='<div style="font-size:12px;color:#aaa">Історія статусів недоступна (завдання створено до цього оновлення)</div>';
+  } else {
+    histEl.innerHTML=hist.map(h=>`<div class="td-history-item"><span class="td-history-ts">${fmtTourDateTime(h.ts)}</span> — <strong>${esc(mgr(h.by).name||h.by)}</strong>${h.from?` змінив(-ла) статус з <em>${esc(h.from)}</em> на <em>${esc(h.to)}</em>.`:` створив(-ла) завдання зі статусом <em>${esc(h.to)}</em>.`}</div>`).join('');
+  }
+  const editBtn=document.getElementById('tdEditBtn');
+  if(!t.arch && canEditTask(t)) editBtn.classList.remove('hide'); else editBtn.classList.add('hide');
+  openM('mTaskDetail');
+}
+function editTourTaskFromDetail(){
+  if(!_tdCurId) return;
+  const id=_tdCurId;
+  closeM('mTaskDetail');
+  closeM('mTour');
+  goTab('main',document.querySelector('.tab[onclick*="main"]'));
+  openAdd(id);
+}
+/* ── PDF booklet design-year labels ── */
+let _pdfYearAdding=false;
+function renderPdfYearPills(){
+  const el=document.getElementById('trPdfYearPills');
+  if(!el) return;
+  const sel=document.getElementById('trPdfYear').value||'';
+  let html=pdfYearLabels.map(lb=>`
+    <span class="tr-year-pill${lb===sel?' on':''}" onclick="selectPdfYear('${esc(lb)}')">
+      ${esc(lb)}<span class="tr-year-pill-x" onclick="event.stopPropagation();removePdfYearLabel('${esc(lb)}')">✕</span>
+    </span>`).join('');
+  if(_pdfYearAdding){
+    html+=`<input id="trPdfYearNewInp" class="tr-year-pill-input" maxlength="8" placeholder="27" onkeydown="if(event.key==='Enter')commitPdfYearLabel();if(event.key==='Escape')cancelPdfYearLabel()">`;
+  } else {
+    html+=`<span class="tr-year-pill-add" onclick="startAddPdfYearLabel()">+ мітка</span>`;
+  }
+  el.innerHTML=html;
+  if(_pdfYearAdding){ const inp=document.getElementById('trPdfYearNewInp'); if(inp){inp.focus();} }
+}
+function selectPdfYear(lb){
+  const cur=document.getElementById('trPdfYear').value||'';
+  document.getElementById('trPdfYear').value=(cur===lb)?'':lb; // click again to deselect
+  renderPdfYearPills();
+}
+function startAddPdfYearLabel(){ _pdfYearAdding=true; renderPdfYearPills(); }
+function cancelPdfYearLabel(){ _pdfYearAdding=false; renderPdfYearPills(); }
+function commitPdfYearLabel(){
+  const inp=document.getElementById('trPdfYearNewInp');
+  const v=(inp?inp.value:'').trim();
+  _pdfYearAdding=false;
+  if(!v){ renderPdfYearPills(); return; }
+  if(!pdfYearLabels.includes(v)) pdfYearLabels.push(v);
+  document.getElementById('trPdfYear').value=v;
+  save();
+  renderPdfYearPills();
+}
+function removePdfYearLabel(lb){
+  if(!confirm(`Видалити мітку «${lb}»?`)) return;
+  pdfYearLabels=pdfYearLabels.filter(x=>x!==lb);
+  const cur=document.getElementById('trPdfYear');
+  if(cur && cur.value===lb) cur.value='';
+  save();
+  renderPdfYearPills();
 }
 function createTaskForTour(){
   if(!trCurId) return;
@@ -3396,7 +3487,7 @@ document.addEventListener('keydown',e=>{
     case '/':e.preventDefault();document.getElementById('srch')?.focus();break;
     case 'q':case 'Q':e.preventDefault();openQ();break;
     case 'Escape':
-      ['mAdd','mQ','mSt','mCf','mSet','mLabel','mConfLabel','mBatch','mSALogin','mSASetPwd','mSAHardDel','mProfile'].forEach(id=>{
+      ['mAdd','mQ','mSt','mCf','mSet','mLabel','mConfLabel','mBatch','mSALogin','mSASetPwd','mSAHardDel','mProfile','mTaskDetail'].forEach(id=>{
         const el=document.getElementById(id);if(el&&!el.classList.contains('hide'))closeM(id);
       });break;
     case '1':goTab('main',null);break;
@@ -5073,7 +5164,12 @@ function mkT(){
     const label=T||U||N||'—';
     // Collect what changed for lastChange summary
     const changes=[];
-    if(oldStatus!==newStatus){ logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]); changes.push(`статус: ${SL[oldStatus]} → ${SL[newStatus]}`); }
+    if(oldStatus!==newStatus){
+      logEntry('status',eId,label,'status',SL[oldStatus],SL[newStatus]);
+      changes.push(`статус: ${SL[oldStatus]} → ${SL[newStatus]}`);
+      t.statusLog=t.statusLog||[];
+      t.statusLog.push({ts:new Date().toISOString(),by:curU,from:SL[oldStatus],to:SL[newStatus]});
+    }
     if(oldTo!==newTo){ logEntry('edit',eId,label,'виконавець',mgr(oldTo).name,mgr(newTo).name); changes.push(`виконавець: ${mgr(oldTo).name} → ${mgr(newTo).name}`); }
     if(oldDl!==newDl){ logEntry('edit',eId,label,'дедлайн',oldDl||'—',newDl||'—'); changes.push(`дедлайн: ${oldDl||'—'} → ${newDl||'—'}`); }
     if(oldTitle!==T&&T){ logEntry('edit',eId,label,'назва',oldTitle||'—',T); changes.push(`назва: «${(oldTitle||'—').slice(0,25)+(oldTitle&&oldTitle.length>25?'…':'')}» → «${T.slice(0,25)+(T.length>25?'…':'')}»`); }
@@ -5105,6 +5201,7 @@ function mkT(){
       hours:parseFloat(document.getElementById('fHours').value)||0,
       tourId:(_fTourSelC&&_fTourSelC.value)?_fTourSelC.value:null,
       driveFiles:JSON.parse(document.getElementById('fDriveFiles').value||'[]'),
+      statusLog:[{ts:now.toISOString(),by:curU,from:null,to:SL[document.getElementById('fS').value]||document.getElementById('fS').value}],
       arch:false,archAt:'',cmts:[]});
     logEntry('create',newId,T||U||N||'—');
     tgNotifyCreate(tasks[0]);
@@ -5125,7 +5222,9 @@ function mkQ(){
   const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
   // Always title:'' so placeholder phrase shows; text goes to url or note
   const newTask={id:newId,title:'',url:iU?v.replace(/^https?:\/\//,''):'',note:iU?'':v,status:'new',tags:[],
-    created:today,createdTime:timeStr,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',arch:false,archAt:'',cmts:[]};
+    created:today,createdTime:timeStr,deadline:'',forecast:'',from:curU,to:defaultTo,result:'',
+    statusLog:[{ts:now.toISOString(),by:curU,from:null,to:SL['new']}],
+    arch:false,archAt:'',cmts:[]};
   tasks.unshift(newTask);
   logEntry('create',newId,v.slice(0,60)||'—');
   tgNotifyCreate(newTask);
@@ -5146,6 +5245,8 @@ function apSt(){
   t.seenBy=t.seenBy||[];if(!t.seenBy.includes(curU))t.seenBy.push(curU);
   t.seenBy=t.seenBy.filter(c=>c===curU);
   t.lastChange={by:curU,summary:`статус: ${SL[oldStatus]} → ${SL[t.status]}`,ts:new Date().toISOString()};
+  t.statusLog=t.statusLog||[];
+  t.statusLog.push({ts:new Date().toISOString(),by:curU,from:SL[oldStatus],to:SL[t.status]});
   logEntry('status',eId,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[t.status]);
   tgNotifyStatus(t, oldStatus, curU);
   closeM('mSt');eId=null;save();rStats();render();
@@ -5189,6 +5290,8 @@ function quickSetStatus(id,newStatus){
   if(oldStatus===newStatus)return;
   t.status=newStatus;
   t.lastChange={by:curU,at:new Date().toISOString(),summary:`Статус: ${SL[oldStatus]} → ${SL[newStatus]}`};
+  t.statusLog=t.statusLog||[];
+  t.statusLog.push({ts:new Date().toISOString(),by:curU,from:SL[oldStatus],to:SL[newStatus]});
   logEntry('status',t.id,t.title||t.url||t.note||'—','status',SL[oldStatus],SL[newStatus]);
   tgNotifyStatus(t,oldStatus,curU);
   save();rStats();render();
@@ -5238,7 +5341,7 @@ function exportCSV(){
 /* ── MODALS ── */
 function openM(id){document.getElementById(id).classList.remove('hide');}
 function closeM(id){document.getElementById(id).classList.add('hide');}
-['mQ','mSt','mCf','mSet','mLabel','mProfile'].forEach(id=>{
+['mQ','mSt','mCf','mSet','mLabel','mProfile','mTaskDetail'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeM(id);});
 });
 
