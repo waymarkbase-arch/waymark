@@ -754,7 +754,38 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tr-task-row:hover{background:#efece6}
 .tr-task-title{flex:1;color:var(--wm-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-task-to{color:var(--wm-muted);font-size:11px;white-space:nowrap}
+.tr-task-arch-tag{background:#efece6;border:1px solid #e0dcd6;color:#8a8478;border-radius:20px;padding:2px 9px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .tr-btn{border:1px solid var(--wm-border);background:#fff;border-radius:9px;padding:8px 16px;font-size:12px;font-family:var(--wm-sans);font-weight:600;color:var(--wm-ink2);cursor:pointer}
+/* PDF booklet design-year labels */
+.tr-pdf-year-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px}
+.tr-pdf-year-label{font-size:11px;color:var(--wm-muted);white-space:nowrap}
+.tr-pdf-year-pills{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tr-year-pill{position:relative;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--wm-border);background:#fff;border-radius:50px;padding:4px 10px 4px 12px;font-size:11.5px;font-weight:600;font-family:var(--wm-sans);color:var(--wm-ink2);cursor:pointer;white-space:nowrap;transition:all .12s}
+.tr-year-pill:hover{background:#f5f3ee}
+.tr-year-pill.on{background:var(--wm-ink);border-color:var(--wm-ink);color:#fff}
+.tr-year-pill-x{opacity:.5;font-size:10px;padding:0 1px}
+.tr-year-pill-x:hover{opacity:1}
+.tr-year-pill-add{border:1px dashed var(--wm-border);background:transparent;border-radius:50px;padding:4px 12px;font-size:11.5px;font-weight:600;font-family:var(--wm-sans);color:var(--wm-muted);cursor:pointer}
+.tr-year-pill-add:hover{background:#f5f3ee;color:var(--wm-ink2)}
+.tr-year-pill-input{border:1px solid var(--wm-border);border-radius:50px;padding:4px 12px;font-size:11.5px;font-family:var(--wm-sans);width:56px;text-align:center}
+.tour-pdf-year-tag{display:inline-flex;align-items:center;background:#efece6;border:1px solid #e0dcd6;color:var(--wm-ink2);border-radius:20px;padding:2px 10px;font-size:10.5px;font-weight:700;margin:-6px 0 12px;width:fit-content}
+[data-theme="dark"] .tr-year-pill{background:var(--surface);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] .tr-year-pill.on{background:var(--text);color:var(--bg)}
+[data-theme="dark"] .tour-pdf-year-tag,[data-theme="dark"] .tr-task-arch-tag{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+/* Task detail (read-only) modal */
+.td-title{font-size:16px;font-weight:700;color:var(--wm-ink);margin:2px 0 10px;line-height:1.35}
+.td-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin:10px 0;font-size:12px}
+.td-meta-label{color:var(--wm-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.td-meta-val{color:var(--wm-ink2)}
+.td-block{margin-top:14px}
+.td-block-label{font-size:11px;font-weight:700;color:var(--wm-ink2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.td-text{background:var(--wm-bg);border:1px solid var(--wm-border);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--wm-ink2);white-space:pre-wrap;line-height:1.5}
+.td-history{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.td-history-item{background:var(--wm-bg);border:1px solid var(--wm-border);border-radius:8px;padding:7px 12px;font-size:11.5px;color:var(--wm-ink2);line-height:1.5}
+.td-history-ts{color:var(--wm-muted);font-weight:600}
+.td-arch-flag{background:#efece6;border:1px solid #e0dcd6;color:#8a8478;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;margin-bottom:8px}
+[data-theme="dark"] .td-text,[data-theme="dark"] .td-history-item{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] .td-arch-flag{background:var(--surface2);border-color:var(--border);color:var(--text2)}
 .tr-fees-block{margin-top:2px}
 .tr-fees-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
 .tr-fee-row-wrap{display:flex;flex-direction:column;gap:6px}
@@ -1763,8 +1794,16 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <button type="button" onclick="_driveTargetMode='tour';openGooglePicker()" style="border:1px solid #c8ddf0;border-radius:9px;padding:8px 14px;font-size:12px;font-family:inherit;cursor:pointer;background:#f0f6fc;color:#2a6090;white-space:nowrap">📎 Drive</button>
     </div>
     <div class="tr-pdf-meta" id="trPdfMeta"></div>
+    <div class="tr-pdf-year-row">
+      <span class="tr-pdf-year-label">Дизайн буклету:</span>
+      <div id="trPdfYearPills" class="tr-pdf-year-pills"></div>
+    </div>
+    <input type="hidden" id="trPdfYear">
 
     <label>Посилання на сторінку туру на сайті</label><input id="trSiteUrl" placeholder="https://...">
+
+    <label>Нотатки</label>
+    <textarea id="trNotes" rows="3" placeholder="Важливі нотатки щодо цього туру..." style="font-family:var(--wm-sans);font-size:12.5px;resize:vertical"></textarea>
 
     <div class="mbtns"><button onclick="closeM('mTour')">Скасувати</button><button class="mprim" id="trBtn" onclick="saveTourPassport()">Створити</button></div>
 
@@ -1779,6 +1818,42 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <div style="text-align:right;margin-top:18px">
         <button onclick="deleteTourConfirm()" style="border:1px solid #cbb0a0;background:#f7f0ea;border-radius:9px;padding:8px 16px;font-size:12px;font-family:inherit;color:#a83820;cursor:pointer">🗑 Видалити тур</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- TASK DETAIL (read-only, opened from Паспорт туру — works for archived tasks too) -->
+<div class="mbg hide" id="mTaskDetail">
+  <div class="mbox tr-mbox">
+    <div id="tdArchFlag" class="td-arch-flag hide">🗄 <span id="tdArchFlagText"></span></div>
+    <span class="tg" id="tdStatus"></span>
+    <div class="td-title" id="tdTitle"></div>
+
+    <div class="td-meta-grid">
+      <div><div class="td-meta-label">Створено</div><div class="td-meta-val" id="tdCreated"></div></div>
+      <div><div class="td-meta-label">Автор</div><div class="td-meta-val" id="tdAuthor"></div></div>
+      <div><div class="td-meta-label">Виконавець</div><div class="td-meta-val" id="tdAssignee"></div></div>
+      <div><div class="td-meta-label">Дедлайн</div><div class="td-meta-val" id="tdDeadline"></div></div>
+    </div>
+
+    <div class="td-block" id="tdNoteBlock">
+      <div class="td-block-label">Нотатки</div>
+      <div class="td-text" id="tdNote"></div>
+    </div>
+
+    <div class="td-block" id="tdResultBlock">
+      <div class="td-block-label">Результат</div>
+      <div class="td-text" id="tdResult"></div>
+    </div>
+
+    <div class="td-block">
+      <div class="td-block-label">Історія статусів</div>
+      <div class="td-history" id="tdHistory"></div>
+    </div>
+
+    <div class="mbtns">
+      <button onclick="closeM('mTaskDetail')">Закрити</button>
+      <button class="mprim hide" id="tdEditBtn" onclick="editTourTaskFromDetail()">Редагувати</button>
     </div>
   </div>
 </div>
@@ -2003,6 +2078,7 @@ async function save(){
     localStorage.setItem('wm_cfg',      JSON.stringify(cfg));
     localStorage.setItem('wm_log',      JSON.stringify(auditLog));
     localStorage.setItem('wm_tours',    JSON.stringify(tours));
+    localStorage.setItem('wm_pdf_years',JSON.stringify(pdfYearLabels));
   }catch(e){}
   // Push to Firestore.
   // IMPORTANT: For production — add Firestore Security Rules in Firebase Console:
@@ -2017,7 +2093,7 @@ async function save(){
   try{
     const {db, doc, setDoc, serverTimestamp} = window._fb;
     await setDoc(doc(db, 'waymark','main'), {
-      tasks: activeTasks, managers, customLabels, cfg, tours,
+      tasks: activeTasks, managers, customLabels, cfg, tours, pdfYearLabels,
       auditLog: auditLog.slice(0,500),
       updatedAt: serverTimestamp(),
       updatedBy: curU
@@ -2054,6 +2130,7 @@ async function loadFromFirestore(){
       if(d.cfg)          cfg          = d.cfg;
       if(d.auditLog)     auditLog     = d.auditLog;
       if(d.tours)        tours        = d.tours;
+      if(d.pdfYearLabels) pdfYearLabels = d.pdfYearLabels;
     }
     // ── завантажити архівні завдання з окремої колекції ──
     try{
@@ -2079,6 +2156,7 @@ function loadFromLocalStorage(){
     const c=localStorage.getItem('wm_cfg');      if(c) cfg          = JSON.parse(c);
     const lg=localStorage.getItem('wm_log');     if(lg) auditLog    = JSON.parse(lg);
     const tr=localStorage.getItem('wm_tours');   if(tr) tours       = JSON.parse(tr);
+    const py=localStorage.getItem('wm_pdf_years');if(py) pdfYearLabels = JSON.parse(py);
   }catch(e){}
 }
 
@@ -2103,6 +2181,7 @@ function startRealtimeSync(){
       if(d.cfg){cfg=d.cfg;applyMaintenance();}
       if(d.auditLog)     auditLog     = d.auditLog;
       if(d.tours)        tours        = d.tours;
+      if(d.pdfYearLabels) pdfYearLabels = d.pdfYearLabels;
       // Re-fetch archive collection to pick up tasks newly archived by other users
       getDocs(collection(db,'waymark_archive')).then(archSnap=>{
         const activeIds=new Set(tasks.filter(t=>!t.arch).map(t=>String(t.id)));
@@ -2385,6 +2464,7 @@ let tasks=[
   {id:'6ba7b812-9dad-11d1-80b4-00c04fd430ca',title:'Звіт по бронюванням за квітень',url:'',note:'',status:'done',tags:["Об'єкти"],created:'2026-04-10',deadline:'2026-04-15',forecast:'',from:'TD',to:'TD',result:'PDF надіслано. 14 бронювань.',hours:3,arch:true,archAt:'2026-04-15',cmts:[],seenBy:[]}
 ];
 let customLabels=["Об'єкти",'Розсилка','Документи'];
+let pdfYearLabels=['25','26']; // editable set of PDF-booklet design-year tags
 // ── TOURS DOSSIER ──
 const TOUR_PDF_STALE_DAYS=0;
 let tours=[
@@ -2854,6 +2934,7 @@ function renderTours(){
       <div class="tour-card-body">
         <h3 class="tour-title">${esc(t.title||'Без назви')}</h3>
         ${tier?`<div class="pdf-freshness-badge tier-${tier}"><span class="pdf-pulse-dot"></span>${tourStaleLabel(t)}</div>`:''}
+        ${t.pdf_design_year?`<div class="tour-pdf-year-tag">Дизайн ${esc(t.pdf_design_year)}</div>`:''}
         <div class="tour-details-list">
           <div class="tour-detail-row"><span class="tour-detail-label">Check point:</span><span class="tour-detail-val">${t.checkpoint_price?Number(t.checkpoint_price).toFixed(2)+' '+t.currency+(t.checkpoint_price_child!=null?' <span class="tour-detail-sub">(дит. '+Number(t.checkpoint_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
           <div class="tour-detail-row"><span class="tour-detail-label">City Tax:</span><span class="tour-detail-val">${t.city_tax_price?Number(t.city_tax_price).toFixed(2)+' '+t.currency+(t.city_tax_price_child!=null?' <span class="tour-detail-sub">(дит. '+Number(t.city_tax_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
@@ -2898,8 +2979,11 @@ function openTourAdd(id){
     renderTourFeeRows(t.extra_fees);
     document.getElementById('trPdfUrl').value=t.pdf_url||'';
     document.getElementById('trSiteUrl').value=t.site_url||'';
+    document.getElementById('trNotes').value=t.notes||'';
     document.getElementById('trBtn').textContent='Зберегти';
     document.getElementById('trPdfMeta').textContent=t.pdf_updated_at?('Буклет оновлено: '+fmtTourDateTime(t.pdf_updated_at)):'Буклет ще не завантажено';
+    document.getElementById('trPdfYear').value=t.pdf_design_year||'';
+    renderPdfYearPills();
     const tier=tourPdfTier(t);
     document.getElementById('trStaleFlagText').textContent=tier?tourStaleLabel(t):'';
     staleFlag.className='pdf-freshness-badge'+(tier?' tier-'+tier:' hide');
@@ -2909,7 +2993,7 @@ function openTourAdd(id){
   } else {
     document.getElementById('trH').textContent='🏛 Новий тур';
     document.getElementById('trModalCode').textContent='Новий тур';
-    ['trTitle','trCities','trNextDate','trPdfUrl','trSiteUrl'].forEach(i=>document.getElementById(i).value='');
+    ['trTitle','trCities','trNextDate','trPdfUrl','trSiteUrl','trNotes'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('trStatus').value='draft';
     document.getElementById('trCurrency').value='EUR';
     document.getElementById('trPrice').value='';
@@ -2921,6 +3005,8 @@ function openTourAdd(id){
     renderTourFeeRows([]);
     document.getElementById('trBtn').textContent='Створити';
     document.getElementById('trPdfMeta').textContent='';
+    document.getElementById('trPdfYear').value='';
+    renderPdfYearPills();
     staleFlag.classList.add('hide');
     existingBlocks.classList.add('hide');
   }
