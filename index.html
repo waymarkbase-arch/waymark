@@ -2596,7 +2596,10 @@ window.addEventListener('load', ()=>{
               document.getElementById('loginScreen').style.display='none';
               document.getElementById('appShell').style.display='block';
             };
-            if(window.wmAfterIntro) window.wmAfterIntro(enter); else enter();
+            // чекаємо, поки заставка повністю розкриється (settle),
+            // і додатково тримаємо розкритий екран ще ~1.6с, щоб користувач встиг його побачити
+            const enterAfterHold=()=>setTimeout(enter,1600);
+            if(window.wmAfterIntro) window.wmAfterIntro(enterAfterHold); else enterAfterHold();
           }
         } else {
           if(window._accessDeniedShown) return;
