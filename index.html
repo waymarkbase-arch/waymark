@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Waymark">
 <meta name="theme-color" content="#8b1a1a">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 // ═══════════════════════════════════════════════
@@ -1250,71 +1250,298 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 </style>
 </head>
 <body>
-<!-- ══ LOGIN SCREEN ══ -->
-<div id="loginScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f6f4f0">
-  <div style="background:#fff;border-radius:20px;padding:44px 40px 36px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.08)">
-    <div style="text-align:center;margin-bottom:28px">
-      <div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:600;color:#191816;letter-spacing:-0.01em">Waymark</div>
-      <div style="font-size:10px;font-weight:700;color:#8c8577;margin-top:6px;text-transform:uppercase;letter-spacing:.2em">Task Management</div>
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em">Email</label>
-      <input id="loginEmail" type="email" placeholder="your@email.com"
-        style="width:100%;margin-top:5px;border:1px solid #e4e0da;border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"
-        onkeydown="if(event.key==='Enter')document.getElementById('loginPwd').focus()">
-    </div>
-    <div style="margin-bottom:20px">
-      <label style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em">Пароль</label>
-      <input id="loginPwd" type="password" placeholder="••••••••"
-        style="width:100%;margin-top:5px;border:1px solid #e4e0da;border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"
-        onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div id="loginErr" style="font-size:12px;color:#a83820;min-height:18px;margin-bottom:10px;text-align:center"></div>
-    <button onclick="doLogin()"
-      style="width:100%;background:#191816;color:#fff;border:none;border-radius:11px;padding:13px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s"
-      onmouseover="this.style.background='#8c6e4a'" onmouseout="this.style.background='#191816'">
-      Увійти
-    </button>
-    <div style="display:flex;align-items:center;gap:10px;margin:18px 0">
-      <div style="flex:1;height:1px;background:#e8e4de"></div>
-      <span style="font-size:11px;color:#bbb;white-space:nowrap">або</span>
-      <div style="flex:1;height:1px;background:#e8e4de"></div>
-    </div>
-    <button onclick="doGoogleLogin()"
-      style="width:100%;background:#fff;color:#333;border:1px solid #dadce0;border-radius:11px;padding:12px;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;box-shadow:0 1px 3px rgba(0,0,0,.08)"
-      onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      Увійти через Google
-    </button>
-    <div style="text-align:center;margin-top:14px">
-      <span onclick="doForgotPassword()" style="font-size:12px;color:#bbb;cursor:pointer;text-decoration:underline;text-underline-offset:3px">Забули пароль?</span>
-    </div>
-    <div id="loginSpinner" style="display:none;margin-top:20px">
-      <div style="text-align:center;margin-bottom:14px">
-        <div style="display:inline-block;position:relative;width:48px;height:48px">
-          <svg viewBox="0 0 48 48" style="width:48px;height:48px;animation:wm-spin 2s linear infinite">
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#ede8e0" stroke-width="3"/>
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#8c6e4a" stroke-width="3"
-              stroke-dasharray="31 95" stroke-linecap="round"
-              style="animation:wm-dash 1.5s ease-in-out infinite;transform-origin:center"/>
+<!-- ══ LOGIN SCREEN — cinematic intro → split "quiet luxury" (cream/ink), Google only ══ -->
+<div id="loginScreen">
+  <div class="auth-shell" id="wmShell">
+
+    <!-- BRAND PANEL — на старті це повноекранна заставка -->
+    <aside class="brand-panel" id="wmBrandPanel">
+      <div class="wm-grain"></div>
+      <div class="wm-breathe"></div>
+      <div class="brand-mark">
+        <div class="mark-box">
+          <svg viewBox="0 0 42 42">
+            <rect class="mb-rect" x="1" y="1" width="40" height="40"/>
+            <path class="mb-letter" d="M10 13L14 29L21 17L28 29L32 13"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:600;color:#191816">W</div>
+        </div>
+        <div class="mark-copy">
+          <strong id="wmWordmark"></strong>
+          <span>Task Management</span>
         </div>
       </div>
-      <div style="font-size:13px;font-weight:600;color:#555;text-align:center;margin-bottom:4px" id="loginSpinnerMsg">Авторизація...</div>
-      <div style="font-size:11px;color:#bbb;text-align:center;line-height:1.5">Перше завантаження може зайняти<br>кілька секунд — зачекайте, будь ласка</div>
-      <div style="margin-top:12px;height:3px;background:#ede8e0;border-radius:4px;overflow:hidden">
-        <div style="height:100%;background:linear-gradient(90deg,#191816,#8c6e4a);border-radius:4px;animation:wm-progress 2s ease-in-out infinite"></div>
+
+      <div class="brand-quote">
+        <h2>Один простір. Жодного хаосу.</h2>
+        <p>Дошка завдань і Досьє турів — завжди під рукою: дедлайни з нагадуваннями, мітки, коментарі та файли з Google Drive.</p>
+      </div>
+    </aside>
+
+    <!-- FORM PANEL -->
+    <div class="form-panel">
+      <div class="auth-card">
+        <div class="auth-eyebrow">Waymark</div>
+        <h1 class="auth-title">Вхід до системи</h1>
+        <p class="auth-lead">Задачі, дедлайни й тури — там, де ви їх залишили.</p>
+
+        <div class="notice info">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+          <p>Доступ відкритий лише для учасників команди — увійдіть через ваш робочий Google-акаунт.</p>
+        </div>
+
+        <button onclick="doGoogleLogin()" class="btn-google" type="button">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          <span>Продовжити з Google</span>
+        </button>
+
+        <div id="loginErr" class="wm-err"></div>
+
+        <div id="loginSpinner" class="wm-spinner" style="display:none">
+          <div style="text-align:center;margin-bottom:14px">
+            <div style="display:inline-block;position:relative;width:48px;height:48px">
+              <svg viewBox="0 0 48 48" style="width:48px;height:48px;animation:wm-spin 2s linear infinite">
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(29,24,16,.14)" stroke-width="3"/>
+                <circle cx="24" cy="24" r="20" fill="none" stroke="#8c6e4a" stroke-width="3"
+                  stroke-dasharray="31 95" stroke-linecap="round"
+                  style="animation:wm-dash 1.5s ease-in-out infinite;transform-origin:center"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',Georgia,serif;font-size:14px;font-weight:600;color:#1d1810">W</div>
+            </div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:#1d1810;text-align:center;margin-bottom:4px" id="loginSpinnerMsg">Авторизація...</div>
+          <div style="font-size:11px;color:rgba(29,24,16,.5);text-align:center;line-height:1.5">Перше завантаження може зайняти<br>кілька секунд — зачекайте, будь ласка</div>
+          <div style="margin-top:12px;height:2px;background:rgba(29,24,16,.12);border-radius:4px;overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,#8c6e4a,#a98657);border-radius:4px;animation:wm-progress 2s ease-in-out infinite"></div>
+          </div>
+        </div>
+
+        <div class="divider-note"><span>Потрібна допомога</span></div>
+
+        <p class="auth-footer">Немає доступу до акаунта? Зверніться до адміністратора вашої команди.</p>
       </div>
     </div>
-    <style>
-    @keyframes wm-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-    @keyframes wm-dash{0%{stroke-dasharray:1 125;stroke-dashoffset:0}50%{stroke-dasharray:90 125;stroke-dashoffset:-35}100%{stroke-dasharray:90 125;stroke-dashoffset:-125}}
-    @keyframes wm-progress{0%{width:0%;margin-left:0}50%{width:70%;margin-left:10%}100%{width:20%;margin-left:100%}}
-    </style>
-    <div id="resetMsg" style="display:none;text-align:center;margin-top:12px;font-size:12px;color:#2e8653;background:#e8f5ee;border-radius:9px;padding:9px 14px"></div>
+
   </div>
+
+  <div class="skip-hint" id="wmSkipHint">Натисніть, щоб пропустити</div>
+
+  <!-- прибрано з інтерфейсу, але залишено в DOM для сумісності зі скриптами -->
+  <div style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none">
+    <input id="loginEmail" type="email">
+    <input id="loginPwd" type="password">
+    <div id="resetMsg"></div>
+  </div>
+
+  <style>
+  #loginScreen{
+    --bg:#F4EFE6; --bg-2:#e9e0cf;
+    --ink:#1d1810; --ink-dim:rgba(29,24,16,.6); --ink-faint:rgba(29,24,16,.32);
+    --accent:#8c6e4a; --accent-soft:#75593a;
+    --line:rgba(29,24,16,.14);
+    --err:#a83820;
+    --cubic-luxury: cubic-bezier(0.25,1,0.5,1);
+    --morph-dur: 1.15s;
+    position:relative;min-height:100vh;background:var(--bg);
+    font-family:'Inter',sans-serif;color:var(--ink);
+    overflow:hidden;
+  }
+  #loginScreen *{box-sizing:border-box}
+
+  #loginScreen .auth-shell{ min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
+
+  /* ===================== BRAND PANEL (заставка → брендова панель) ===================== */
+  #loginScreen .brand-panel{
+    position:fixed; inset:0; width:100vw; height:100vh; left:0; top:0;
+    background:linear-gradient(160deg,var(--bg) 0%,var(--bg-2) 60%,var(--bg) 100%);
+    color:var(--ink); display:flex; flex-direction:column; justify-content:space-between;
+    padding:56px 64px; overflow:hidden; z-index:40; cursor:pointer;
+    border-right:1px solid transparent;
+    transition:width var(--morph-dur) var(--cubic-luxury), padding var(--morph-dur) var(--cubic-luxury),
+      border-color .3s ease, box-shadow .3s ease;
+  }
+  #loginScreen .auth-shell.morph .brand-panel{
+    width:50vw; padding:56px 64px; cursor:default;
+    border-right-color:var(--accent);
+    box-shadow:14px 0 46px -8px rgba(140,110,74,.3);
+  }
+  #loginScreen .auth-shell.settled .brand-panel{
+    position:static; width:auto; height:auto; inset:auto; z-index:1;
+    border-right-color:transparent; box-shadow:none;
+    transition:border-color .7s ease .15s, box-shadow .7s ease .15s;
+  }
+  #loginScreen .wm-grain{
+    position:absolute; inset:-20%; opacity:.04; pointer-events:none; z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:wm-grain-drift 9s steps(6) infinite;
+  }
+  #loginScreen .wm-breathe{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  #loginScreen .wm-breathe::before, #loginScreen .wm-breathe::after{
+    content:''; position:absolute; width:520px; height:520px; border-radius:50%; filter:blur(75px);
+  }
+  #loginScreen .wm-breathe::before{
+    top:-130px; left:-110px; background:radial-gradient(circle, rgba(140,110,74,.28), transparent 70%);
+    animation:wm-breathe-a 6.5s ease-in-out infinite;
+  }
+  #loginScreen .wm-breathe::after{
+    bottom:-150px; right:-100px; background:radial-gradient(circle, rgba(140,110,74,.22), transparent 70%);
+    animation:wm-breathe-b 6.5s ease-in-out infinite; animation-delay:-3.2s;
+  }
+  #loginScreen .brand-panel::after{
+    content:''; position:absolute; inset:24px; border:1px solid rgba(140,110,74,.28); pointer-events:none;
+    opacity:0; transition:opacity .9s ease .3s;
+  }
+  #loginScreen .auth-shell.morph .brand-panel::after{ opacity:1; }
+
+  #loginScreen .brand-mark{ display:flex; align-items:center; gap:13px; position:relative; z-index:1; }
+  #loginScreen .brand-mark .mark-box{ width:42px; height:42px; display:grid; place-items:center; flex-shrink:0; position:relative; transform-origin:center; }
+  #loginScreen .brand-mark .mark-box::before{
+    content:''; position:absolute; inset:-12px; border-radius:50%;
+    background:radial-gradient(circle, rgba(140,110,74,.6), transparent 70%);
+    opacity:0; pointer-events:none;
+  }
+  html.wm-play #loginScreen .brand-mark .mark-box{ animation:wm-stampPulse .55s var(--cubic-luxury) 1.4s; }
+  html.wm-play #loginScreen .brand-mark .mark-box::before{ animation:wm-stampFlash .65s ease 1.4s; }
+  #loginScreen .brand-mark .mark-box svg{ width:42px; height:42px; overflow:visible; position:relative; z-index:1; }
+  #loginScreen .brand-mark .mark-box .mb-rect{ fill:none; stroke:var(--accent); stroke-width:1.4; stroke-dasharray:168; stroke-dashoffset:168; }
+  #loginScreen .brand-mark .mark-box .mb-letter{ fill:none; stroke:var(--accent); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:62; stroke-dashoffset:62; }
+  html.wm-play #loginScreen .brand-mark .mark-box .mb-rect{ animation:wm-drawStroke .9s var(--cubic-luxury) .15s forwards; }
+  html.wm-play #loginScreen .brand-mark .mark-box .mb-letter{ animation:wm-drawStroke .55s var(--cubic-luxury) .85s forwards; }
+
+  #loginScreen .mark-copy strong{ display:flex; font-family:'Cinzel',Georgia,serif; font-size:16px; letter-spacing:.12em; }
+  #loginScreen .mark-copy strong .lt{ display:inline-block; opacity:0; transform:translateY(8px); white-space:pre; }
+  html.wm-play #loginScreen .mark-copy strong .lt{ animation:wm-letterIn .45s var(--cubic-luxury) forwards; animation-delay:calc(1.25s + var(--i) * 0.045s); }
+  html.wm-no-anim #loginScreen .mark-copy strong .lt,
+  html.wm-no-anim #loginScreen .brand-mark .mark-box .mb-rect,
+  html.wm-no-anim #loginScreen .brand-mark .mark-box .mb-letter{ opacity:1; transform:none; stroke-dashoffset:0; animation:none; }
+
+  #loginScreen .mark-copy span{ display:block; font-size:9px; text-transform:uppercase; letter-spacing:.3em; color:var(--accent); margin-top:3px; opacity:0; transform:translateY(6px); }
+  html.wm-play #loginScreen .mark-copy span{ animation:wm-fadeUp .5s var(--cubic-luxury) 2.15s forwards; }
+  html.wm-no-anim #loginScreen .mark-copy span{ opacity:1; transform:none; }
+
+  #loginScreen .brand-quote{ position:relative; z-index:1; max-width:420px; opacity:0; transform:translateY(14px); transition:opacity .8s ease .35s, transform .8s var(--cubic-luxury) .35s; }
+  #loginScreen .auth-shell.morph .brand-quote{ opacity:1; transform:none; }
+  #loginScreen .brand-quote h2{ font-family:'Cinzel',Georgia,serif; font-size:32px; font-weight:400; line-height:1.35; color:var(--ink); letter-spacing:.01em; }
+  #loginScreen .brand-quote p{ margin-top:18px; font-size:13px; color:var(--ink-dim); line-height:1.7; }
+
+  /* ===================== FORM PANEL ===================== */
+  #loginScreen .form-panel{ display:flex; align-items:center; justify-content:center; padding:40px; background:var(--bg); opacity:0; transform:translateX(14px); transition:opacity .9s ease .25s, transform .9s var(--cubic-luxury) .25s; }
+  #loginScreen .auth-shell.morph .form-panel{ opacity:1; transform:none; }
+  html.wm-no-anim #loginScreen .form-panel{ opacity:1; transform:none; }
+
+  #loginScreen .auth-card{ width:100%; max-width:420px; }
+  #loginScreen .auth-eyebrow{ font-size:10px; text-transform:uppercase; letter-spacing:.2em; color:var(--accent); font-weight:700; margin-bottom:10px; }
+  #loginScreen .auth-title{ font-family:'Cinzel',Georgia,serif; font-size:30px; font-weight:500; color:var(--accent); letter-spacing:.02em; margin-bottom:10px; }
+  #loginScreen .auth-lead{ font-size:13px; color:var(--ink-dim); margin-bottom:28px; }
+
+  #loginScreen .notice{ display:flex; gap:12px; align-items:flex-start; border:1px solid var(--line); background:rgba(29,24,16,.035); padding:15px 17px; margin-bottom:14px; }
+  #loginScreen .notice svg{ width:16px; height:16px; stroke-width:1.6; fill:none; flex-shrink:0; margin-top:1px; stroke:var(--accent); }
+  #loginScreen .notice p{ font-size:12px; color:var(--ink-dim); line-height:1.55; }
+  #loginScreen .notice.info{ border-left:2px solid var(--accent); }
+
+  #loginScreen .btn-google{
+    position:relative; overflow:hidden; width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    padding:14px 18px; margin-top:6px; background:rgba(29,24,16,.03); border:1px solid rgba(29,24,16,.22);
+    color:var(--ink); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:500; letter-spacing:.02em;
+    cursor:pointer; transition:border-color .35s, background .35s, transform .25s, box-shadow .35s;
+  }
+  #loginScreen .btn-google:hover{
+    border-color:var(--accent); background:rgba(140,110,74,.08); transform:translateY(-1px);
+    box-shadow:0 10px 30px -10px rgba(140,110,74,.35);
+  }
+  #loginScreen .btn-google::after{
+    content:''; position:absolute; top:0; left:-60%; width:35%; height:100%;
+    background:linear-gradient(120deg,transparent,rgba(140,110,74,.28),transparent);
+    transform:skewX(-20deg); animation:wm-shimmer 5.5s ease-in-out infinite;
+  }
+  #loginScreen .wm-err{ margin-top:16px; font-size:11.5px; color:var(--err); min-height:16px; letter-spacing:.01em; text-align:center; }
+
+  #loginScreen .auth-footer{ margin-top:26px; text-align:center; font-size:11.5px; color:var(--ink-faint); }
+  #loginScreen .auth-footer a{ color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent); padding-bottom:1px; }
+
+  #loginScreen .divider-note{ display:flex; align-items:center; gap:12px; margin:26px 0; }
+  #loginScreen .divider-note::before, #loginScreen .divider-note::after{ content:''; flex:1; height:1px; background:var(--line); }
+  #loginScreen .divider-note span{ font-size:10px; text-transform:uppercase; letter-spacing:.14em; color:var(--ink-faint); }
+
+  #loginScreen .skip-hint{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:41; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:rgba(29,24,16,.55); opacity:0; transition:opacity .5s ease .6s; pointer-events:none; }
+  html.wm-play #loginScreen .skip-hint{ opacity:1; animation:wm-skipPulse 2.6s ease-in-out infinite; pointer-events:auto; cursor:pointer; }
+  #loginScreen .auth-shell.morph ~ .skip-hint{ opacity:0 !important; transition:opacity .3s ease; pointer-events:none; }
+
+  @keyframes wm-drawStroke{ to{ stroke-dashoffset:0; } }
+  @keyframes wm-letterIn{ to{ opacity:1; transform:translateY(0); } }
+  @keyframes wm-fadeUp{ to{ opacity:1; transform:translateY(0); } }
+  @keyframes wm-skipPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:.95; } }
+  @keyframes wm-stampPulse{ 0%{ transform:scale(1); } 38%{ transform:scale(1.14); } 65%{ transform:scale(.97); } 100%{ transform:scale(1); } }
+  @keyframes wm-stampFlash{ 0%{ opacity:0; } 32%{ opacity:1; } 100%{ opacity:0; } }
+  @keyframes wm-grain-drift{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-1.5%,1%); } }
+  @keyframes wm-breathe-a{ 0%,100%{ opacity:.55; transform:scale(1); } 50%{ opacity:1; transform:scale(1.15); } }
+  @keyframes wm-breathe-b{ 0%,100%{ opacity:.5; transform:scale(1.05); } 50%{ opacity:.95; transform:scale(1.2); } }
+  @keyframes wm-shimmer{ 0%,55%{ left:-60%; } 100%{ left:140%; } }
+  @keyframes wm-spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  @keyframes wm-dash{ 0%{ stroke-dasharray:1 125; stroke-dashoffset:0; } 50%{ stroke-dasharray:90 125; stroke-dashoffset:-35; } 100%{ stroke-dasharray:90 125; stroke-dashoffset:-125; } }
+  @keyframes wm-progress{ 0%{ width:0%; margin-left:0; } 50%{ width:70%; margin-left:10%; } 100%{ width:20%; margin-left:100%; } }
+
+  @media (max-width: 940px){
+    #loginScreen .auth-shell.settled{ grid-template-columns:1fr; }
+    #loginScreen .auth-shell.settled .brand-panel{ display:none; }
+    #loginScreen .auth-shell.morph .brand-panel{ width:100vw; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    #loginScreen *{ animation:none!important; }
+  }
+  </style>
 </div>
+
+<script>
+(function () {
+  var html = document.documentElement;
+  var shell = document.getElementById('wmShell');
+  var brandPanel = document.getElementById('wmBrandPanel');
+  var wordmark = document.getElementById('wmWordmark');
+  var skipHint = document.getElementById('wmSkipHint');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var text = 'Waymark';
+  text.split('').forEach(function (ch, i) {
+    var s = document.createElement('span');
+    s.className = 'lt';
+    s.style.setProperty('--i', i);
+    s.textContent = ch === ' ' ? '\u00A0' : ch;
+    wordmark.appendChild(s);
+  });
+
+  function settle() {
+    shell.classList.add('settled');
+    brandPanel.removeEventListener('transitionend', onWidthDone);
+  }
+  function onWidthDone(e) {
+    if (e.propertyName === 'width') settle();
+  }
+
+  var morphed = false;
+  function triggerMorph() {
+    if (morphed) return;
+    morphed = true;
+    shell.classList.add('morph');
+    if (window.innerWidth > 940) {
+      brandPanel.addEventListener('transitionend', onWidthDone);
+      setTimeout(settle, 1400);
+    } else {
+      setTimeout(settle, 950);
+    }
+  }
+
+  if (reduced) {
+    html.classList.add('wm-no-anim');
+    shell.classList.add('morph', 'settled');
+    return;
+  }
+
+  html.classList.add('wm-play');
+  brandPanel.addEventListener('click', triggerMorph);
+  skipHint.addEventListener('click', triggerMorph);
+  setTimeout(triggerMorph, 2650);
+})();
+</script>
 
 <div id="appShell" style="display:none">
 <div class="page">
@@ -2020,7 +2247,7 @@ async function doGoogleLogin(){
       } catch(popupErr){
         if(popupErr.code==='auth/popup-blocked'||popupErr.code==='auth/cancelled-popup-request'){
           spin.style.display='none';
-          errEl.textContent='Будь ласка, використайте вхід через Email/Пароль — Google вхід обмежений у PWA на iOS.';
+          errEl.textContent='Спливаюче вікно заблоковано. Спробуйте ще раз або відкрийте сайт у Safari.';
           return;
         }
         throw popupErr;
@@ -2040,7 +2267,7 @@ async function doGoogleLogin(){
     spin.style.display='none';
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
     const msgs={
-      'auth/popup-blocked':'Браузер заблокував спливаюче вікно. Використайте вхід через Email/Пароль.',
+      'auth/popup-blocked':'Браузер заблокував спливаюче вікно. Дозвольте спливаючі вікна для цього сайту та спробуйте ще раз.',
       'auth/unauthorized-domain':'Цей домен не авторизований у Firebase Console → Authentication → Settings → Authorized domains.'
     };
     errEl.textContent=msgs[e.code]||'Помилка Google входу: '+e.message;
