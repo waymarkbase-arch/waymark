@@ -1281,8 +1281,13 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     <div class="form-panel">
       <div class="auth-card">
         <div class="auth-eyebrow">Waymark</div>
-        <h1 class="auth-title">Вхід до системи</h1>
-        <p class="auth-lead">Задачі, дедлайни й тури — там, де ви їх залишили.</p>
+        <h1 class="auth-title" id="authTitle">Вхід до системи</h1>
+        <p class="auth-lead" id="authLead">Задачі, дедлайни й тури — там, де ви їх залишили.</p>
+
+        <div class="welcome-progress" id="welcomeProgress">
+          <div class="wp-dots"><span></span><span></span><span></span></div>
+          <span class="wp-text">Завантажуємо ваш простір...</span>
+        </div>
 
         <div class="notice info">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
@@ -1429,6 +1434,18 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   html.wm-no-anim #loginScreen .form-panel{ opacity:1; transform:none; }
 
   #loginScreen .auth-card{ width:100%; max-width:420px; }
+  #loginScreen .auth-card.welcome .notice,
+  #loginScreen .auth-card.welcome .btn-google,
+  #loginScreen .auth-card.welcome .divider-note,
+  #loginScreen .auth-card.welcome .auth-footer,
+  #loginScreen .auth-card.welcome .wm-err{ display:none!important; }
+  #loginScreen .welcome-progress{ display:none; align-items:center; gap:10px; margin-top:8px; }
+  #loginScreen .auth-card.welcome .welcome-progress{ display:flex; }
+  #loginScreen .wp-dots{ display:flex; gap:5px; }
+  #loginScreen .wp-dots span{ width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:.3; animation:wm-dotPulse 1.2s ease-in-out infinite; }
+  #loginScreen .wp-dots span:nth-child(2){ animation-delay:.15s; }
+  #loginScreen .wp-dots span:nth-child(3){ animation-delay:.3s; }
+  #loginScreen .wp-text{ font-size:12px; color:var(--ink-dim); }
   #loginScreen .auth-eyebrow{ font-size:10px; text-transform:uppercase; letter-spacing:.2em; color:var(--accent); font-weight:700; margin-bottom:10px; }
   #loginScreen .auth-title{ font-family:'Cinzel',Georgia,serif; font-size:30px; font-weight:500; color:var(--accent); letter-spacing:.02em; margin-bottom:10px; }
   #loginScreen .auth-lead{ font-size:13px; color:var(--ink-dim); margin-bottom:28px; }
@@ -1475,6 +1492,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   @keyframes wm-grain-drift{ 0%,100%{ transform:translate(0,0); } 50%{ transform:translate(-1.5%,1%); } }
   @keyframes wm-breathe-a{ 0%,100%{ opacity:.55; transform:scale(1); } 50%{ opacity:1; transform:scale(1.15); } }
   @keyframes wm-breathe-b{ 0%,100%{ opacity:.5; transform:scale(1.05); } 50%{ opacity:.95; transform:scale(1.2); } }
+  @keyframes wm-dotPulse{ 0%,100%{ opacity:.3; transform:scale(.85); } 50%{ opacity:1; transform:scale(1.15); } }
   @keyframes wm-shimmer{ 0%,55%{ left:-60%; } 100%{ left:140%; } }
   @keyframes wm-spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
   @keyframes wm-dash{ 0%{ stroke-dasharray:1 125; stroke-dashoffset:0; } 50%{ stroke-dasharray:90 125; stroke-dashoffset:-35; } 100%{ stroke-dasharray:90 125; stroke-dashoffset:-125; } }
@@ -1509,15 +1527,24 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     wordmark.appendChild(s);
   });
 
+  var morphed = false;
+  window._wmIntroSettled = false;
+  window._wmOnSettled = [];
+  window.wmAfterIntro = function (fn) {
+    if (window._wmIntroSettled) fn();
+    else window._wmOnSettled.push(fn);
+  };
+
   function settle() {
     shell.classList.add('settled');
     brandPanel.removeEventListener('transitionend', onWidthDone);
+    window._wmIntroSettled = true;
+    window._wmOnSettled.forEach(function (fn) { try { fn(); } catch (e) {} });
+    window._wmOnSettled = [];
   }
   function onWidthDone(e) {
     if (e.propertyName === 'width') settle();
   }
-
-  var morphed = false;
   function triggerMorph() {
     if (morphed) return;
     morphed = true;
@@ -1533,6 +1560,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   if (reduced) {
     html.classList.add('wm-no-anim');
     shell.classList.add('morph', 'settled');
+    window._wmIntroSettled = true;
     return;
   }
 
@@ -2495,6 +2523,29 @@ function openIdentityPicker(firebaseEmail){
 }
 
 // ── AUTH STATE OBSERVER ── (fires on page load + login/logout)
+function showWelcomeState(){
+  const card=document.querySelector('#loginScreen .auth-card');
+  if(!card) return;
+  card.classList.add('welcome');
+  const title=document.getElementById('authTitle');
+  const lead=document.getElementById('authLead');
+  let firstName='';
+  try{
+    const m=(typeof curMgr==='function')?curMgr():null;
+    if(m && m.name) firstName=String(m.name).trim().split(/\s+/)[0];
+  }catch(e){}
+  if(title) title.textContent = firstName ? `Раді бачити вас, ${firstName}!` : 'Раді бачити вас знову!';
+  if(lead) lead.textContent = 'Приємного та продуктивного дня';
+}
+function hideWelcomeState(){
+  const card=document.querySelector('#loginScreen .auth-card');
+  if(!card) return;
+  card.classList.remove('welcome');
+  const title=document.getElementById('authTitle');
+  const lead=document.getElementById('authLead');
+  if(title) title.textContent='Вхід до системи';
+  if(lead) lead.textContent='Задачі, дедлайни й тури — там, де ви їх залишили.';
+}
 window.addEventListener('load', ()=>{
   // poll until _fb is populated by the module script
   // mobile on slow connections can take 5–10s to load Firebase modules
@@ -2539,15 +2590,20 @@ window.addEventListener('load', ()=>{
             curEmail = user.email;
             bootApp();
             startRealtimeSync();
-            document.getElementById('loginScreen').style.display='none';
-            document.getElementById('appShell').style.display='block';
             applyMaintenance();
+            showWelcomeState();
+            const enter=()=>{
+              document.getElementById('loginScreen').style.display='none';
+              document.getElementById('appShell').style.display='block';
+            };
+            if(window.wmAfterIntro) window.wmAfterIntro(enter); else enter();
           }
         } else {
           if(window._accessDeniedShown) return;
           document.getElementById('loginSpinner').style.display='none';
           document.getElementById('appShell').style.display='none';
           document.getElementById('loginScreen').style.display='flex';
+          hideWelcomeState();
           setTimeout(()=>document.getElementById('loginEmail').focus(),100);
         }
       });
