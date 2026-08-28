@@ -1437,6 +1437,36 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .pg-foot{border-top:1px solid var(--wm-border)!important;font-family:var(--wm-sans)!important;text-transform:uppercase;letter-spacing:.14em!important;font-size:10px!important;font-weight:700!important;padding-top:20px!important}
 [data-theme="dark"] .pg-foot{border-top-color:var(--border)!important}
 
+/* ══════════════════════════════════════════════════════════
+   MOBILE UX FIXES (scoped strictly to max-width:768px —
+   does not affect desktop/tablet layout in any way)
+   ══════════════════════════════════════════════════════════ */
+@media(max-width:768px){
+  /* 1. Prevent iOS Safari auto-zoom on focus: any input under 16px
+        triggers a forced page zoom. All form fields bumped to 16px
+        just on mobile; padding stays the same so layout doesn't shift. */
+  input,select,textarea{font-size:16px!important}
+
+  /* 2. Bring the most-used icon buttons up to the ~44px touch-target
+        minimum (Apple HIG / Material guidance) without resizing them
+        on desktop, where mouse precision makes this unnecessary. */
+  .notif-btn,.btn-gear,#themeBtn{width:44px!important;height:44px!important}
+  .tr-fee-remove{width:36px!important;height:36px!important}
+  .mobile-nav button{min-height:44px}
+
+  /* 3. Tour "fee" rows: two fixed-width amount inputs + a name field +
+        a remove button in one flex row get tight inside a 95vw modal.
+        Shrink the fixed-width inputs slightly and allow wrapping so
+        nothing overflows or gets clipped on narrow phones. */
+  .tr-fee-row{flex-wrap:wrap;row-gap:6px}
+  .tr-fee-row input.tr-fee-amount{width:84px!important}
+  .tr-fee-row input.tr-fee-amount-child{width:74px!important}
+
+  /* 4. Custom tooltip (data-tip="1"): base positioning already works
+        via JS on tap (see touch handler added below); just make sure
+        it never exceeds the viewport width on very small phones. */
+  #wm-tooltip{max-width:88vw}
+}
 </style>
 </head>
 <body>
@@ -6437,9 +6467,32 @@ async function tgNotifyDeadline(task, daysLeft){
     const badge=e.target.closest('[data-tip="1"]');
     if(badge) hide();
   });
+
+  // ── Touch support ──
+  // Mobile/tablet has no hover, so the mouseover/mouseout pair above
+  // never fires there and the tooltip was previously unreachable on
+  // touch devices. This block is purely additive: it only listens for
+  // touchstart and never touches the mouse handlers, so desktop
+  // behaviour above is completely unchanged.
+  let activeTipEl=null;
+  document.addEventListener('touchstart',e=>{
+    const badge=e.target.closest('[data-tip="1"]');
+    if(badge){
+      if(activeTipEl===badge && tip.classList.contains('visible')){
+        hide(); activeTipEl=null;
+      } else {
+        clearTimeout(hideTimer);
+        show(badge);
+        activeTipEl=badge;
+      }
+    } else if(activeTipEl){
+      hide(); activeTipEl=null;
+    }
+  },{passive:true});
+
   // Hide on scroll/resize
-  document.addEventListener('scroll',hide,true);
-  window.addEventListener('resize',hide);
+  document.addEventListener('scroll',()=>{ hide(); activeTipEl=null; },true);
+  window.addEventListener('resize',()=>{ hide(); activeTipEl=null; });
 })();
 </script>
 
