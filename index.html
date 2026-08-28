@@ -1228,12 +1228,12 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .date-divider::after{content:'';flex:1;height:1px;background:var(--wm-border)}
 
 /* -- segmented tab track (reference style: floating white pill on a cream track) -- */
-.tab-track{display:inline-flex;flex-wrap:wrap;align-items:center;background:#eee8dd;border-radius:999px;padding:5px;gap:2px}
-[data-theme="dark"] .tab-track{background:var(--surface2)}
-.tab-track .fp{border:none!important;background:transparent!important;box-shadow:none!important;border-radius:999px!important;padding:9px 20px!important;font-weight:700!important;font-size:13px!important;color:var(--wm-ink2)!important;text-transform:none!important;letter-spacing:0!important}
-.tab-track .fp:hover{background:rgba(25,24,22,.05)!important}
-.tab-track .fp.on{background:var(--wm-card)!important;color:var(--wm-ink)!important;box-shadow:0 2px 6px rgba(25,24,22,.1)!important}
-[data-theme="dark"] .tab-track .fp.on{background:var(--surface)!important;color:var(--text)!important}
+.tab-track{display:inline-flex;flex-wrap:wrap;align-items:center;background:transparent;border-radius:0;padding:0;gap:22px}
+[data-theme="dark"] .tab-track{background:transparent}
+.tab-track .fp{border:none!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;padding:6px 0!important;font-family:var(--wm-sans)!important;font-weight:600!important;font-size:12px!important;letter-spacing:.06em!important;text-transform:uppercase;color:var(--wm-muted)!important;border-bottom:2px solid transparent!important}
+.tab-track .fp:hover{background:transparent!important;color:var(--wm-ink2)!important}
+.tab-track .fp.on{background:transparent!important;color:var(--wm-ink)!important;box-shadow:none!important;border-bottom-color:var(--wm-ink)!important}
+[data-theme="dark"] .tab-track .fp.on{background:transparent!important;color:var(--text)!important;border-bottom-color:var(--text)!important}
 .stats-w{padding-top:28px!important}
 .stats-g{gap:14px!important}
 .filt-w{padding-top:28px!important}
@@ -1326,10 +1326,9 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 [data-theme="dark"] .tc-inner{background:transparent!important}
 
 /* -- kicker line: STATUS · CATEGORY, plain caps text, no pill/dot -- */
-.tc-badges{gap:0!important}
+.tc-badges{gap:0!important;display:flex!important;align-items:center;flex-wrap:wrap}
 .tc-status-btn::before,.tg::before{content:none!important}
-.tc-status-wrap+.tg::before,.tc-badges>.tg+.tg::before{content:'·';margin:0 8px;color:var(--wm-muted);font-weight:400}
-.tc-status-wrap+.tg::before{content:'·'}
+.tc-status-wrap+.tg::before,.tc-badges>.tg+.tg::before{content:'·'!important;display:inline!important;margin:0 8px!important;color:var(--wm-muted)!important;font-weight:400!important;letter-spacing:0!important}
 .tc-badges .tg{margin-left:0}
 .tc-status-btn,.tg{font-size:10.5px!important;letter-spacing:.16em!important}
 .tc-status-btn svg{display:none}
@@ -2305,9 +2304,7 @@ function renderMastheadDate(){
   const el=document.getElementById('mastheadDate');
   if(!el) return;
   const d=new Date();
-  const start=new Date(d.getFullYear(),0,0);
-  const issue=Math.floor((d-start)/86400000);
-  el.textContent=`${WD_UK[d.getDay()]}, ${d.getDate()} ${MK_UK_GEN?MK_UK_GEN[d.getMonth()]:''} ${d.getFullYear()} · Випуск №${issue}`;
+  el.textContent=`${WD_UK[d.getDay()]}, ${d.getDate()} ${MK_UK_GEN?MK_UK_GEN[d.getMonth()]:''} ${d.getFullYear()}`;
 }
 document.addEventListener('DOMContentLoaded',()=>{ try{renderMastheadDate();}catch(e){} });
 if(document.readyState==='complete'||document.readyState==='interactive') setTimeout(()=>{try{renderMastheadDate();}catch(e){}},0);
