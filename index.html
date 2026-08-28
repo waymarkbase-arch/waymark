@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Waymark">
 <meta name="theme-color" content="#8b1a1a">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Cinzel:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script type="module">
 // ═══════════════════════════════════════════════
@@ -1247,6 +1247,124 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   .ta{padding-top:16px!important}
 }
 
+/* ══════════════════════════════════════════════════════════
+   ROUND 7 — NEWSPAPER EDITION
+   Editorial type system (serif headline / sans UI / mono numerals),
+   masthead with double rule + dateline, kicker-style status lines
+   (no pills), flat hairline task rows, ticker-style stat line,
+   byline-style monogram avatars, word-based pagination & colophon.
+   ══════════════════════════════════════════════════════════ */
+:root{
+  --wm-serif:'PT Serif',Georgia,'Times New Roman',serif;
+  --wm-mono:'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace;
+}
+
+/* ---- masthead ---- */
+.hdr.masthead{padding:26px 48px 0!important;border-bottom:none!important;display:block!important}
+.masthead-top{display:flex;align-items:flex-start}
+.masthead-top .logo-name{font-size:34px!important;font-weight:700!important;letter-spacing:-.01em!important}
+.masthead-rule{margin:18px 0 0}
+.masthead-rule .rule-thin{height:1px;background:var(--wm-border-strong);margin-bottom:3px}
+.masthead-rule .rule-thick{height:3px;background:var(--wm-ink)}
+[data-theme="dark"] .masthead-rule .rule-thick{background:var(--text)}
+.masthead-meta{display:flex;align-items:center;justify-content:space-between;padding:9px 0 20px;gap:12px;flex-wrap:wrap}
+.masthead-sub{font-family:var(--wm-sans);font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--wm-muted)}
+.masthead-date{font-family:var(--wm-mono);font-size:11.5px;font-weight:500;letter-spacing:.02em;color:var(--wm-ink2);text-transform:uppercase}
+[data-theme="dark"] .masthead-date{color:var(--text2)}
+@media(max-width:768px){
+  .hdr.masthead{padding:18px 16px 0!important}
+  .masthead-top .logo-name{font-size:24px!important}
+  .masthead-meta{padding:7px 0 14px;gap:6px}
+  .masthead-date{font-size:10px}
+}
+
+/* de-emphasise the punch-clock so it doesn't compete with the masthead dateline
+   (kept fully functional — clock in/out is a real feature) */
+.masthead-top .clk{background:transparent!important;border:none!important;box-shadow:none!important;padding:2px 6px!important}
+.masthead-top .clk-t{font-family:var(--wm-mono)!important;font-size:12px!important;font-weight:600!important;color:var(--wm-muted)!important}
+.masthead-top .clk-loc{display:none!important}
+.masthead-top .clk-l{background:transparent!important;border:none!important;padding:0!important;font-size:9px!important}
+
+/* ---- section nav: newspaper rubrics ---- */
+.tabs{border-bottom:1px solid var(--wm-border)!important;gap:30px!important}
+.tabs .tab{border-bottom-width:3px!important;padding:11px 0 10px!important}
+.tab.tab-tours{color:var(--wm-muted)!important}
+.tab.tab-tours.on{color:var(--wm-ink)!important;border-bottom-color:var(--wm-ink)!important}
+[data-theme="dark"] .tab.tab-tours{color:var(--text3)!important}
+[data-theme="dark"] .tab.tab-tours.on{color:var(--text)!important;border-bottom-color:var(--text)!important}
+
+/* ---- stat line: a single row of figures, no cards ---- */
+.stats-w{display:flex;justify-content:flex-start!important}
+.stats-g{display:flex!important;width:100%!important;gap:0!important}
+.sc{background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:2px 28px!important;flex:1;text-align:left;position:relative}
+.sc:first-child{padding-left:0!important}
+.sc:not(:last-child)::after{content:'';position:absolute;top:2px;bottom:2px;right:0;width:1px;background:var(--wm-border)}
+.sc:hover{border-color:transparent!important}
+.sc-n{font-family:var(--wm-serif)!important;font-size:38px!important;font-weight:700!important;letter-spacing:-.02em!important}
+.sc-l{font-size:9.5px!important;letter-spacing:.16em!important;margin-top:8px!important}
+.s-urg{background:transparent!important;border:none!important}
+@media(max-width:768px){
+  .stats-g{flex-wrap:wrap!important}
+  .sc{flex:1 1 30%;padding:2px 12px!important;margin-bottom:12px}
+  .sc:not(:last-child)::after{display:none}
+  .sc:nth-child(3n)::after{display:none}
+  .sc:not(:nth-child(3n))::after{display:block}
+}
+
+/* ---- task rows: flat, hairline-divided, no card boxes ---- */
+.ta{gap:0!important}
+.task-section{border:none!important}
+.tc{border:none!important;border-radius:0!important;border-bottom:1px solid var(--wm-border)!important;box-shadow:none!important;background:transparent!important;transition:background .12s ease!important}
+.tc:hover{background:rgba(25,24,22,.02)!important;border-color:var(--wm-border)!important}
+[data-theme="dark"] .tc:hover{background:rgba(255,255,255,.02)!important}
+.tc.st-done{background:transparent!important}
+.tc.overdue{animation:none!important}
+.tc.st-work,.tc.st-clarify{animation:none!important}
+.tc-header{padding:20px 4px 14px!important;gap:8px!important}
+.tc-foot{padding:0 4px 20px!important;border-top:none!important}
+.tc-inner{margin:0 4px 18px!important;background:transparent!important;border:none!important;padding:0 0 0 0!important}
+[data-theme="dark"] .tc-inner{background:transparent!important}
+
+/* -- kicker line: STATUS · CATEGORY, plain caps text, no pill/dot -- */
+.tc-badges{gap:0!important}
+.tc-status-btn::before,.tg::before{content:none!important}
+.tc-status-wrap+.tg::before,.tc-badges>.tg+.tg::before{content:'·';margin:0 8px;color:var(--wm-muted);font-weight:400}
+.tc-status-wrap+.tg::before{content:'·'}
+.tc-badges .tg{margin-left:0}
+.tc-status-btn,.tg{font-size:10.5px!important;letter-spacing:.16em!important}
+.tc-status-btn svg{display:none}
+.tc-assignee{background:transparent!important;border:none!important;padding:0!important}
+[data-theme="dark"] .tc-assignee{background:transparent!important;border:none!important}
+
+/* -- headline: full editorial serif, larger -- */
+.tc-title{font-family:var(--wm-serif)!important;font-size:21px!important;font-weight:700!important;letter-spacing:-.01em!important;line-height:1.28!important}
+
+/* -- dates & counters in monospace -- */
+.tc-dates,.tc-meta-item,.dlbl,.tc-meta-item strong{font-family:var(--wm-mono)!important}
+.tc-meta-item{letter-spacing:0!important}
+.pag-info,.pag-info-range{font-family:var(--wm-mono)!important}
+
+/* ---- avatars: byline monograms, not chat bubbles ---- */
+.cav,.av,.mgr-av,.md-av,.notif-avatar{background:transparent!important;border:1.4px solid var(--wm-border-strong)!important;color:var(--wm-ink)!important;font-family:var(--wm-serif)!important;font-weight:700!important;box-shadow:none!important}
+.cav::before{display:none!important}
+.cav:hover{box-shadow:none!important;border-color:var(--wm-ink)!important}
+[data-theme="dark"] .cav,[data-theme="dark"] .av,[data-theme="dark"] .mgr-av,[data-theme="dark"] .md-av,[data-theme="dark"] .notif-avatar{border-color:var(--border)!important;color:var(--text)!important}
+[data-theme="dark"] .cav:hover{border-color:var(--text)!important}
+.tc-assignee-name{font-family:var(--wm-serif)!important;font-style:italic!important;font-weight:600!important;color:var(--wm-ink2)!important}
+[data-theme="dark"] .tc-assignee-name{color:var(--text2)!important}
+
+/* ---- pagination & footer: words, not buttons ---- */
+.pag-bar{justify-content:space-between!important;padding-left:4px!important;padding-right:4px!important}
+.pag-word{background:none!important;border:none!important;font-family:var(--wm-sans)!important;font-size:11.5px!important;font-weight:700!important;letter-spacing:.08em!important;text-transform:uppercase;color:var(--wm-ink)!important;cursor:pointer;padding:6px 2px!important}
+.pag-word:hover:not(:disabled){color:var(--wm-bronze)!important}
+.pag-word:disabled{opacity:.3;cursor:default}
+.pag-info{color:var(--wm-muted)!important;font-size:11px!important}
+.pag-info-range{color:var(--wm-muted)!important;opacity:.7}
+[data-theme="dark"] .pag-word{color:var(--text)!important}
+
+.pg-foot{border-top:1px solid var(--wm-border)!important;font-family:var(--wm-sans)!important;text-transform:uppercase;letter-spacing:.14em!important;font-size:10px!important;font-weight:700!important;padding-top:20px!important}
+[data-theme="dark"] .pg-foot{border-top-color:var(--border)!important}
+
 </style>
 </head>
 <body>
@@ -1573,8 +1691,9 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 
 <div id="appShell" style="display:none">
 <div class="page">
-<div class="hdr">
-  <div><div class="logo-name">Waymark</div><div class="logo-sub">Task Management</div></div>
+<div class="hdr masthead">
+ <div class="masthead-top">
+  <div><div class="logo-name">Waymark</div></div>
   <div class="hdr-spacer"></div>
   <div class="hdr-r">
     <div class="clk" id="clk" style="cursor:default">
@@ -1598,6 +1717,12 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     <button class="btn-gear" onclick="showSet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <div class="av-wrap" onclick="avClick()" title="Профіль акаунту"><div class="av" id="avU" style="background:#3a9e6a">МК</div><div class="av-vacation" id="avVacBadge" style="display:none">🏖</div></div>
   </div>
+ </div>
+ <div class="masthead-rule"><div class="rule-thin"></div><div class="rule-thick"></div></div>
+ <div class="masthead-meta">
+   <div class="masthead-sub">Task Management</div>
+   <div class="masthead-date" id="mastheadDate">—</div>
+ </div>
 </div>
 <!-- VACATION BANNER -->
 <div class="vacation-bar" id="vacBar" style="display:none">
@@ -1606,7 +1731,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 </div>
 <div class="tabs">
   <button class="tab on" onclick="goTab('main',this)">Завдання</button>
-  <button class="tab tab-tours" onclick="goTab('tours',this)">🏛 Досьє турів</button>
+  <button class="tab tab-tours" onclick="goTab('tours',this)">Досьє турів</button>
   <button class="tab" onclick="goTab('arch',this)">Архів</button>
   <button class="tab" onclick="goTab('anlyt',this)">Аналітика</button>
   <button class="tab" onclick="goTab('log',this)">Журнал</button>
@@ -1783,7 +1908,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   <div class="tr-grid" id="trGrid"></div>
 </div>
 
-<div class="pg-foot">© Made by Kovach</div>
+<div class="pg-foot">© Видано Ковачем · Waymark, Київ</div>
 </div>
 
 <!-- CALENDAR -->
@@ -2174,6 +2299,18 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 </div>
 
 <script>
+// ── MASTHEAD DATELINE ──
+const WD_UK=['Неділя','Понеділок','Вівторок','Середа','Четвер',"П'ятниця",'Субота'];
+function renderMastheadDate(){
+  const el=document.getElementById('mastheadDate');
+  if(!el) return;
+  const d=new Date();
+  const start=new Date(d.getFullYear(),0,0);
+  const issue=Math.floor((d-start)/86400000);
+  el.textContent=`${WD_UK[d.getDay()]}, ${d.getDate()} ${MK_UK_GEN?MK_UK_GEN[d.getMonth()]:''} ${d.getFullYear()} · Випуск №${issue}`;
+}
+document.addEventListener('DOMContentLoaded',()=>{ try{renderMastheadDate();}catch(e){} });
+if(document.readyState==='complete'||document.readyState==='interactive') setTimeout(()=>{try{renderMastheadDate();}catch(e){}},0);
 const SL={new:'Нові',work:'В роботі',clarify:'Уточнення',done:'Виконано',urgent:'Терміново',test:'Тестування'};
 function fmtHrs(h){if(!h)return'';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
 const SC={new:'tg-new',work:'tg-work',clarify:'tg-clarify',done:'tg-done',urgent:'tg-urgent',test:'tg-test'};
@@ -4180,7 +4317,6 @@ function render(){
         <div class="tc-top-row">
           <div class="tc-badges">
             ${stBtnH}
-            ${isW?spinH:''}
             ${tagsH}
           </div>
           <div class="tc-assignee">
@@ -4190,6 +4326,7 @@ function render(){
         </div>
         <div class="tc-title-row">
           <div class="tc-title">${esc(titleText)}</div>
+          ${isW?spinH:''}
           <button class="tc-expand-btn" onclick="event.stopPropagation();tcExpand(event,${tid})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>
         </div>
       </div>
@@ -4250,20 +4387,9 @@ function renderPagination(total,totalPages){
     if(total<=TASKS_PER_PAGE){el.innerHTML='';return;}
     const from=(currentPage-1)*TASKS_PER_PAGE+1;
     const to=Math.min(currentPage*TASKS_PER_PAGE,total);
-    let html=`<button class="pag-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
-    // Show at most 7 page buttons with ellipsis
-    const WING=2;
-    let pages=[];
-    for(let p=1;p<=totalPages;p++){
-      if(p===1||p===totalPages||Math.abs(p-currentPage)<=WING) pages.push(p);
-      else if(pages[pages.length-1]!=='…') pages.push('…');
-    }
-    pages.forEach(p=>{
-      if(p==='…') html+=`<span class="pag-info">…</span>`;
-      else html+=`<button class="pag-btn${p===currentPage?' on':''}" onclick="goPage(${p})">${p}</button>`;
-    });
-    html+=`<button class="pag-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
-    html+=`<span class="pag-info">${from}–${to} з ${total}</span>`;
+    let html=`<button class="pag-word" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← Попередня</button>`;
+    html+=`<span class="pag-info">Сторінка ${currentPage} з ${totalPages} <span class="pag-info-range">(${from}–${to} з ${total})</span></span>`;
+    html+=`<button class="pag-word" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Наступна →</button>`;
     el.innerHTML=html;
   });
 }
