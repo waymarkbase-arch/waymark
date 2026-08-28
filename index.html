@@ -569,7 +569,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 [data-theme="dark"] .cal-d:hover:not(.empty){background:var(--surface2)}
 [data-theme="dark"] .cal-dn{color:var(--text3)}
 [data-theme="dark"] .mobile-nav{background:var(--surface);border-top-color:var(--border)}
-[data-theme="dark"] .mobile-nav button{color:var(--text3)}
+[data-theme="dark"] .mobile-nav button{color:var(--text2)}
 [data-theme="dark"] .mobile-nav button.on{color:#e08080}
 [data-theme="dark"] .vacation-bar{background:#2a2010;border-color:#6a5010}
 .gantt-period-btn{border:none;background:none;border-radius:7px;padding:5px 12px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500;transition:background .12s}
@@ -645,7 +645,7 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
   .stats-g{grid-template-columns:repeat(3,1fr)}
   /* Bottom nav for mobile */
   .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e6e0;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
-  .mobile-nav button{flex:1;padding:10px 0;background:none;border:none;font-family:inherit;font-size:10px;color:#aaa;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .mobile-nav button{flex:1;padding:10px 0;background:none;border:none;font-family:inherit;font-size:10px;color:#555049;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
   .mobile-nav button.on{color:#8b1a1a}
   .mobile-nav button svg{width:20px;height:20px}
   body{padding-bottom:60px}
@@ -1466,6 +1466,19 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
         via JS on tap (see touch handler added below); just make sure
         it never exceeds the viewport width on very small phones. */
   #wm-tooltip{max-width:88vw}
+
+  /* 5. Header overflow fix: on mobile the masthead row (logo + clock +
+        notifications + export + logout + gear + avatar) is wider than
+        the screen and its tail (logout/gear/avatar) was pushed fully
+        off-screen with no way to reach it. Gear and text-logout are
+        exact duplicates of controls already reachable elsewhere on
+        mobile (gear = bottom-nav "Меню"; logout = avatar → Профіль),
+        so hiding them here removes nothing functionally. flex-wrap is
+        also added as a safety net on very narrow phones. */
+  .btn-gear{display:none!important}
+  .btn-logout{display:none!important}
+  .masthead-top{flex-wrap:wrap;row-gap:8px}
+  .hdr-r{flex-wrap:wrap;justify-content:flex-end}
 }
 </style>
 </head>
@@ -6251,27 +6264,27 @@ async function tgNotifyDeadline(task, daysLeft){
 </div>
 <div class="mobile-nav" id="mobileNav" style="display:none!important">
   <button onclick="goTab('main',this)" class="on" id="mnMain">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M216,88H168V40a8,8,0,0,0-8-8H40a8,8,0,0,0-8,8V160a8,8,0,0,0,8,8H88v48a8,8,0,0,0,8,8H216a8,8,0,0,0,8-8V96A8,8,0,0,0,216,88ZM48,48H152V152H48Z"></path></svg>
     Завдання
   </button>
   <button onclick="goTab('tours',this)" id="mnTours">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm51.58,57.79-32,64a4.08,4.08,0,0,1-1.79,1.79l-64,32a4,4,0,0,1-5.37-5.37l32-64a4.08,4.08,0,0,1,1.79-1.79l64-32A4,4,0,0,1,179.58,81.79Z"></path></svg>
     Тури
   </button>
   <button onclick="goTab('arch',this)" id="mnArch">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,48H32A16,16,0,0,0,16,64V88a16,16,0,0,0,16,16v88a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V104a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm-72,96H104a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm72-56H32V64H224V88Z"></path></svg>
     Архів
   </button>
   <button onclick="goTab('anlyt',this)" id="mnAnlyt">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M120,161.94v65.34a4,4,0,0,1-4.46,4,104.28,104.28,0,0,1-84-64.5,4,4,0,0,1,2.69-5.34L97.32,144.5a4,4,0,0,1,4.35,1.66,32.25,32.25,0,0,0,15.59,12A4,4,0,0,1,120,161.94ZM128.06,24A8,8,0,0,0,120,32V88a7.94,7.94,0,0,0,7.87,8,32,32,0,0,1,10.86,62.15,4,4,0,0,0-2.73,3.79v65.34a4,4,0,0,0,4.45,4A104,104,0,0,0,128.06,24Zm-32,101.49a32,32,0,0,1,4.15-13.42l0-.07a8,8,0,0,0-.57-8.87A8.36,8.36,0,0,0,97.18,101L48.85,73.06A8,8,0,0,0,37.92,76,104.12,104.12,0,0,0,25,142.68,4,4,0,0,0,30,146L93.22,129A3.94,3.94,0,0,0,96.1,125.49Z"></path></svg>
     Аналітика
   </button>
   <button onclick="goTab('log',this)" id="mnLog">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM192,184H64a8,8,0,0,1,0-16H192a8,8,0,0,1,0,16Zm0-48H64a8,8,0,0,1,0-16H192a8,8,0,0,1,0,16Zm0-48H64a8,8,0,0,1,0-16H192a8,8,0,0,1,0,16Z"></path></svg>
     Журнал
   </button>
   <button onclick="showSet()" id="mnSet">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M232,96a72,72,0,0,1-100.94,66L79,222.22c-.12.14-.26.29-.39.42a32,32,0,0,1-45.26-45.26c.14-.13.28-.27.43-.39L94,124.94a72.07,72.07,0,0,1,83.54-98.78,8,8,0,0,1,3.93,13.19L144,80l5.66,26.35L176,112l40.65-37.52a8,8,0,0,1,13.19,3.93A72.6,72.6,0,0,1,232,96Z"></path></svg>
     Меню
   </button>
 </div>
