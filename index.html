@@ -1238,9 +1238,12 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 [data-theme="dark"] .pag-btn.on{border-color:var(--text)!important;color:var(--text)!important}
 
 /* -- date-group dividers in task list (e.g. "СЬОГОДНІ ────") -- */
-.date-divider{display:flex;align-items:center;gap:14px}
-.date-divider-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--wm-muted);white-space:nowrap;font-family:var(--wm-sans)}
-.date-divider::after{content:'';flex:1;height:1px;background:var(--wm-border)}
+.date-divider{display:flex;align-items:center;gap:12px;margin:32px 0 6px}
+.date-divider:first-child{margin-top:0}
+.date-divider-label{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--wm-ink);white-space:nowrap;font-family:var(--wm-sans)}
+.date-divider-date{font-size:12px;font-weight:500;color:var(--wm-muted);font-family:var(--wm-mono);white-space:nowrap;position:relative;padding-left:14px}
+.date-divider-date::before{content:'';position:absolute;left:4px;top:50%;transform:translateY(-50%);width:3px;height:3px;border-radius:50%;background:var(--wm-muted)}
+.date-divider::after{content:'';flex:1;height:1px;background:var(--wm-border-strong)}
 
 /* -- segmented tab track (reference style: floating white pill on a cream track) -- */
 .tab-track{display:inline-flex;flex-wrap:wrap;align-items:center;background:transparent;border-radius:0;padding:0;gap:22px}
@@ -1333,7 +1336,10 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tc{border:none!important;border-radius:0!important;border-bottom:1px solid var(--wm-border)!important;box-shadow:none!important;background:transparent!important;transition:background .12s ease!important}
 .tc:hover{background:rgba(25,24,22,.02)!important;border-color:var(--wm-border)!important}
 [data-theme="dark"] .tc:hover{background:rgba(255,255,255,.02)!important}
-.tc.st-done{background:transparent!important}
+/* done tasks: dimmed at rest so the eye lands on what's still open;
+   full clarity on hover, or once expanded to actually read it */
+.tc.st-done{background:transparent!important;opacity:.6;transition:opacity .15s ease,background .12s ease!important}
+.tc.st-done:hover,.tc.st-done:not(.tc-collapsed){opacity:1}
 .tc.overdue{animation:none!important}
 .tc.st-work,.tc.st-clarify{animation:none!important}
 .tc-header{padding:20px 4px 14px!important;gap:8px!important}
@@ -1764,7 +1770,6 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       </div>
     </div>
     <button class="btn-exp" onclick="doExp()">Експорт <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-    <button id="themeBtn" onclick="toggleTheme()" title="Перемкнути тему" style="width:40px;height:40px;border:1px solid #d8d5ce;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px">🌙</button>
     <div id="saIndicator" onclick="saLogout()" title="Суперадмін активний. Клік для виходу." style="display:none;align-items:center;gap:5px;background:#faf0dc;border:1px solid #dcc48a;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#8a6a2e;cursor:pointer">👑 SA</div>
     <button class="btn-logout" onclick="doLogout()" title="Вийти"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Вийти</button>
     <button class="btn-gear" onclick="showSet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -2380,6 +2385,14 @@ function taskDateGroupLabel(iso){
   if(diffDays===1) return 'Вчора';
   if(diffDays===-1) return 'Завтра';
   const sameYear=d.getFullYear()===today.getFullYear();
+  return d.getDate()+' '+MK_UK_GEN[d.getMonth()]+(sameYear?'':' '+d.getFullYear());
+}
+// exact "28 серпня" date, shown next to the relative kicker (Сьогодні/Вчора/Завтра)
+// so the divider reads as "Сьогодні · 28 серпня" instead of a bare relative word
+function taskDateGroupDateStr(iso){
+  if(!iso) return '';
+  const d=new Date(iso+'T12:00:00');
+  const sameYear=d.getFullYear()===new Date().getFullYear();
   return d.getDate()+' '+MK_UK_GEN[d.getMonth()]+(sameYear?'':' '+d.getFullYear());
 }
 const DS=['SAN','MON','TUE','WED','THU','FRI','SAT'];
@@ -3987,18 +4000,12 @@ function checkDeadlines(){
   });
 }
 
-/* ── DARK THEME ── */
-function toggleTheme(){
-  const d=document.documentElement,isDark=d.getAttribute('data-theme')==='dark';
-  d.setAttribute('data-theme',isDark?'light':'dark');
-  document.getElementById('themeBtn').textContent=isDark?'🌙':'☀️';
-  try{localStorage.setItem('wm_theme',isDark?'light':'dark');}catch(e){}
-}
+/* ── theme: fixed to light — dark mode removed as an unnecessary
+   surface to maintain; this also clears out any 'dark' value a
+   returning user might still have sitting in localStorage ── */
 function initTheme(){
-  try{const t=localStorage.getItem('wm_theme')||'light';
-    document.documentElement.setAttribute('data-theme',t);
-    const b=document.getElementById('themeBtn');if(b)b.textContent=t==='dark'?'☀️':'🌙';
-  }catch(e){}
+  document.documentElement.removeAttribute('data-theme');
+  try{localStorage.removeItem('wm_theme');}catch(e){}
 }
 
 /* ── VACATION helpers ── */
@@ -4441,7 +4448,9 @@ function render(){
     if(showDateDividers){
       const dg=taskDateGroupLabel(t.created);
       if(dg!==lastDateGroup){
-        groupedHtml+=`<div class="date-divider"><span class="date-divider-label">${esc(dg)}</span></div>`;
+        const isRelative=(dg==='Сьогодні'||dg==='Вчора'||dg==='Завтра');
+        const dateStr=isRelative?taskDateGroupDateStr(t.created):'';
+        groupedHtml+=`<div class="date-divider"><span class="date-divider-label">${esc(dg)}</span>${dateStr?`<span class="date-divider-date">${esc(dateStr)}</span>`:''}</div>`;
         lastDateGroup=dg;
       }
     }
