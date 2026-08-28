@@ -1033,13 +1033,16 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 
 /* ---- content max-width: everything used flat 48px side padding with
    no cap, so on wide screens the page stretched edge-to-edge and the
-   48px started reading as "no breathing room". Cap + center it. ---- */
-.hdr,.hdr.masthead,.tabs,.stats-w,.filt-w,.sa,.ta,.pag-bar,.tr-controls,.tr-grid,.arch-w,.anlyt-w{
-  max-width:1440px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
-  box-sizing:border-box!important;
-  float:none!important;
+   48px started reading as "no breathing room". Instead of capping each
+   section's own box (which centered each one independently and threw
+   their edges out of alignment with each other), give every section
+   the SAME computed side padding via calc() — this keeps them all
+   full-width boxes (so nothing shifts or shrink-wraps) while their
+   left/right edges line up perfectly, equivalent to a 1440px content
+   column, on any viewport. ---- */
+.hdr,.hdr.masthead,.tabs,.stats-w,.filt-w,.sa,.ta,.pag-bar,.pag-bar.bottom,.tr-controls,.tr-grid,.arch-w,.anlyt-w{
+  padding-left:max(48px,calc((100% - 1440px)/2))!important;
+  padding-right:max(48px,calc((100% - 1440px)/2))!important;
 }
 
 /* ---- avatars: neutral dark tone everywhere (no per-person colours) ---- */
