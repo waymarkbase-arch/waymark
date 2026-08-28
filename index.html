@@ -977,6 +977,15 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .fp-add-label{border-color:var(--wm-border)!important;color:var(--wm-muted)!important}
 .fp-add-label:hover{background:#f5f3ee!important;color:var(--wm-ink2)!important}
 
+/* ---- tag chips ("Об'єкти ✕" etc.) sat much heavier than the plain
+   "Всі / Мої" tabs right next to them — same row, very different
+   visual weight. Slim them down: smaller type, tighter padding,
+   thinner border. ---- */
+.fp-label{padding:4px 10px 4px 14px!important;font-size:11.5px!important;font-weight:500!important;border-width:1px!important}
+.fp-label-x{font-size:10px!important;margin-left:6px!important}
+.fp-add-label{padding:4px 12px!important;font-size:11px!important}
+.fp-add-label svg{width:9px!important;height:9px!important}
+
 /* ---- search / action bar ---- */
 .sb{border-radius:30px!important;border:1px solid var(--wm-border)!important;background:var(--wm-card)!important}
 .sb input{color:var(--wm-ink)!important}
@@ -1246,12 +1255,12 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .date-divider::after{content:'';flex:1;height:1px;background:var(--wm-border-strong)}
 
 /* -- segmented tab track (reference style: floating white pill on a cream track) -- */
-.tab-track{display:inline-flex;flex-wrap:wrap;align-items:center;background:transparent;border-radius:0;padding:0;gap:22px}
+.tab-track{display:inline-flex;flex-wrap:wrap;align-items:center;background:transparent;border-radius:0;padding:0;gap:6px}
 [data-theme="dark"] .tab-track{background:transparent}
-.tab-track .fp{border:none!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;padding:6px 0!important;font-family:var(--wm-sans)!important;font-weight:600!important;font-size:12px!important;letter-spacing:.06em!important;text-transform:uppercase;color:var(--wm-muted)!important;border-bottom:2px solid transparent!important}
-.tab-track .fp:hover{background:transparent!important;color:var(--wm-ink2)!important}
-.tab-track .fp.on{background:transparent!important;color:var(--wm-ink)!important;box-shadow:none!important;border-bottom-color:var(--wm-ink)!important}
-[data-theme="dark"] .tab-track .fp.on{background:transparent!important;color:var(--text)!important;border-bottom-color:var(--text)!important}
+.tab-track .fp{border:1px solid transparent!important;background:transparent!important;box-shadow:none!important;border-radius:20px!important;padding:7px 15px!important;font-family:var(--wm-sans)!important;font-weight:600!important;font-size:11.5px!important;letter-spacing:.06em!important;text-transform:uppercase;color:var(--wm-muted)!important}
+.tab-track .fp:hover{background:var(--wm-card)!important;border-color:var(--wm-border)!important;color:var(--wm-ink2)!important}
+.tab-track .fp.on{background:var(--wm-bronze-light)!important;border-color:var(--wm-bronze)!important;color:var(--wm-bronze)!important;box-shadow:none!important}
+[data-theme="dark"] .tab-track .fp.on{background:#3a1818!important;border-color:#8b4040!important;color:#e08080!important}
 .stats-w{padding-top:28px!important}
 .stats-g{gap:14px!important}
 .filt-w{padding-top:28px!important}
@@ -1330,21 +1339,25 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   .sc:not(:nth-child(3n))::after{display:block}
 }
 
-/* ---- task rows: flat, hairline-divided, no card boxes ---- */
-.ta{gap:0!important}
+/* ---- task cards: separated again (own background, border, radius,
+   soft shadow, gap between rows) so tasks read as distinct items
+   instead of one continuous strip — same idea as the earlier version,
+   but in the current muted/editorial palette instead of the old
+   drop-shadow-on-cream look ---- */
+.ta{gap:14px!important}
 .task-section{border:none!important}
-.tc{border:none!important;border-radius:0!important;border-bottom:1px solid var(--wm-border)!important;box-shadow:none!important;background:transparent!important;transition:background .12s ease!important}
-.tc:hover{background:rgba(25,24,22,.02)!important;border-color:var(--wm-border)!important}
-[data-theme="dark"] .tc:hover{background:rgba(255,255,255,.02)!important}
+.tc{border:1px solid var(--wm-border)!important;border-radius:12px!important;box-shadow:0 1px 3px rgba(25,24,22,.05)!important;background:var(--wm-card)!important;transition:box-shadow .15s ease,border-color .15s ease!important}
+.tc:hover{box-shadow:0 4px 16px rgba(25,24,22,.08)!important;border-color:var(--wm-border-strong)!important;background:var(--wm-card)!important}
+[data-theme="dark"] .tc:hover{box-shadow:0 4px 16px rgba(0,0,0,.25)!important}
 /* done tasks: dimmed at rest so the eye lands on what's still open;
    full clarity on hover, or once expanded to actually read it */
-.tc.st-done{background:transparent!important;opacity:.6;transition:opacity .15s ease,background .12s ease!important}
+.tc.st-done{opacity:.6;transition:opacity .15s ease,box-shadow .15s ease,border-color .15s ease!important}
 .tc.st-done:hover,.tc.st-done:not(.tc-collapsed){opacity:1}
 .tc.overdue{animation:none!important}
 .tc.st-work,.tc.st-clarify{animation:none!important}
-.tc-header{padding:20px 4px 14px!important;gap:8px!important}
-.tc-foot{padding:0 4px 20px!important;border-top:none!important}
-.tc-inner{margin:0 4px 20px!important;background:transparent!important;border:none!important;border-left:2px solid var(--wm-border)!important;padding:2px 0 2px 18px!important}
+.tc-header{padding:18px 22px 14px!important;gap:8px!important}
+.tc-foot{padding:12px 22px 20px!important;border-top:1px dashed var(--wm-border)!important}
+.tc-inner{margin:0 22px 18px!important;background:transparent!important;border:none!important;border-left:2px solid var(--wm-border)!important;padding:2px 0 2px 18px!important}
 [data-theme="dark"] .tc-inner{background:transparent!important;border-left-color:var(--border)!important}
 
 /* -- expanded body: consistent editorial rhythm, dashed key/value blocks -- */
