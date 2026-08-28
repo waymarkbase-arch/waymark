@@ -1479,6 +1479,13 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   .btn-logout{display:none!important}
   .masthead-top{flex-wrap:wrap;row-gap:8px}
   .hdr-r{flex-wrap:wrap;justify-content:flex-end}
+
+  /* 6. "Архів", "Аналітика" та "Журнал" уже є в нижньому мобільному
+        навбарі — прибираємо дублікати з верхньої вкладки тільки на
+        мобільному. "Завдання" й "Досьє турів" залишені за проханням.
+        goTab() керує видимістю секцій незалежно від цих кнопок,
+        тож приховування нічого не ламає. */
+  .tab-arch,.tab-anlyt,.tab-log{display:none!important}
 }
 </style>
 </head>
@@ -1846,9 +1853,9 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 <div class="tabs">
   <button class="tab on" onclick="goTab('main',this)">Завдання</button>
   <button class="tab tab-tours" onclick="goTab('tours',this)">Досьє турів</button>
-  <button class="tab" onclick="goTab('arch',this)">Архів</button>
-  <button class="tab" onclick="goTab('anlyt',this)">Аналітика</button>
-  <button class="tab" onclick="goTab('log',this)">Журнал</button>
+  <button class="tab tab-arch" onclick="goTab('arch',this)">Архів</button>
+  <button class="tab tab-anlyt" onclick="goTab('anlyt',this)">Аналітика</button>
+  <button class="tab tab-log" onclick="goTab('log',this)">Журнал</button>
 </div>
 <!-- MAIN -->
 <div id="vMain">
