@@ -1031,6 +1031,17 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .clk-loc{font-family:var(--wm-sans)!important;font-size:10px!important;font-weight:700!important;letter-spacing:.1em!important;text-transform:uppercase;color:var(--wm-muted)!important;white-space:nowrap}
 [data-theme="dark"] .clk-loc{color:var(--text3)!important}
 
+/* ---- content max-width: everything used flat 48px side padding with
+   no cap, so on wide screens the page stretched edge-to-edge and the
+   48px started reading as "no breathing room". Cap + center it. ---- */
+.hdr,.hdr.masthead,.tabs,.stats-w,.filt-w,.sa,.ta,.pag-bar,.tr-controls,.tr-grid,.arch-w,.anlyt-w{
+  max-width:1440px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  box-sizing:border-box!important;
+  float:none!important;
+}
+
 /* ---- avatars: neutral dark tone everywhere (no per-person colours) ---- */
 .cav{background:var(--wm-ink)!important;width:26px!important;height:26px!important;font-size:9px!important}
 .cav-arr svg{width:14px!important;height:14px!important}
@@ -1282,8 +1293,8 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
    (kept fully functional — clock in/out is a real feature) */
 .masthead-top .clk{background:transparent!important;border:none!important;box-shadow:none!important;padding:2px 6px!important}
 .masthead-top .clk-t{font-family:var(--wm-mono)!important;font-size:12px!important;font-weight:600!important;color:var(--wm-muted)!important}
-.masthead-top .clk-loc{display:inline!important;font-size:9px!important;color:var(--wm-muted)!important;font-weight:700!important;margin-right:6px!important}
-.masthead-top .clk>div:last-child{display:flex!important;align-items:center;gap:0!important}
+.masthead-top .clk-loc{display:inline!important;font-size:9px!important;color:var(--wm-muted)!important;font-weight:700!important;margin-right:0!important}
+.masthead-top .clk>div:last-child{display:flex!important;align-items:center;gap:7px!important}
 .masthead-top .clk-l{background:transparent!important;border:none!important;padding:0!important;font-size:9px!important}
 
 /* ---- section nav: newspaper rubrics ---- */
