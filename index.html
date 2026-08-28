@@ -1092,6 +1092,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 [data-theme="dark"] .tc-inner{background:var(--surface2)!important;border-color:var(--border)!important}
 .tc-note{border:1px solid var(--wm-border)!important;background:var(--wm-card)!important;color:var(--wm-ink2)!important}
 .tc-url-label,.tc-res-label{font-size:10px!important;font-weight:700!important;letter-spacing:.06em!important;text-transform:uppercase;color:var(--wm-muted)!important}
+.tc-res-label{color:#22643a!important}
 .tc-url,.tc-res-link{color:var(--wm-ink)!important}
 .tc-forecast{background:var(--wm-bronze-light)!important;color:var(--wm-bronze)!important}
 .tc-hours-top{color:#22643a!important}
@@ -1343,6 +1344,10 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 /* -- expanded body: consistent editorial rhythm, dashed key/value blocks -- */
 .tc-note{border:none!important;background:transparent!important;padding:0!important;margin-bottom:14px!important;color:var(--wm-ink2)!important;line-height:1.55!important}
 .tc-url-label,.tc-res-label{font-family:var(--wm-sans)!important;font-size:9.5px!important;font-weight:700!important;letter-spacing:.12em!important;text-transform:uppercase;color:var(--wm-muted)!important;margin-bottom:4px!important}
+.tc-res-label{color:#22643a!important;display:inline-flex!important;align-items:center;gap:5px!important}
+.tc-res-label::before{content:'';width:5px;height:5px;border-radius:50%;background:#22643a;flex-shrink:0}
+[data-theme="dark"] .tc-res-label{color:#a3c28c!important}
+[data-theme="dark"] .tc-res-label::before{background:#a3c28c!important}
 .tc-url{font-family:var(--wm-mono)!important;font-size:11.5px!important;word-break:break-all;color:var(--wm-ink2)!important}
 .tc-res{font-family:var(--wm-sans)!important}
 .tc-res-link{font-family:var(--wm-mono)!important;font-size:11.5px!important}
@@ -1363,8 +1368,11 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tc-hours-top{font-family:var(--wm-sans)!important;font-size:11px!important;font-weight:600!important;letter-spacing:.04em!important}
 .tc-status-chip{font-family:var(--wm-sans)!important;font-size:10px!important;font-weight:700!important;letter-spacing:.1em!important;text-transform:uppercase;color:#4c6b3f!important}
 [data-theme="dark"] .tc-status-chip{color:#a3c28c!important}
-/* -- result block: neutral accent line instead of a green fill bar -- */
-.tc-res>div>div:first-child{background:var(--wm-border-strong)!important;width:2px!important;border-radius:0!important;min-height:0!important;align-self:auto!important}
+/* -- result block: quiet sage accent line + status-style dot on the
+   label, reusing the system's existing "done" green (#22643a / #b8dbc3)
+   instead of the old flat mint fill bar -- */
+.tc-res>div>div:first-child{background:#b8dbc3!important;width:2px!important;border-radius:0!important;min-height:0!important;align-self:auto!important}
+[data-theme="dark"] .tc-res>div>div:first-child{background:#3d6b4c!important}
 
 /* -- comment box: minimal, tied visually to the actions above -- */
 .tc-cmt-box{margin-top:14px!important}
@@ -4255,6 +4263,32 @@ function render(){
   const STATUS_ORDER=['urgent','work','clarify','new','test','done'];
   const STATUS_LABELS={urgent:'Терміново',work:'В роботі',clarify:'Уточнення',new:'Нові',test:'Тестування',done:'Виконано'};
   const STATUS_BAR_CLS={urgent:'sb-urgent',work:'sb-work',clarify:'sb-clarify',new:'sb-new',test:'sb-test',done:'sb-done'};
+  // ── time-aware placeholder titles for tasks created with no title ──
+  // picks a phrase for the period of day the task was created in, and
+  // appends the exact created time in parentheses, e.g. "Ранкова іскра (08:30)"
+  const _phPools={
+    morning:['Ранкова іскра','Світанкова нотатка','Перша думка дня','Ранковий відбиток'],
+    midday: ['Полудневий квест','Обідня знахідка','Розпал дня','Денна зачіпка'],
+    evening:['Вечірній артефакт','Вечірній підсумок','Присмеркова думка','Вечірня знахідка'],
+    night:  ['Нічна гіпотеза','Опівнічне натхнення','Безсонна ідея','Нічний спалах']
+  };
+  const _phFallback=['Завдання без імені, але з характером','Щось важливе','Місія без брифінгу'];
+  function phPeriodOfDay(hh){
+    if(hh>=5&&hh<11) return 'morning';
+    if(hh>=11&&hh<17) return 'midday';
+    if(hh>=17&&hh<22) return 'evening';
+    return 'night';
+  }
+  function phTitlePlaceholder(t,phIdx){
+    if(t.createdTime&&/^\d{1,2}:\d{2}$/.test(t.createdTime)){
+      const hh=parseInt(t.createdTime.split(':')[0],10);
+      const pool=_phPools[phPeriodOfDay(hh)];
+      return pool[phIdx%pool.length]+' ('+t.createdTime+')';
+    }
+    // older tasks saved before createdTime existed — no hour to anchor to
+    return _phFallback[phIdx%_phFallback.length];
+  }
+
   const renderCard=(t,phIdx)=>{
     const tid=typeof t.id==='number'?t.id:`'${t.id}'`; // safe id ref for inline handlers
     const isW=t.status==='work',over=isOverdue(t);
@@ -4334,11 +4368,8 @@ function render(){
     const tagsH=tourBadgeH+t.tags.filter(g=>!g.startsWith('@')).map(g=>`<span class="tg tg-label">${esc(g)}</span>`).join('');
     const cmtsH=t.cmts.length?`<div class="tc-cmts">${t.cmts.map(c=>{const isMine=c.by===curU;const mgrName=mgr(c.by).name||c.by;return `<div class="tc-cmt ${isMine?'mine':'other'}">${!isMine?`<div class="tc-cmt-by">${esc(mgrName)}</div>`:''}<div class="tc-cmt-bubble">${esc(c.tx)}</div><div class="tc-cmt-time">${esc(c.t)}</div></div>`;}).join('')}</div>`:'';
 
-    // title — fallback to note, then placeholder (url shown separately in body)
-    const _placeholders=['Завдання з таємничою місією','Завдання, яке само знає хто воно','Місія без брифінгу',
-      'Таємне завдання №'+(phIdx%7+1),
-      'Шось треба зробити','Завдання без імені, але з характером','Щось важливе'];
-    const _ph=_placeholders[phIdx%7];
+    // title — fallback to note, then a time-aware placeholder (url shown separately in body)
+    const _ph=phTitlePlaceholder(t,phIdx);
     const titleText=(t.title&&t.title.trim())?t.title:_ph;
 
     // ── assignee name (the person the task is FOR — mirrors reference's single assignee-info pill) ──
