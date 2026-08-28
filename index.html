@@ -1282,7 +1282,8 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
    (kept fully functional — clock in/out is a real feature) */
 .masthead-top .clk{background:transparent!important;border:none!important;box-shadow:none!important;padding:2px 6px!important}
 .masthead-top .clk-t{font-family:var(--wm-mono)!important;font-size:12px!important;font-weight:600!important;color:var(--wm-muted)!important}
-.masthead-top .clk-loc{display:none!important}
+.masthead-top .clk-loc{display:inline!important;font-size:9px!important;color:var(--wm-muted)!important;font-weight:700!important;margin-right:6px!important}
+.masthead-top .clk>div:last-child{display:flex!important;align-items:center;gap:0!important}
 .masthead-top .clk-l{background:transparent!important;border:none!important;padding:0!important;font-size:9px!important}
 
 /* ---- section nav: newspaper rubrics ---- */
@@ -1322,8 +1323,39 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tc.st-work,.tc.st-clarify{animation:none!important}
 .tc-header{padding:20px 4px 14px!important;gap:8px!important}
 .tc-foot{padding:0 4px 20px!important;border-top:none!important}
-.tc-inner{margin:0 4px 18px!important;background:transparent!important;border:none!important;padding:0 0 0 0!important}
-[data-theme="dark"] .tc-inner{background:transparent!important}
+.tc-inner{margin:0 4px 20px!important;background:transparent!important;border:none!important;border-left:2px solid var(--wm-border)!important;padding:2px 0 2px 18px!important}
+[data-theme="dark"] .tc-inner{background:transparent!important;border-left-color:var(--border)!important}
+
+/* -- expanded body: consistent editorial rhythm, dashed key/value blocks -- */
+.tc-note{border:none!important;background:transparent!important;padding:0!important;margin-bottom:14px!important;color:var(--wm-ink2)!important;line-height:1.55!important}
+.tc-url-label,.tc-res-label{font-family:var(--wm-sans)!important;font-size:9.5px!important;font-weight:700!important;letter-spacing:.12em!important;text-transform:uppercase;color:var(--wm-muted)!important;margin-bottom:4px!important}
+.tc-url{font-family:var(--wm-mono)!important;font-size:11.5px!important;word-break:break-all;color:var(--wm-ink2)!important}
+.tc-res{font-family:var(--wm-sans)!important}
+.tc-res-link{font-family:var(--wm-mono)!important;font-size:11.5px!important}
+.tc-inner>div{margin-bottom:14px!important}
+.tc-inner>div:last-child{margin-bottom:0!important}
+
+/* -- action row: quiet, left-aligned, no giant black bar -- */
+.tc-actions{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;margin-top:6px!important;padding-top:14px!important;border-top:1px dashed var(--wm-border)!important}
+[data-theme="dark"] .tc-actions{border-top-color:var(--border)!important}
+.tc-actions .edit-btn-main{width:auto!important;max-width:none!important;padding:8px 20px!important;font-size:11px!important}
+.tc-actions>div{display:flex!important;gap:8px!important}
+.tc-btn-del,.tc-btn-arch{background:transparent!important;color:var(--wm-ink2)!important}
+.tc-btn-del:hover{background:transparent!important;color:#a83820!important;border-color:#a83820!important}
+.tc-btn-arch:hover{background:transparent!important;color:var(--wm-ink)!important;border-color:var(--wm-border-strong)!important}
+[data-theme="dark"] .tc-btn-del,[data-theme="dark"] .tc-btn-arch{color:var(--text2)!important;border-color:var(--border)!important}
+
+/* -- hours / done badge: quiet inline label, not a floating pill -- */
+.tc-hours-top{font-family:var(--wm-sans)!important;font-size:11px!important;font-weight:600!important;letter-spacing:.04em!important}
+.tc-status-chip{font-family:var(--wm-sans)!important;font-size:10px!important;font-weight:700!important;letter-spacing:.1em!important;text-transform:uppercase;color:#4c6b3f!important}
+[data-theme="dark"] .tc-status-chip{color:#a3c28c!important}
+/* -- result block: neutral accent line instead of a green fill bar -- */
+.tc-res>div>div:first-child{background:var(--wm-border-strong)!important;width:2px!important;border-radius:0!important;min-height:0!important;align-self:auto!important}
+
+/* -- comment box: minimal, tied visually to the actions above -- */
+.tc-cmt-box{margin-top:14px!important}
+.tc-cmt-box textarea{border:1px solid var(--wm-border)!important;font-size:12.5px!important}
+.tc-cmt-box button{border-radius:8px!important;font-size:11px!important;padding:7px 16px!important}
 
 /* -- kicker line: STATUS · CATEGORY, plain caps text, no pill/dot -- */
 .tc-badges{gap:0!important;display:flex!important;align-items:center;flex-wrap:wrap}
@@ -1907,7 +1939,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   <div class="tr-grid" id="trGrid"></div>
 </div>
 
-<div class="pg-foot">© Видано Ковачем · Waymark, Київ</div>
+<div class="pg-foot">Made by Kovach</div>
 </div>
 
 <!-- CALENDAR -->
@@ -4254,7 +4286,7 @@ function render(){
 
     // ── wristwatch icon (Frame-3) for hours — top of inner panel ──
     const wristSvg=`<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12.875 8C12.8747 7.22638 12.6902 6.46395 12.3366 5.77585C11.9831 5.08775 11.4707 4.49377 10.8418 4.04313L10.4437 1.84375C10.4071 1.64203 10.3008 1.45957 10.1434 1.32821C9.98602 1.19685 9.78749 1.12493 9.58247 1.125H6.41747C6.21245 1.12493 6.01392 1.19685 5.85652 1.32821C5.69911 1.45957 5.59283 1.64203 5.55622 1.84375L5.1581 4.04313C4.52908 4.49358 4.01652 5.08751 3.66292 5.77566C3.30933 6.4638 3.12488 7.22633 3.12488 8C3.12488 8.77367 3.30933 9.5362 3.66292 10.2243C4.01652 10.9125 4.52908 11.5064 5.1581 11.9569L5.55622 14.1562C5.59283 14.358 5.69911 14.5404 5.85652 14.6718C6.01392 14.8032 6.21245 14.8751 6.41747 14.875H9.58247C9.78749 14.8751 9.98602 14.8032 10.1434 14.6718C10.3008 14.5404 10.4071 14.358 10.4437 14.1562L10.8418 11.9569C11.4707 11.5062 11.9831 10.9123 12.3366 10.2242C12.6902 9.53605 12.8747 8.77362 12.875 8ZM7.99997 12.125C7.18412 12.125 6.3866 11.8831 5.70824 11.4298C5.02989 10.9766 4.50118 10.3323 4.18897 9.57857C3.87676 8.82482 3.79507 7.99542 3.95423 7.19525C4.1134 6.39508 4.50626 5.66008 5.08316 5.08318C5.66005 4.50629 6.39505 4.11342 7.19522 3.95426C7.99539 3.7951 8.8248 3.87679 9.57854 4.189C10.3323 4.50121 10.9765 5.02992 11.4298 5.70827C11.883 6.38663 12.125 7.18415 12.125 8C12.1236 9.09361 11.6886 10.1421 10.9153 10.9154C10.142 11.6887 9.09358 12.1237 7.99997 12.125Z" fill="#679673"/></svg>`;
-    const statusBadgeH=`<span style="background:#EAF6F0;color:#2e7d4f;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600">${SL[t.status]||''}</span>`;
+    const statusBadgeH=`<span class="tc-status-chip">${SL[t.status]||''}</span>`;
     const doneBadgeH=t.status==='done'&&!t.hours?`<div style="display:flex;justify-content:flex-end;margin-bottom:8px">${statusBadgeH}</div>`:'';
     const hoursH=t.hours&&canAccessHours()?`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:8px"><div class="tc-hours-top" style="margin-bottom:0">${wristSvg}<span>${fmtHrs(t.hours)}</span></div>${statusBadgeH}</div>`:'';
 
