@@ -218,12 +218,27 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .fp-label-x{margin-left:4px;opacity:.5;font-size:11px}.fp-label-x:hover{opacity:1}
 .fp-add-label{border:1px dashed #b0c8e0;background:transparent;border-radius:50px;padding:6px 14px;font-size:12px;font-family:inherit;color:#88aacc;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
 .fp-add-label:hover{background:#eaf3fb;color:#5588bb}
+.tag-scroll{flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.tag-scroll::-webkit-scrollbar{display:none}
+.tag-scroll-inner{flex-wrap:nowrap!important}
+.tag-scroll-inner .fp,.tag-scroll-inner .fp-label,.tag-scroll-inner .fp-add-label{flex-shrink:0}
+.tag-scroll-sep{width:1px;align-self:stretch;background:#e2ded4;flex-shrink:0;margin:2px 2px}
+[data-theme="dark"] .tag-scroll-sep{background:var(--border)}
 .sa{padding:14px 48px 0;display:flex;align-items:center;gap:16px}
 .sb{flex:1;border:1px solid #d2d0c8;background:#fff;border-radius:10px;padding:11px 18px;display:flex;align-items:center;gap:10px}
 .sb input{border:none;outline:none;background:transparent;font-size:13px;font-family:inherit;color:#888;width:100%}
 .sb input::placeholder{color:#ccc;font-size:12px;letter-spacing:.08em}
 .btn-cal{background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:11px 16px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#888;font-family:inherit}
 .btn-cal:hover{background:#f5f3ee}
+.sb-collapsible{flex:0 0 auto;padding:0;border:1px solid #d2d0c8;background:#fff;border-radius:30px;overflow:hidden;transition:flex-basis .2s ease,width .2s ease}
+.sb-icon-btn{border:none;background:transparent;cursor:pointer;padding:10px;display:flex;align-items:center;justify-content:center;color:#888;flex-shrink:0}
+.sb-icon-btn:hover{color:#555}
+.sb-collapsible input{width:0;padding:0;opacity:0;transition:width .2s ease,opacity .15s ease,padding .2s ease}
+.sb-collapsible.open{flex:0 0 auto;width:min(240px,60vw)}
+.sb-collapsible.open input{width:160px;opacity:1;padding:11px 14px 11px 0}
+@media(max-width:768px){.sb-collapsible.open{width:min(200px,60vw)}.sb-collapsible.open input{width:120px}}
+.btn-cal.btn-icon-only{padding:10px!important;border-radius:50%!important;gap:0!important;width:38px;height:38px;justify-content:center}
+.btn-icon-only svg{display:block}
 .btn-add{background:#2f52cc;color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .btn-qk{background:#28a890;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:.07em;white-space:nowrap}
 .ta{padding:20px 48px 40px;display:flex;flex-direction:column;gap:16px}
@@ -1434,8 +1449,12 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .pag-info-range{color:var(--wm-muted)!important;opacity:.7}
 [data-theme="dark"] .pag-word{color:var(--text)!important}
 
-.pg-foot{border-top:1px solid var(--wm-border)!important;font-family:var(--wm-sans)!important;text-transform:uppercase;letter-spacing:.14em!important;font-size:10px!important;font-weight:700!important;padding-top:20px!important}
-[data-theme="dark"] .pg-foot{border-top-color:var(--border)!important}
+.pg-foot{border-top:none!important;display:flex!important;flex-direction:column;align-items:center;gap:9px;padding:34px 0 22px!important}
+.pg-foot-rule{width:34px;height:1px;background:var(--wm-bronze);opacity:.55}
+.pg-foot-kicker{font-family:var(--wm-sans);text-transform:uppercase;letter-spacing:.22em;font-size:9.5px;font-weight:700;color:var(--wm-muted)}
+.pg-foot-brand{font-family:var(--wm-serif);text-transform:none;letter-spacing:.03em;font-size:16px;font-style:italic;font-weight:600;color:var(--wm-bronze)}
+[data-theme="dark"] .pg-foot-rule{background:#8b4040}
+[data-theme="dark"] .pg-foot-brand{color:#c99a6a}
 
 /* ══════════════════════════════════════════════════════════
    MOBILE UX FIXES (scoped strictly to max-width:768px —
@@ -1861,28 +1880,22 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 <div id="vMain">
   <div class="stats-w"><div class="stats-g" id="sg"></div></div>
   <div class="filt-w">
-    <div class="frow">
-      <div class="tab-track">
-        <button class="fp" data-f="new" onclick="sf('new',this)">Нові</button>
-        <button class="fp" data-f="work" onclick="sf('work',this)">В роботі</button>
-        <button class="fp" data-f="clarify" onclick="sf('clarify',this)">Уточнення</button>
-        <button class="fp" data-f="done" onclick="sf('done',this)">Виконано</button>
-        <button class="fp" data-f="urgent" onclick="sf('urgent',this)">Терміново</button>
-        <button class="fp" data-f="test" onclick="sf('test',this)">Тестування</button>
-      </div>
-    </div>
-    <div class="frow">
-      <div class="tab-track">
+    <div class="frow tag-scroll">
+      <div class="tab-track tag-scroll-inner">
         <button class="fp on" data-f="all" onclick="sf('all',this)">Всі</button>
         <button class="fp" data-f="mine" id="fpMine" onclick="sfMine(this)">Мої</button>
+        <span class="tag-scroll-sep"></span>
+        <div id="labelPills" style="display:contents"></div>
+        <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
       </div>
-      <div id="labelPills" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-      <button class="fp-add-label" onclick="openAddLabel()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новий тег</button>
     </div>
   </div>
   <div class="sa">
-    <div class="sb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="srch" placeholder="Знайти" oninput="currentPage=1;render()"></div>
-    <button class="btn-cal" onclick="openCal(null,null)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#545048" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Календар</button>
+    <div class="sb sb-collapsible" id="sbSearch">
+      <button class="sb-icon-btn" onclick="toggleSearch()" title="Пошук" aria-label="Пошук"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+      <input id="srch" placeholder="Знайти" oninput="currentPage=1;render()" onblur="collapseSearchIfEmpty()">
+    </div>
+    <button class="btn-cal btn-icon-only" onclick="openCal(null,null)" title="Календар" aria-label="Календар"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM84,184a12,12,0,1,1,12-12A12,12,0,0,1,84,184Zm44,0a12,12,0,1,1,12-12A12,12,0,0,1,128,184Zm0-40a12,12,0,1,1,12-12A12,12,0,0,1,128,144Zm44,40a12,12,0,1,1,12-12A12,12,0,0,1,172,184Zm0-40a12,12,0,1,1,12-12A12,12,0,0,1,172,144Zm36-64H48V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24Z"></path></svg></button>
     <div style="display:flex;gap:4px;background:#fff;border:1px solid #d2d0c8;border-radius:10px;padding:4px">
       <button class="sort-btn on" data-s="created" onclick="toggleSort('created')" title="За датою створення" style="border:none;background:none;border-radius:7px;padding:5px 10px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500">Дата <span id="sort-created-icon">↓</span></button>
       <button class="sort-btn" data-s="deadline" onclick="toggleSort('deadline')" title="За дедлайном" style="border:none;background:none;border-radius:7px;padding:5px 10px;font-size:11px;font-family:inherit;cursor:pointer;color:#666;font-weight:500">Дедлайн <span id="sort-deadline-icon">↑</span></button>
@@ -2029,7 +2042,11 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
   <div class="tr-grid" id="trGrid"></div>
 </div>
 
-<div class="pg-foot">Made by Kovach</div>
+<div class="pg-foot">
+  <div class="pg-foot-rule"></div>
+  <div class="pg-foot-kicker">Дизайн і розробка</div>
+  <div class="pg-foot-brand">M. Kovach</div>
+</div>
 </div>
 
 <!-- CALENDAR -->
@@ -4201,6 +4218,21 @@ function addLabel(){
   const v=document.getElementById('lInp').value.trim();
   if(!v||customLabels.includes(v))return;
   customLabels.push(v);document.getElementById('lInp').value='';closeM('mLabel');renderLabelPills();save();
+}
+
+/* ── SEARCH TOGGLE ── */
+function toggleSearch(){
+  const box=document.getElementById('sbSearch');
+  const inp=document.getElementById('srch');
+  const opening=!box.classList.contains('open');
+  box.classList.toggle('open');
+  if(opening) setTimeout(()=>inp.focus(),150);
+  else if(!inp.value) inp.blur();
+}
+function collapseSearchIfEmpty(){
+  const inp=document.getElementById('srch');
+  const box=document.getElementById('sbSearch');
+  if(!inp.value) box.classList.remove('open');
 }
 
 /* ── FILTER ── */
