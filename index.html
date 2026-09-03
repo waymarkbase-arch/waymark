@@ -411,6 +411,14 @@ html,body{font-family:'Inter',sans-serif;background:#F0EEE6;min-height:100vh}
 .date-display{width:100%;border:1px solid #e4e0da;border-radius:9px;padding:9px 12px;font-size:13px;font-family:inherit;color:#333;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:space-between}
 .date-display:hover{border-color:#bbb}
 .date-display .placeholder{color:#aaa}
+.forecast-display{gap:10px}
+.forecast-display svg{flex-shrink:0}
+.cal-time{display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eee9e2}
+.cal-time.show{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-time label{font-size:11px;color:#aaa;margin:0;font-weight:500}
+.cal-time input{border:1px solid #e4e0da;border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;color:#333;background:#fff;outline:none}
+.cal-time input:hover{border-color:#bbb}
+.cal-time input:focus{border-color:#8c6e4a;box-shadow:0 0 0 2px rgba(140,110,74,.08)}
 /* ARCHIVE */
 .arch-w{padding:20px 48px 40px}
 .arch-subtabs{display:flex;gap:8px;margin-bottom:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
@@ -2059,6 +2067,10 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <button class="cal-nav" onclick="calNav(1)">&#8250;</button>
     </div>
     <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-time" id="calTimeWrap">
+      <label for="calTime">Час виконання</label>
+      <input id="calTime" type="time" value="09:00">
+    </div>
     <div class="cal-footer">
       <button class="cal-close" onclick="closeCal()">Закрити</button>
       <button class="cal-select-btn" id="calSelBtn" onclick="calConfirmDate()">Обрати</button>
@@ -2085,7 +2097,18 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </div><input type="hidden" id="fDl">
     </div>
-    <label>Прогноз виконання</label><input id="fFc" type="datetime-local">
+    <label>Прогноз виконання</label>
+    <div class="date-field forecast-field">
+      <div class="date-display forecast-display" id="fFcDisp" onclick="openCal('forecast','fFcDisp')">
+        <span id="fFcTxt" class="placeholder">Оберіть дату та час...</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <input type="hidden" id="fFc">
+    </div>
     <label>Виконавець</label><select id="fTo"></select>
     <label>🏛 Прив'язати до туру</label><select id="fTourSel"><option value="">— не прив'язано —</option></select>
     <label>Результат (зелена смужка)</label><input id="fR" placeholder="Посилання або опис...">
@@ -4128,33 +4151,63 @@ function renderVacBanner(){
 /* ── CALENDAR ── */
 function openCal(mode,targetId){
   calMode=mode;calTarget=targetId;calSelected=null;
+
   const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate'];
-  if(picks.includes(mode)){
+  const timeWrap=document.getElementById('calTimeWrap');
+  const timeInput=document.getElementById('calTime');
+
+  if(mode==='forecast'){
+    const raw=document.getElementById('fFc').value || '';
+    const normalized=forecastInputValue(raw);
+    let datePart='',timePart='09:00';
+
+    if(normalized){
+      const m=normalized.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/);
+      if(m){ datePart=m[1]; timePart=m[2]; }
+    }
+
+    calDate=datePart?new Date(datePart+'T12:00:00'):new Date();
+    calSelected=datePart || null;
+    timeInput.value=timePart;
+    timeWrap.classList.add('show');
+    document.getElementById('calSelBtn').classList.add('show');
+  } else if(picks.includes(mode)){
     let existVal='';
     if(mode==='deadline') existVal=document.getElementById('fDl').value;
     else if(mode==='pFrom') existVal=document.getElementById('pFrom').value;
     else if(mode==='pTo') existVal=document.getElementById('pTo').value;
     else if(mode==='trNextDate') existVal=document.getElementById('trNextDate').value;
     else if(mode.startsWith('vac')){
-      // calTarget holds code+field
       const [code,field]=calTarget.split('|');
       const m=managers.find(x=>x.code===code);
       existVal=m?m[field]:'';
     }
     calDate=existVal?new Date(existVal+'T12:00:00'):new Date();
+    timeWrap.classList.remove('show');
     document.getElementById('calSelBtn').classList.add('show');
   } else {
     calDate=new Date();
+    timeWrap.classList.remove('show');
     document.getElementById('calSelBtn').classList.remove('show');
   }
-  renderCal();document.getElementById('calOv').classList.remove('hide');
+
+  renderCal();
+  document.getElementById('calOv').classList.remove('hide');
 }
 function closeCal(){document.getElementById('calOv').classList.add('hide');}
 function calNav(d){calDate.setMonth(calDate.getMonth()+d);renderCal();}
 function calConfirmDate(){
   if(!calSelected) return;
   const iso=calSelected;
-  if(calMode==='deadline'){
+
+  if(calMode==='forecast'){
+    const tm=document.getElementById('calTime').value || '09:00';
+    const value=iso+'T'+tm;
+    document.getElementById('fFc').value=value;
+    const t=document.getElementById('fFcTxt');
+    t.textContent=fmtForecast(value);
+    t.className='';
+  } else if(calMode==='deadline'){
     document.getElementById('fDl').value=iso;
     const t=document.getElementById('fDlTxt');t.textContent=iso;t.className='';
   } else if(calMode==='pFrom'){
@@ -4197,11 +4250,11 @@ function renderCal(){
   document.getElementById('calGrid').innerHTML=html;
 }
 function calPickDay(iso){
-  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate'];
+  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate','forecast'];
   if(picks.includes(calMode)){calSelected=iso;calDate=new Date(iso+'T12:00:00');renderCal();}
 }
 document.getElementById('calOv').addEventListener('click',function(e){
-  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate'];
+  const picks=['deadline','pFrom','pTo','vacFrom','vacTo','trNextDate','forecast'];
   if(e.target===this&&!picks.includes(calMode)) closeCal();
 });
 
@@ -5717,7 +5770,9 @@ function openAdd(id){
     document.getElementById('fTg').value=t.tags.join(', ');
     document.getElementById('fDl').value=t.deadline;
     const dt=document.getElementById('fDlTxt');dt.textContent=t.deadline||'Оберіть дату...';dt.className=t.deadline?'':'placeholder';
-    document.getElementById('fFc').value=forecastInputValue(t.forecast);document.getElementById('fTo').value=t.to;document.getElementById('fR').value=t.result;
+    document.getElementById('fFc').value=forecastInputValue(t.forecast);
+    const ffcTxt=document.getElementById('fFcTxt');ffcTxt.textContent=t.forecast?fmtForecast(t.forecast):'Оберіть дату та час...';ffcTxt.className=t.forecast?'':'placeholder';
+    document.getElementById('fTo').value=t.to;document.getElementById('fR').value=t.result;
     document.getElementById('fHours').value=t.hours||0;
     const fTourSelEdit=document.getElementById('fTourSel');if(fTourSelEdit)fTourSelEdit.value=t.tourId||'';
     const df=t.driveFiles||[];document.getElementById('fDriveFiles').value=JSON.stringify(df);renderDriveLinks(df);
@@ -5729,6 +5784,7 @@ function openAdd(id){
   } else {
     document.getElementById('mH').textContent='+ Нове завдання';document.getElementById('mBtn').textContent='Створити';
     ['fT','fU','fN','fTg','fFc','fR'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('fFcTxt').textContent='Оберіть дату та час...';document.getElementById('fFcTxt').className='placeholder';
     document.getElementById('fDl').value='';document.getElementById('fDlTxt').textContent='Оберіть дату...';document.getElementById('fDlTxt').className='placeholder';
     document.getElementById('fS').value='new';
     const firstVisible=managers.find(m=>!m.hidden);
