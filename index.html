@@ -1205,6 +1205,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 /* -- expanded inner panel: keep the warm neutral wash, no blue defaults -- */
 .tc-note{font-style:italic!important}
 .tc-forecast{border-radius:20px!important;font-family:var(--wm-sans)!important}
+.tc-forecast svg{flex-shrink:0;width:18px;height:18px}.tc-forecast strong{font-weight:700}
 
 /* ══════════════════════════════════════════════════════════
    ROUND 5 — remaining raw accent colours (amber/orange/red/blue)
@@ -2084,7 +2085,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </div><input type="hidden" id="fDl">
     </div>
-    <label>Прогноз виконання</label><input id="fFc" placeholder="15:30 / 2026-04-21">
+    <label>Прогноз виконання</label><input id="fFc" type="datetime-local">
     <label>Виконавець</label><select id="fTo"></select>
     <label>🏛 Прив'язати до туру</label><select id="fTourSel"><option value="">— не прив'язано —</option></select>
     <label>Результат (зелена смужка)</label><input id="fR" placeholder="Посилання або опис...">
@@ -2449,6 +2450,26 @@ document.addEventListener('DOMContentLoaded',()=>{ try{renderMastheadDate();}cat
 if(document.readyState==='complete'||document.readyState==='interactive') setTimeout(()=>{try{renderMastheadDate();}catch(e){}},0);
 const SL={new:'Нові',work:'В роботі',clarify:'Уточнення',done:'Виконано',urgent:'Терміново',test:'Тестування'};
 function fmtHrs(h){if(!h)return'';const hh=Math.floor(h),mm=Math.round((h-hh)*60);return hh>0?(mm>0?hh+'г '+mm+'хв':hh+'г'):(mm+'хв');}
+function forecastInputValue(v){
+  if(!v) return '';
+  // New format: YYYY-MM-DDTHH:mm
+  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) return v;
+  // Backward compatibility with the previous free-text format:
+  // "15:30 / 2026-04-28"
+  let m=String(v).match(/^(\d{1,2}):(\d{2})\s*\/\s*(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m) return `${m[3]}-${String(m[4]).padStart(2,'0')}-${String(m[5]).padStart(2,'0')}T${String(m[1]).padStart(2,'0')}:${m[2]}`;
+  // Also accept "2026-04-28 15:30" if an old value exists in that form.
+  m=String(v).match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})$/);
+  if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}T${String(m[4]).padStart(2,'0')}:${m[5]}`;
+  return '';
+}
+function fmtForecast(v){
+  const s=forecastInputValue(v);
+  if(!s) return String(v||'');
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  return m ? `${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]}` : s;
+}
+
 const SC={new:'tg-new',work:'tg-work',clarify:'tg-clarify',done:'tg-done',urgent:'tg-urgent',test:'tg-test'};
 const STCOL={new:'#c8cdd6',work:'#dfc9b0',clarify:'#d5d4b8',done:'#c4d8c8',urgent:'#d4c4bc',test:'#c6c6d6'};
 const STCOL_CH={new:'#9ca3b0',work:'#c09060',clarify:'#a8a870',done:'#60a878',urgent:'#b07060',test:'#8878b0'};
@@ -4463,7 +4484,7 @@ function render(){
     const dtH=dp.length?`<div class="tc-dates">${dp.join('<span style="color:#ddd;margin:0 4px">·</span>')}</div>`:'';
 
     const overdueH=over?`<div class="overdue-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Дедлайн прострочено</div>`:'';
-    const fcH=t.forecast?`<div class="tc-forecast"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M12.875 8C12.8747 7.22638 12.6902 6.46395 12.3366 5.77585C11.9831 5.08775 11.4707 4.49377 10.8418 4.04313L10.4437 1.84375C10.4071 1.64203 10.3008 1.45957 10.1434 1.32821C9.98602 1.19685 9.78749 1.12493 9.58247 1.125H6.41747C6.21245 1.12493 6.01392 1.19685 5.85652 1.32821C5.69911 1.45957 5.59283 1.64203 5.55622 1.84375L5.1581 4.04313C4.52908 4.49358 4.01652 5.08751 3.66292 5.77566C3.30933 6.4638 3.12488 7.22633 3.12488 8C3.12488 8.77367 3.30933 9.5362 3.66292 10.2243C4.01652 10.9125 4.52908 11.5064 5.1581 11.9569L5.55622 14.1562C5.59283 14.358 5.69911 14.5404 5.85652 14.6718C6.01392 14.8032 6.21245 14.8751 6.41747 14.875H9.58247C9.78749 14.8751 9.98602 14.8032 10.1434 14.6718C10.3008 14.5404 10.4071 14.358 10.4437 14.1562L10.8418 11.9569C11.4707 11.5062 11.9831 10.9123 12.3366 10.2242C12.6902 9.53605 12.8747 8.77362 12.875 8Z" fill="#679673"/></svg> ${esc(t.forecast)}</div>`:'';
+    const fcH=t.forecast?`<div class="tc-forecast"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#000000" viewBox="0 0 256 256"><path d="M134,80v44.6l37.09,22.25a6,6,0,1,1-6.18,10.3l-40-24A6,6,0,0,1,122,128V80a6,6,0,0,1,12,0Zm90-22a6,6,0,0,0-6,6V87.36c-7.48-8.83-14.94-17.13-23.53-25.83a94,94,0,1,0-1.95,134.83,6,6,0,0,0-8.24-8.72A82,82,0,1,1,186,70c9.24,9.36,17.18,18.3,25.31,28H184a6,6,0,0,0,0,12h40a6,6,0,0,0,6-6V64A6,6,0,0,0,224,58Z"></path></svg><span>Прогноз виконання: <strong>${esc(fmtForecast(t.forecast))}</strong></span></div>`:'';
 
     const _linkedTour=t.tourId?tours.find(x=>x.id===t.tourId):null;
     const tourBadgeH=_linkedTour?`<span class="tg tg-tour" onclick="event.stopPropagation();goTab('tours',document.querySelector('.tab-tours'));openTourDetail('${_linkedTour.id}')">🏛 ${esc(_linkedTour.title)}</span>`:'';
@@ -5696,7 +5717,7 @@ function openAdd(id){
     document.getElementById('fTg').value=t.tags.join(', ');
     document.getElementById('fDl').value=t.deadline;
     const dt=document.getElementById('fDlTxt');dt.textContent=t.deadline||'Оберіть дату...';dt.className=t.deadline?'':'placeholder';
-    document.getElementById('fFc').value=t.forecast;document.getElementById('fTo').value=t.to;document.getElementById('fR').value=t.result;
+    document.getElementById('fFc').value=forecastInputValue(t.forecast);document.getElementById('fTo').value=t.to;document.getElementById('fR').value=t.result;
     document.getElementById('fHours').value=t.hours||0;
     const fTourSelEdit=document.getElementById('fTourSel');if(fTourSelEdit)fTourSelEdit.value=t.tourId||'';
     const df=t.driveFiles||[];document.getElementById('fDriveFiles').value=JSON.stringify(df);renderDriveLinks(df);
@@ -5747,7 +5768,7 @@ function mkT(){
     const oldTourId=t.tourId||'',newTourId=document.getElementById('fTourSel')?document.getElementById('fTourSel').value:'';
     Object.assign(t,{title:T,url:U.replace(/^https?:\/\//,''),note:N,status:newStatus,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
-      deadline:newDl,forecast:document.getElementById('fFc').value,
+      deadline:newDl,forecast:forecastInputValue(document.getElementById('fFc').value),
       from:newFrom,
       to:newTo,result:document.getElementById('fR').value,
       hours:parseFloat(document.getElementById('fHours').value)||0,
@@ -5788,7 +5809,7 @@ function mkT(){
     tasks.unshift({id:newId,title:T,url:U.replace(/^https?:\/\//,''),note:N,
       status:document.getElementById('fS').value,
       tags:document.getElementById('fTg').value.split(',').map(s=>s.trim()).filter(Boolean),
-      created:today,createdTime:timeStr,deadline:document.getElementById('fDl').value,forecast:document.getElementById('fFc').value,
+      created:today,createdTime:timeStr,deadline:document.getElementById('fDl').value,forecast:forecastInputValue(document.getElementById('fFc').value),
       from:curU,to:document.getElementById('fTo').value,result:document.getElementById('fR').value,
       hours:parseFloat(document.getElementById('fHours').value)||0,
       tourId:(_fTourSelC&&_fTourSelC.value)?_fTourSelC.value:null,
