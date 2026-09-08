@@ -754,12 +754,18 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .badge.trs-draft::before{background:var(--wm-muted)}
 .badge.trs-needs_update{color:#96382a}
 .badge.trs-needs_update::before{background:#b04a38}
+.badge.trs-inactive{color:#a39b8c}
+.badge.trs-inactive::before{background:#a39b8c}
 .badge.trs-archived{color:#a39b8c}
 .badge.trs-archived::before{background:#a39b8c}
 [data-theme="dark"] .badge{color:var(--text2)}
 [data-theme="dark"] .badge.trs-active{color:#a3c28c}
 [data-theme="dark"] .badge.trs-needs_update{color:#dd9483}
+[data-theme="dark"] .badge.trs-inactive{color:var(--text3)}
 [data-theme="dark"] .badge.trs-archived{color:var(--text3)}
+/* tours with no upcoming departure date: visually dimmed to signal "not currently on sale" */
+.tour-card.tour-card-nodate{opacity:.55}
+.tour-card.tour-card-nodate:hover{opacity:.85}
 
 /* Tour passport modal */
 .tr-mbox{width:480px}
@@ -2039,6 +2045,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <button class="tr-pill" data-tf="active" onclick="tf('active',this)">У продажу</button>
       <button class="tr-pill" data-tf="draft" onclick="tf('draft',this)">Чернетки</button>
       <button class="tr-pill" data-tf="needs_update" onclick="tf('needs_update',this)">Потребує оновлення</button>
+      <button class="tr-pill" data-tf="inactive" onclick="tf('inactive',this)">Неактивні</button>
       <button class="tr-pill" data-tf="archived" onclick="tf('archived',this)">Архів</button>
     </div>
     <div class="tr-actionbar">
@@ -2285,6 +2292,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
           <option value="active">У продажу</option>
           <option value="draft">Чернетка</option>
           <option value="needs_update">Потребує оновлення</option>
+          <option value="inactive">Неактивний</option>
           <option value="archived">Архів</option>
         </select>
       </div>
@@ -3162,7 +3170,7 @@ function tourStaleLabel(tour){
   if(days===0) return 'Програма PDF оновлена сьогодні';
   return `Програма PDF не оновлювалася ${days} ${uaDaysWord(days)}`;
 }
-const TOUR_STATUS_LABELS={active:'У продажу',draft:'Чернетка',needs_update:'Потребує оновлення',archived:'Архів'};
+const TOUR_STATUS_LABELS={active:'У продажу',draft:'Чернетка',needs_update:'Потребує оновлення',inactive:'Неактивний',archived:'Архів'};
 // ── Departure date helpers ──
 // Internally we always store next_departure as ISO 'YYYY-MM-DD' (sortable, comparable, and it's
 // exactly what a native <input type="date"> expects/returns — no ambiguity about day/month order).
@@ -3512,9 +3520,25 @@ function commitTourFeesBulkImport(){
   closeM('mTourFeesBulk');
   showToast('Платежі додано!',`Оброблено рядків: ${added}`);
 }
+// Tours whose departure date has passed (or never had one) show as "Без дати".
+// Any such tour still marked "У продажу" is no longer actually sellable, so we
+// flip it to "Неактивний" automatically and log the change for the audit trail.
+function tourAutoDeactivateExpired(){
+  let changed=false;
+  tours.forEach(t=>{
+    if(t.status==='active'&&!tourHasUpcomingDate(t)){
+      tourLogEntry(t,'статус',TOUR_STATUS_LABELS.active,TOUR_STATUS_LABELS.inactive);
+      t.status='inactive';
+      t.updated_at=new Date().toISOString();
+      changed=true;
+    }
+  });
+  if(changed) save();
+}
 function renderTours(){
   const grid=document.getElementById('trGrid');
   if(!grid) return;
+  tourAutoDeactivateExpired();
   const q=(document.getElementById('trSrch')?.value||'').toLowerCase();
   let list=tours.slice();
   if(tourFlt==='needs_update') list=list.filter(t=>t.status==='needs_update'||tourStale(t));
@@ -3537,7 +3561,8 @@ function renderTours(){
     const tier=tourPdfTier(t);
     const linkedCount=tasks.filter(x=>x.tourId===t.id&&!x.arch).length;
     const statusCls='trs-'+t.status;
-    return `<article class="tour-card" onclick="openTourDetail('${t.id}')">
+    const noDate=!tourHasUpcomingDate(t);
+    return `<article class="tour-card${noDate?' tour-card-nodate':''}" onclick="openTourDetail('${t.id}')">
       <div class="tour-card-header">
         <span class="tour-code">${esc(t.id)}</span>
         <span class="badge ${statusCls}">${TOUR_STATUS_LABELS[t.status]||t.status}</span>
