@@ -2147,6 +2147,20 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
     <div class="qbtns"><button onclick="closeM('mQ')">Скасувати</button><button class="qprim" onclick="mkQ()">Додати</button></div>
   </div>
 </div>
+<!-- OFF-HOURS NOTICE -->
+<div class="mbg hide" id="mOff" style="z-index:260">
+  <div class="cbox" style="padding:28px 24px 22px;width:340px">
+    <div class="del-modal-icon" style="background:#fff4e0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b9770e" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div class="del-modal-title">Зараз неробочий час</div>
+    <div class="del-modal-sub" id="offMsg" style="color:#666;font-size:13px"></div>
+    <div class="cbtns-v">
+      <button class="cyes-v" id="offOk" onclick="offHoursConfirm()">Створити завдання</button>
+      <button onclick="offHoursCancel()">Скасувати</button>
+    </div>
+  </div>
+</div>
 <!-- STATUS -->
 <div class="mbg hide" id="mSt">
   <div class="mbox" style="width:300px">
@@ -4123,6 +4137,7 @@ document.addEventListener('keydown',e=>{
     case '/':e.preventDefault();document.getElementById('srch')?.focus();break;
     case 'q':case 'Q':e.preventDefault();openQ();break;
     case 'Escape':
+      if(!document.getElementById('mOff').classList.contains('hide')){offHoursCancel();break;}
       ['mAdd','mQ','mSt','mCf','mSet','mLabel','mConfLabel','mBatch','mSALogin','mSASetPwd','mSAHardDel','mProfile','mTaskDetail'].forEach(id=>{
         const el=document.getElementById(id);if(el&&!el.classList.contains('hide'))closeM(id);
       });break;
@@ -5828,11 +5843,13 @@ function openAdd(id){
   if(hw) hw.style.display=showH?'flex':'none';
   // Do NOT zero out hours when hidden — preserve existing value so it's not lost on save
 }
-function mkT(){
+function mkT(_skipOff){
   const T=document.getElementById('fT').value,U=document.getElementById('fU').value,N=document.getElementById('fN').value;
   const _wasEdit=!!eId;
   const toVal=document.getElementById('fTo').value;
   if(!toVal){alert('Оберіть виконавця.');document.getElementById('fTo').focus();return;}
+  // Нове завдання в неробочий час — спочатку показати повідомлення (редагування не стосується)
+  if(!_wasEdit&&_skipOff!==true&&!isWorkTime()){askOffHours(()=>mkT(true));return;}
   const today=new Date().toISOString().split('T')[0];
   if(eId){
     const t=findTask(eId);
@@ -5906,8 +5923,9 @@ function mkT(){
   else showToast('Збережено!','Зміни застосовано');
 }
 function openQ(){openM('mQ');setTimeout(()=>document.getElementById('qI').focus(),80);}
-function mkQ(){
+function mkQ(_skipOff){
   const v=document.getElementById('qI').value.trim();if(!v)return;
+  if(_skipOff!==true&&!isWorkTime()){askOffHours(()=>mkQ(true));return;}
   const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
   const now=new Date();
   const today=now.toISOString().split('T')[0];
@@ -6038,12 +6056,60 @@ function closeM(id){document.getElementById(id).classList.add('hide');}
 ['mQ','mSt','mCf','mSet','mLabel','mProfile','mTaskDetail'].forEach(id=>{
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeM(id);});
 });
+document.getElementById('mOff').addEventListener('click',function(e){if(e.target===this)offHoursCancel();});
+
+/* ── WORK HOURS HELPERS ── */
+function isWorkTime(d){
+  d=d||new Date();
+  const ts=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  return (cfg.days||[]).includes(d.getDay())&&ts>=(cfg.s||'09:00')&&ts<=(cfg.e||'18:00');
+}
+// Найближчий наступний початок робочого дня (Date) або null, якщо немає робочих днів
+function nextWorkStart(from){
+  from=from||new Date();
+  const days=cfg.days||[];
+  if(!days.length) return null;
+  const st=/^\d{1,2}:\d{2}$/.test(cfg.s||'')?cfg.s:'09:00';
+  const [sh,sm]=st.split(':').map(Number);
+  const ts=String(from.getHours()).padStart(2,'0')+':'+String(from.getMinutes()).padStart(2,'0');
+  // сьогодні — якщо день робочий і робочий час ще не почався
+  if(days.includes(from.getDay())&&ts<st) return new Date(from.getFullYear(),from.getMonth(),from.getDate(),sh,sm);
+  for(let i=1;i<=7;i++){
+    const c=new Date(from.getFullYear(),from.getMonth(),from.getDate()+i,sh,sm);
+    if(days.includes(c.getDay())) return c;
+  }
+  return null;
+}
+const _WD_UA=['Неділя','Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота'];
+const _MN_UA=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+function offHoursText(){
+  const n=nextWorkStart();
+  let tail;
+  if(!n) tail='Нове завдання буде зареєстроване в системі, але його опрацювання відбудеться після відновлення робочого графіка.';
+  else{
+    const hh=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+    tail='Нове завдання буде зареєстроване в системі, але його опрацювання відбудеться у найближчий робочий час.<br><br><b>Найближчий робочий час:</b> '+_WD_UA[n.getDay()]+', '+n.getDate()+' '+_MN_UA[n.getMonth()]+' '+n.getFullYear()+', '+hh+'.';
+  }
+  return tail;
+}
+let _offPending=null;
+function askOffHours(cb){
+  _offPending=cb;
+  document.getElementById('offMsg').innerHTML=offHoursText();
+  openM('mOff');
+}
+function offHoursConfirm(){
+  const cb=_offPending;_offPending=null; // захист від подвійного створення
+  closeM('mOff');
+  if(cb) cb();
+}
+function offHoursCancel(){_offPending=null;closeM('mOff');}
 
 /* ── CLOCK ── */
 function updClk(){
   const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),ts=h+':'+m;
   document.getElementById('clkT').textContent=ts;
-  const ok=cfg.days.includes(n.getDay())&&ts>=cfg.s&&ts<=cfg.e;
+  const ok=isWorkTime(n);
   document.getElementById('clkL').textContent=ok?'Робочий час':'Неробочий час';
   document.getElementById('clk').className='clk'+(ok?' work':'');
 }
