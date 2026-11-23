@@ -2225,7 +2225,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <div class="color-dots" id="mgrColorPicker"></div>
     </div>
     <div id="settingsWorkHours">
-      <div class="sec-title">Робочий час</div>
+      <div class="sec-title">Робочий час <span style="font-weight:500;opacity:.7;text-transform:none;letter-spacing:0">(за київським часом)</span></div>
       <div class="dbtns" id="dbtns"></div>
       <div class="srow"><label>Початок</label><input type="time" id="ws" value="09:00"></div>
       <div class="srow"><label>Кінець</label><input type="time" id="we" value="18:00"></div>
@@ -3249,8 +3249,15 @@ function openTourBulkImport(){
 function parseTourTable(raw){
   const skipRe=/^(страна|країна|код тура|код туру|название тура|назва туру|отправление|відправлення|дней|днів|дата заездов|дата заїздів|пошук|поиск|місце виїзду туру|дата виїзду|страна\/район)$/i;
   const codeRe=/^[A-ZА-ЯЁІЇЄ]{2,6}-\d+$/i;
-  const dateRe=/^\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}$/;
   const daysRe=/^\d{1,3}$/;
+  const DATE_G=/\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}/g;
+  // Рядок, що складається ЛИШЕ з однієї чи кількох дат («31.05.2027, 16.08.2027») → масив дат, інакше null.
+  // Раніше розпізнавалася тільки одна дата в рядку, тому список дат потрапляв у «країни» наступного туру.
+  const datesOf=line=>{
+    const found=line.match(DATE_G);
+    if(!found) return null;
+    return line.replace(DATE_G,'').replace(/[\s,;•·|\/–—-]+/g,'')===''?found:null;
+  };
   const lines=raw.split(/\r?\n/).map(l=>l.replace(/^[✈🚌🚍🛫🛬🚗🚂]+\s*/,'').trim()).filter(l=>l.length&&!skipRe.test(l));
 
   const rows=[];
@@ -3258,7 +3265,7 @@ function parseTourTable(raw){
   let cur=null, state='country';
   for(const line of lines){
     if(codeRe.test(line)){
-      cur={code:line.toUpperCase(),countries:countries.slice(),title:'',departure:[],days:'',date:''};
+      cur={code:line.toUpperCase(),countries:countries.slice(),title:'',departure:[],days:'',dates:[]};
       countries=[];
       rows.push(cur);
       state='title';
@@ -3266,20 +3273,32 @@ function parseTourTable(raw){
     }
     if(!cur){ countries.push(line); continue; }
     if(state==='title'){ cur.title=line; state='departure'; continue; }
+    const ds=datesOf(line);
     if(state==='departure'){
-      if(daysRe.test(line)&&Number(line)>=1&&Number(line)<=60){ cur.days=line; state='date'; }
-      else if(dateRe.test(line)){ cur.date=line; state='country'; cur=null; }
+      if(ds){ cur.dates.push(...ds); state='date'; }
+      else if(daysRe.test(line)&&Number(line)>=1&&Number(line)<=60){ cur.days=line; state='date'; }
       else cur.departure.push(line);
       continue;
     }
     if(state==='date'){
-      if(dateRe.test(line)) cur.date=line;
-      else countries.push(line);
-      state='country'; cur=null;
+      if(ds){ cur.dates.push(...ds); continue; } // усі рядки з датами належать цьому туру
+      countries.push(line); cur=null; state='country'; // перший не-дата — це вже країна наступного туру
       continue;
     }
   }
   return rows.filter(r=>r.code&&r.title);
+}
+// З кількох дат виїзду обираємо найближчу майбутню; якщо всі в минулому — останню
+function pickNextDeparture(dates){
+  const isos=[...new Set((dates||[]).map(parseTourDateToISO).filter(Boolean))].sort();
+  if(!isos.length) return '';
+  const t=new Date();
+  const today=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  return isos.find(d=>d>=today)||isos[isos.length-1];
+}
+// Прибирає дати з рядка маршруту (виправляє вже збережені тури, у яких дати «прилипли» до країн)
+function cleanTourCountries(str){
+  return String(str||'').split('•').map(x=>x.trim()).filter(x=>x&&!/^[\d\s.,;\/–—-]+$/.test(x)).join(' • ');
 }
 function parseTourBulkInput(){
   const raw=document.getElementById('trBulkInput').value;
@@ -3288,9 +3307,9 @@ function parseTourBulkInput(){
     id:r.code,
     title:r.title,
     cities_departure:r.departure.join(', '),
-    countries:r.countries.join(' • '),
+    countries:cleanTourCountries(r.countries.join(' • ')),
     duration_days:r.days,
-    next_departure:parseTourDateToISO(r.date)
+    next_departure:pickNextDeparture(r.dates)
   }));
   renderTourBulkPreview();
 }
@@ -3590,7 +3609,7 @@ function renderTours(){
           <div class="tour-detail-row"><span class="tour-detail-label">City Tax:</span><span class="tour-detail-val">${t.city_tax_price?Number(t.city_tax_price).toFixed(2)+' '+t.currency+(t.city_tax_price_child!=null?' <span class="tour-detail-sub">(дит. '+Number(t.city_tax_price_child).toFixed(2)+')</span>':''):'—'}</span></div>
           ${(t.extra_fees&&t.extra_fees.length)?`<div class="tour-detail-row"><span class="tour-detail-label">Додаткові платежі:</span><span class="tour-detail-val fees-val" title="${t.extra_fees.map(f=>esc(f.name)+': '+Number(f.amount).toFixed(2)+(f.amount_child?' / дит. '+Number(f.amount_child).toFixed(2):'')+' '+t.currency).join(' • ')}">${t.extra_fees.length} · ${tourFeesTotal(t).toFixed(2)} ${t.currency}${tourFeesTotalChild(t)?' <span class="tour-detail-sub">(дит. '+tourFeesTotalChild(t).toFixed(2)+')</span>':''}</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
-          ${t.countries?`<div class="tour-detail-row"><span class="tour-detail-label">Маршрут:</span><span class="tour-detail-val">${esc(t.countries)}</span></div>`:''}
+          ${cleanTourCountries(t.countries)?`<div class="tour-detail-row"><span class="tour-detail-label">Маршрут:</span><span class="tour-detail-val">${esc(cleanTourCountries(t.countries))}</span></div>`:''}
           ${t.duration_days?`<div class="tour-detail-row"><span class="tour-detail-label">Тривалість:</span><span class="tour-detail-val">${esc(t.duration_days)} дн.</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Найближчий виїзд:</span>${tourHasUpcomingDate(t)?`<span class="tour-detail-val">${esc(fmtTourDateShort(t.next_departure))}</span>`:`<span class="tour-detail-val tour-nodate">Без дати</span>`}</div>
           <div class="tour-detail-row"><span class="tour-detail-label">Буклет оновлено:</span><span class="tour-detail-val">${t.pdf_updated_at?fmtTourDate(t.pdf_updated_at):'ще не завантажено'}</span></div>
@@ -6058,26 +6077,47 @@ function closeM(id){document.getElementById(id).classList.add('hide');}
 });
 document.getElementById('mOff').addEventListener('click',function(e){if(e.target===this)offHoursCancel();});
 
-/* ── WORK HOURS HELPERS ── */
-function isWorkTime(d){
-  d=d||new Date();
-  const ts=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-  return (cfg.days||[]).includes(d.getDay())&&ts>=(cfg.s||'09:00')&&ts<=(cfg.e||'18:00');
+/* ── WORK HOURS HELPERS ──
+   Робочий графік (cfg.s / cfg.e / cfg.days) заданий за КИЇВСЬКИМ часом, незалежно від того,
+   де зараз користувач. Тому всі перевірки робочого часу рахуємо в Europe/Kyiv, а не за
+   локальним поясом браузера (new Date().getHours() повертає саме локальний час). */
+const WORK_TZ=(function(){
+  for(const z of ['Europe/Kyiv','Europe/Kiev']){ // 'Europe/Kiev' — для старіших браузерів
+    try{ new Intl.DateTimeFormat('en-GB',{timeZone:z}); return z; }catch(e){}
+  }
+  return undefined; // аварійний варіант: локальний час
+})();
+const _WT_FMT=new Intl.DateTimeFormat('en-GB',{timeZone:WORK_TZ,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',weekday:'short'});
+const _WT_WD={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+// Розкладає момент часу за київським часом: рік, місяць (1-12), день, год, хв, день тижня (0=Нд), 'HH:MM'
+function kyivParts(d){
+  const p={};
+  _WT_FMT.formatToParts(d||new Date()).forEach(x=>{p[x.type]=x.value;});
+  const h=String(Number(p.hour)%24).padStart(2,'0'); // страховка від "24:00" в окремих браузерах
+  return {y:+p.year,mo:+p.month,d:+p.day,h:+h,mi:+p.minute,wd:_WT_WD[p.weekday],ts:h+':'+p.minute};
 }
-// Найближчий наступний початок робочого дня (Date) або null, якщо немає робочих днів
+function normHM(str,def){ // '9:00' → '09:00', щоб рядкове порівняння працювало коректно
+  const m=/^(\d{1,2}):(\d{2})$/.exec(str||'');
+  return m?m[1].padStart(2,'0')+':'+m[2]:def;
+}
+function isWorkTime(d){
+  const k=kyivParts(d);
+  return (cfg.days||[]).includes(k.wd)&&k.ts>=normHM(cfg.s,'09:00')&&k.ts<=normHM(cfg.e,'18:00');
+}
+// Найближчий наступний початок робочого дня за київським часом: {y,mo(0-11),d,wd,h,mi} або null
 function nextWorkStart(from){
-  from=from||new Date();
   const days=cfg.days||[];
   if(!days.length) return null;
-  const st=/^\d{1,2}:\d{2}$/.test(cfg.s||'')?cfg.s:'09:00';
+  const st=normHM(cfg.s,'09:00');
   const [sh,sm]=st.split(':').map(Number);
-  const ts=String(from.getHours()).padStart(2,'0')+':'+String(from.getMinutes()).padStart(2,'0');
+  const k=kyivParts(from);
+  const mk=i=>{ // чиста календарна арифметика (UTC), без впливу часових поясів
+    const c=new Date(Date.UTC(k.y,k.mo-1,k.d+i));
+    return {y:c.getUTCFullYear(),mo:c.getUTCMonth(),d:c.getUTCDate(),wd:c.getUTCDay(),h:sh,mi:sm};
+  };
   // сьогодні — якщо день робочий і робочий час ще не почався
-  if(days.includes(from.getDay())&&ts<st) return new Date(from.getFullYear(),from.getMonth(),from.getDate(),sh,sm);
-  for(let i=1;i<=7;i++){
-    const c=new Date(from.getFullYear(),from.getMonth(),from.getDate()+i,sh,sm);
-    if(days.includes(c.getDay())) return c;
-  }
+  if(days.includes(k.wd)&&k.ts<st) return mk(0);
+  for(let i=1;i<=7;i++){ const c=mk(i); if(days.includes(c.wd)) return c; }
   return null;
 }
 const _WD_UA=['Неділя','Понеділок','Вівторок','Середа','Четвер','П’ятниця','Субота'];
@@ -6087,8 +6127,8 @@ function offHoursText(){
   let tail;
   if(!n) tail='Нове завдання буде зареєстроване в системі, але його опрацювання відбудеться після відновлення робочого графіка.';
   else{
-    const hh=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-    tail='Нове завдання буде зареєстроване в системі, але його опрацювання відбудеться у найближчий робочий час.<br><br><b>Найближчий робочий час:</b> '+_WD_UA[n.getDay()]+', '+n.getDate()+' '+_MN_UA[n.getMonth()]+' '+n.getFullYear()+', '+hh+'.';
+    const hh=String(n.h).padStart(2,'0')+':'+String(n.mi).padStart(2,'0');
+    tail='Нове завдання буде зареєстроване в системі, але його опрацювання відбудеться у найближчий робочий час.<br><br><b>Найближчий робочий час:</b> '+_WD_UA[n.wd]+', '+n.d+' '+_MN_UA[n.mo]+' '+n.y+', '+hh+' (за київським часом).';
   }
   return tail;
 }
@@ -6107,7 +6147,7 @@ function offHoursCancel(){_offPending=null;closeM('mOff');}
 
 /* ── CLOCK ── */
 function updClk(){
-  const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),ts=h+':'+m;
+  const n=new Date(),ts=kyivParts(n).ts; // годинник у шапці — київський час (підпис «Kyiv, UA»)
   document.getElementById('clkT').textContent=ts;
   const ok=isWorkTime(n);
   document.getElementById('clkL').textContent=ok?'Робочий час':'Неробочий час';
