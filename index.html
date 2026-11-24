@@ -3634,8 +3634,10 @@ function renderTours(){
   tourAutoDeactivateExpired();
   const q=(document.getElementById('trSrch')?.value||'').toLowerCase();
   let list=tours.slice();
-  if(tourFlt==='needs_update') list=list.filter(t=>t.status==='needs_update'||tourStale(t));
-  else if(tourFlt!=='all') list=list.filter(t=>t.status===tourFlt);
+  // Кожна кнопка-фільтр = точний статус туру. Раніше «Потребує оновлення» додатково підмішував тури зі старим PDF
+  // (поріг TOUR_PDF_STALE_DAYS=0 означає «не оновлювався сьогодні»), тому в списку з'являлися тури з будь-якими статусами.
+  // Свіжість PDF видно на картці туру (кольоровий бейдж).
+  if(tourFlt!=='all') list=list.filter(t=>t.status===tourFlt);
   if(tourFlt!=='archived') list=list.filter(t=>t.status!=='archived'||tourFlt==='archived');
   if(q) list=list.filter(t=>(t.title+' '+t.id+' '+(t.cities_departure||'')).toLowerCase().includes(q));
   list.sort((a,b)=>{
