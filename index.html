@@ -830,6 +830,15 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 .tr-fee-add-btn{border:1px dashed var(--wm-border-strong);background:transparent;color:var(--wm-ink2);border-radius:10px;padding:8px 14px;font-size:12px;font-family:var(--wm-sans);font-weight:600;cursor:pointer;width:100%}
 .tr-fee-add-btn:hover{background:var(--wm-bronze-light);border-color:var(--wm-bronze);color:var(--wm-bronze)}
 .tour-detail-val.fees-val{font-weight:600}
+.tr-dep-count{font-weight:500;color:var(--wm-muted);text-transform:none;letter-spacing:0}
+.tr-dep-list{display:flex;flex-wrap:wrap;gap:6px;min-height:22px}
+.tr-dep-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 6px 4px 11px;border:1px solid var(--wm-border-strong);border-radius:999px;font-size:12.5px;font-weight:600;color:var(--wm-ink);background:#fff}
+.tr-dep-chip.next{border-color:var(--wm-ink)}
+.tr-dep-chip.past{color:var(--wm-muted);font-weight:500;text-decoration:line-through;background:transparent}
+.tr-dep-chip button{border:0;background:none;cursor:pointer;color:#999;font-size:15px;line-height:1;padding:0 3px}
+.tr-dep-chip button:hover{color:#a83820}
+.tr-dep-empty{font-size:12.5px;color:var(--wm-muted);font-style:italic}
+.tr-dep-err{font-size:12px;color:#a83820;margin-top:6px}
 .tour-detail-sub{color:var(--wm-muted);font-weight:500;font-size:11px}
 /* ── Bulk tour import ── */
 .tr-bulk-mbox{width:560px}
@@ -2332,14 +2341,15 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
       <div style="flex:1"><label>Міста виїзду</label><input id="trCities" placeholder="Будапешт, Рим, Братислава"></div>
     </div>
     <div style="display:flex;gap:10px">
-      <div style="flex:1"><label>Дата найближчого виїзду</label>
-        <div class="date-field">
-          <div class="date-display" id="trNextDateDisp" onclick="openCal('trNextDate','trNextDateDisp')">
-            <span id="trNextDateTxt" class="placeholder">Оберіть дату...</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <input type="hidden" id="trNextDate">
+      <div style="flex:1"><label>Дати виїздів <span id="trDepCount" class="tr-dep-count"></span></label>
+        <div id="trDepList" class="tr-dep-list"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <input id="trDepInput" placeholder="31.05.2027, 16.08.2027 — одна або кілька дат" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();addTourDepartureFromInput();}">
+          <button type="button" class="tr-fee-add-btn" style="width:auto;flex:none;padding:0 14px" onclick="addTourDepartureFromInput()">Додати</button>
+          <button type="button" class="tr-fee-add-btn" id="trNextDateDisp" style="width:auto;flex:none;padding:0 11px" title="Обрати з календаря" onclick="openCal('trNextDate','trNextDateDisp')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
         </div>
+        <div id="trDepErr" class="tr-dep-err" style="display:none"></div>
+        <input type="hidden" id="trNextDate">
       </div>
     </div>
 
@@ -2426,7 +2436,7 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 <div class="mbg hide" id="mTourBulk">
   <div class="mbox tr-mbox tr-bulk-mbox">
     <h3 style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>Масовий імпорт турів</h3>
-    <p class="tr-bulk-hint">Скопіюйте на сайті оператора таблицю з переліком турів (виділіть увесь блок: країна, код туру, назва, місто виїзду, днів, дата заїздів) і вставте нижче — система сама розпізнає рядки.</p>
+    <p class="tr-bulk-hint">Скопіюйте на сайті оператора таблицю з переліком турів (виділіть увесь блок: країна, код туру, назва, місто виїзду, днів, дата заїздів) і вставте нижче — система сама розпізнає рядки. Якщо в турі кілька дат виїзду, зберігаються <strong>всі</strong>; у вже наявних турів список дат замінюється тим, що в таблиці.</p>
 
     <label>Вставлена таблиця</label>
     <textarea id="trBulkInput" rows="7" placeholder="Вставте сюди скопійований текст таблиці з сайту..." style="font-family:var(--wm-sans);font-size:12.5px;resize:vertical"></textarea>
@@ -2452,10 +2462,10 @@ html,body{font-family:var(--wm-sans);background:var(--wm-bg)}
 <div class="mbg hide" id="mTourDatesBulk">
   <div class="mbox tr-mbox tr-bulk-mbox">
     <h3 style="display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Масове оновлення дат</h3>
-    <p class="tr-bulk-hint">По одному туру на рядок: <strong>код туру</strong> і <strong>нова дата виїзду</strong> через пробіл або кому. Наприклад: <code>T_001 15.08.2026</code>. Оновлюються тільки вже наявні тури — за кодом; коди, яких нема в системі, будуть позначені окремо.</p>
+    <p class="tr-bulk-hint">По одному туру на рядок: <strong>код туру</strong> і <strong>одна або кілька дат виїзду</strong> через пробіл чи кому. Наприклад: <code>T_001 15.08.2026, 22.08.2026</code>. Увесь список дат туру замінюється датами з рядка. Оновлюються тільки вже наявні тури — за кодом; коди, яких нема в системі, будуть позначені окремо.</p>
 
     <label>Список дат</label>
-    <textarea id="trDatesBulkInput" rows="7" placeholder="T_001 15.08.2026&#10;T_002, 01.09.2026&#10;T_003 22.09.2026" style="font-family:var(--wm-sans);font-size:12.5px;resize:vertical"></textarea>
+    <textarea id="trDatesBulkInput" rows="7" placeholder="T_001 15.08.2026, 22.08.2026&#10;T_002, 01.09.2026&#10;T_003 22.09.2026" style="font-family:var(--wm-sans);font-size:12.5px;resize:vertical"></textarea>
 
     <div style="margin-top:12px"><button type="button" class="tr-btn" onclick="parseTourDatesBulkInput()">🔎 Розпізнати</button></div>
 
@@ -3107,6 +3117,34 @@ let tourFlt='all',trCurId=null,_presetTourId=null,_driveTargetMode='task';
 let flt='all',fltMine=false,curU='MK',eId=null,dId=null,aMode='week',currentTab='main';
 let expandedTC=new Set(); // ids of task cards left expanded — must survive render() rebuilds
 let cfg={days:[1,2,3,4,5],s:'09:00',e:'18:00'};
+/* ── KYIV TIME ──
+   Робочий графік (cfg.s / cfg.e / cfg.days) заданий за КИЇВСЬКИМ часом, незалежно від того,
+   де зараз користувач. Тому всі перевірки робочого часу рахуємо в Europe/Kyiv, а не за
+   локальним поясом браузера (new Date().getHours() повертає саме локальний час). */
+const WORK_TZ=(function(){
+  for(const z of ['Europe/Kyiv','Europe/Kiev']){ // 'Europe/Kiev' — для старіших браузерів
+    try{ new Intl.DateTimeFormat('en-GB',{timeZone:z}); return z; }catch(e){}
+  }
+  return undefined; // аварійний варіант: локальний час
+})();
+const _WT_FMT=new Intl.DateTimeFormat('en-GB',{timeZone:WORK_TZ,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',weekday:'short'});
+const _WT_WD={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+// Розкладає момент часу за київським часом: рік, місяць (1-12), день, год, хв, день тижня (0=Нд), 'HH:MM'
+function kyivParts(d){
+  const p={};
+  _WT_FMT.formatToParts(d||new Date()).forEach(x=>{p[x.type]=x.value;});
+  const h=String(Number(p.hour)%24).padStart(2,'0'); // страховка від "24:00" в окремих браузерах
+  return {y:+p.year,mo:+p.month,d:+p.day,h:+h,mi:+p.minute,wd:_WT_WD[p.weekday],ts:h+':'+p.minute};
+}
+function normHM(str,def){ // '9:00' → '09:00', щоб рядкове порівняння працювало коректно
+  const m=/^(\d{1,2}):(\d{2})$/.exec(str||'');
+  return m?m[1].padStart(2,'0')+':'+m[2]:def;
+}
+// Дата/час «зараз» за Києвом — для всього, що записується у завдання
+function kyivDateISO(d){const k=kyivParts(d);return k.y+'-'+String(k.mo).padStart(2,'0')+'-'+String(k.d).padStart(2,'0');}
+function kyivTimeHM(d){return kyivParts(d).ts;} // 'HH:MM'
+// Північ «київського сьогодні» як локальна Date — для порівняння з new Date(deadline+'T00:00:00')
+function kyivTodayDate(){const k=kyivParts();return new Date(k.y,k.mo-1,k.d);}
 let calDate=new Date(),calMode=null,calTarget=null,calSelected=null;
 let anlytDays=30;
 let pendingDelLabel=null;
@@ -3205,15 +3243,41 @@ function fmtTourDateShort(iso){
   const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m?`${m[3]}.${m[2]}.${m[1]}`:'';
 }
-// today-or-later, compared by calendar date (not by hours — see the PDF-freshness fix above)
-function tourHasUpcomingDate(tour){
-  const m=String(tour.next_departure||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+// ── Усі дати виїздів туру ──
+// Тур зберігає ПОВНИЙ список дат у tour.departures (ISO 'YYYY-MM-DD', за зростанням, без дублів).
+// tour.next_departure лишається для сумісності: це дзеркало «найближчої» дати зі списку.
+// Старі тури, у яких є лише next_departure, читаються як список із однієї дати.
+const TOUR_DATE_G=/\d{4}-\d{2}-\d{2}|\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}/g;
+function isValidISODate(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');
   if(!m) return false;
-  const dep=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
-  const now=new Date();
-  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  return dep.getTime()>=today.getTime();
+  const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+  return d.getUTCFullYear()===+m[1]&&d.getUTCMonth()===+m[2]-1&&d.getUTCDate()===+m[3];
 }
+function normTourDates(list){ return [...new Set((list||[]).map(parseTourDateToISO).filter(isValidISODate))].sort(); }
+// Рядок, що складається ЛИШЕ з дат і роздільників («31.05.2027, 16.08.2027») → масив ISO-дат (може бути порожнім,
+// якщо всі дати некоректні), інакше null.
+function extractTourDates(line){
+  const str=String(line||'');
+  const found=str.match(TOUR_DATE_G);
+  if(!found) return null;
+  if(str.replace(TOUR_DATE_G,'').replace(/[\s,;•·|\/–—-]+/g,'')!=='') return null;
+  return normTourDates(found);
+}
+function tourDepartures(t){ return normTourDates(Array.isArray(t.departures)?t.departures:(t.next_departure?[t.next_departure]:[])); }
+function tourUpcomingDates(t){ const today=kyivDateISO(); return tourDepartures(t).filter(d=>d>=today); }
+function tourNextDate(t){ return tourUpcomingDates(t)[0]||''; }
+// найближча майбутня дата зі списку; якщо майбутніх немає — остання (щоб було видно, що тур минув)
+function nextDepartureOf(list){
+  const l=normTourDates(list);
+  if(!l.length) return '';
+  const today=kyivDateISO();
+  return l.find(d=>d>=today)||l[l.length-1];
+}
+function setTourDepartures(t,list){ t.departures=normTourDates(list); t.next_departure=nextDepartureOf(t.departures); }
+function fmtTourDepList(list){ return (list||[]).map(fmtTourDateShort).join(', ')||'—'; }
+// є хоча б одна дата сьогодні або пізніше (порівнюємо календарні дати за Києвом)
+function tourHasUpcomingDate(tour){ return !!tourNextDate(tour); }
 function tourLogEntry(tour,field,from,to){
   tour.log=tour.log||[];
   tour.log.unshift({ts:new Date().toISOString(),by:curU,field,from:from===undefined||from===null||from===''?'—':String(from),to:to===undefined||to===null||to===''?'—':String(to)});
@@ -3250,14 +3314,8 @@ function parseTourTable(raw){
   const skipRe=/^(страна|країна|код тура|код туру|название тура|назва туру|отправление|відправлення|дней|днів|дата заездов|дата заїздів|пошук|поиск|місце виїзду туру|дата виїзду|страна\/район)$/i;
   const codeRe=/^[A-ZА-ЯЁІЇЄ]{2,6}-\d+$/i;
   const daysRe=/^\d{1,3}$/;
-  const DATE_G=/\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}/g;
-  // Рядок, що складається ЛИШЕ з однієї чи кількох дат («31.05.2027, 16.08.2027») → масив дат, інакше null.
-  // Раніше розпізнавалася тільки одна дата в рядку, тому список дат потрапляв у «країни» наступного туру.
-  const datesOf=line=>{
-    const found=line.match(DATE_G);
-    if(!found) return null;
-    return line.replace(DATE_G,'').replace(/[\s,;•·|\/–—-]+/g,'')===''?found:null;
-  };
+  // Рядок лише з однієї чи кількох дат («31.05.2027, 16.08.2027») → масив ISO-дат, інакше null.
+  const datesOf=extractTourDates;
   const lines=raw.split(/\r?\n/).map(l=>l.replace(/^[✈🚌🚍🛫🛬🚗🚂]+\s*/,'').trim()).filter(l=>l.length&&!skipRe.test(l));
 
   const rows=[];
@@ -3288,14 +3346,6 @@ function parseTourTable(raw){
   }
   return rows.filter(r=>r.code&&r.title);
 }
-// З кількох дат виїзду обираємо найближчу майбутню; якщо всі в минулому — останню
-function pickNextDeparture(dates){
-  const isos=[...new Set((dates||[]).map(parseTourDateToISO).filter(Boolean))].sort();
-  if(!isos.length) return '';
-  const t=new Date();
-  const today=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-  return isos.find(d=>d>=today)||isos[isos.length-1];
-}
 // Прибирає дати з рядка маршруту (виправляє вже збережені тури, у яких дати «прилипли» до країн)
 function cleanTourCountries(str){
   return String(str||'').split('•').map(x=>x.trim()).filter(x=>x&&!/^[\d\s.,;\/–—-]+$/.test(x)).join(' • ');
@@ -3309,7 +3359,8 @@ function parseTourBulkInput(){
     cities_departure:r.departure.join(', '),
     countries:cleanTourCountries(r.countries.join(' • ')),
     duration_days:r.days,
-    next_departure:pickNextDeparture(r.dates)
+    departures:normTourDates(r.dates),            // ВСІ дати виїзду з таблиці
+    next_departure:nextDepartureOf(r.dates)
   }));
   renderTourBulkPreview();
 }
@@ -3330,7 +3381,7 @@ function renderTourBulkPreview(){
       <label class="tr-bulk-check"><input type="checkbox" checked data-i="${i}" class="trBulkRowChk"></label>
       <div class="tr-bulk-row-main">
         <div class="tr-bulk-row-title"><span class="tr-bulk-code">${esc(r.id)}</span>${esc(r.title)}${existingIds.has(r.id)?'<span class="tr-bulk-tag">оновлення</span>':'<span class="tr-bulk-tag new">нове</span>'}</div>
-        <div class="tr-bulk-row-sub">${esc(r.cities_departure||'—')}${r.duration_days?' · '+esc(r.duration_days)+' дн.':''}${r.next_departure?' · '+esc(fmtTourDateShort(r.next_departure)):''}${r.countries?' · '+esc(r.countries):''}</div>
+        <div class="tr-bulk-row-sub">${esc(r.cities_departure||'—')}${r.duration_days?' · '+esc(r.duration_days)+' дн.':''}${r.departures.length?' · виїзди ('+r.departures.length+'): '+esc(fmtTourDepList(r.departures)):' · <span style="color:#a83820">дат не знайдено</span>'}${r.countries?' · '+esc(r.countries):''}</div>
       </div>
     </div>`).join('')+`</div>`;
   btn.disabled=false;
@@ -3347,11 +3398,16 @@ function commitTourBulkImport(){
     const existing=tours.find(t=>t.id===r.id);
     if(existing){
       tourLogEntry(existing,'масовий імпорт','—','оновлено маршрут/дати з сайту');
-      Object.assign(existing,{cities_departure:r.cities_departure||existing.cities_departure,countries:r.countries||existing.countries,duration_days:r.duration_days||existing.duration_days,next_departure:r.next_departure||existing.next_departure,updated_at:now});
+      Object.assign(existing,{cities_departure:r.cities_departure||existing.cities_departure,countries:r.countries||existing.countries,duration_days:r.duration_days||existing.duration_days,updated_at:now});
+      if(r.departures.length){ // таблиця — джерело правди: повністю замінюємо список дат
+        const before=tourDepartures(existing);
+        if(fmtTourDepList(before)!==fmtTourDepList(r.departures)) tourLogEntry(existing,'дати виїзду',fmtTourDepList(before),fmtTourDepList(r.departures));
+        setTourDepartures(existing,r.departures);
+      }
       updated++;
     } else {
       const t={id:r.id,title:r.title,status:statusSel,currency:'EUR',checkpoint_price:0,checkpoint_price_child:0,city_tax_price:0,city_tax_price_child:0,extra_fees:[],
-        cities_departure:r.cities_departure,countries:r.countries,duration_days:r.duration_days,next_departure:r.next_departure,
+        cities_departure:r.cities_departure,countries:r.countries,duration_days:r.duration_days,next_departure:r.next_departure,departures:r.departures.slice(),
         pdf_url:'',pdf_updated_at:'',site_url:'',created_at:now,updated_at:now,log:[]};
       tourLogEntry(t,'створення туру','—','масовий імпорт з таблиці сайту');
       tours.unshift(t);
@@ -3380,7 +3436,8 @@ function parseTourDatesBulkInput(){
   _tourDatesBulkParsed=lines.map(line=>{
     const m=line.match(/^([A-ZА-ЯЁІЇЄ0-9_-]+)[\s,;]+(.+)$/i);
     if(!m) return null;
-    return {code:m[1].toUpperCase(),rawDate:m[2].trim(),iso:parseTourDateToISO(m[2].trim())};
+    const ds=extractTourDates(m[2].trim());
+    return {code:m[1].toUpperCase(),rawDate:m[2].trim(),dates:ds||[]};
   }).filter(Boolean);
   renderTourDatesBulkPreview();
 }
@@ -3388,20 +3445,20 @@ function renderTourDatesBulkPreview(){
   const wrap=document.getElementById('trDatesBulkPreview');
   const btn=document.getElementById('trDatesBulkCommitBtn');
   if(!_tourDatesBulkParsed.length){
-    wrap.innerHTML='<div style="font-size:12.5px;color:var(--wm-muted);padding:10px 0">Нічого не розпізнано. Формат рядка: код туру, пробіл або кома, дата (напр. T_001 15.08.2026).</div>';
+    wrap.innerHTML='<div style="font-size:12.5px;color:var(--wm-muted);padding:10px 0">Нічого не розпізнано. Формат рядка: код туру, пробіл або кома, одна чи кілька дат (напр. T_001 15.08.2026, 22.08.2026).</div>';
     btn.disabled=true; btn.textContent='Оновити дати';
     return;
   }
-  const validCount=_tourDatesBulkParsed.filter(r=>tours.find(t=>t.id===r.code)&&r.iso).length;
+  const validCount=_tourDatesBulkParsed.filter(r=>tours.find(t=>t.id===r.code)&&r.dates.length).length;
   wrap.innerHTML=`<div class="tr-bulk-summary">Розпізнано рядків: ${_tourDatesBulkParsed.length} · буде оновлено: ${validCount}.</div>`+
     `<div class="tr-bulk-rows">`+_tourDatesBulkParsed.map((r,i)=>{
       const t=tours.find(x=>x.id===r.code);
-      const ok=!!(t&&r.iso);
+      const ok=!!(t&&r.dates.length);
       return `<div class="tr-bulk-row">
         <label class="tr-bulk-check"><input type="checkbox" ${ok?'checked':''} ${ok?'':'disabled'} data-i="${i}" class="trDatesBulkRowChk"></label>
         <div class="tr-bulk-row-main">
           <div class="tr-bulk-row-title"><span class="tr-bulk-code">${esc(r.code)}</span>${t?esc(t.title):'<span style="color:#a83820">тур з таким кодом не знайдено</span>'}</div>
-          <div class="tr-bulk-row-sub">${r.iso?('нова дата: '+esc(fmtTourDateShort(r.iso))+(t&&t.next_departure?' · було: '+esc(fmtTourDateShort(t.next_departure)||'—'):'')):`<span style="color:#a83820">не вдалось розпізнати дату «${esc(r.rawDate)}»</span>`}</div>
+          <div class="tr-bulk-row-sub">${r.dates.length?('дати ('+r.dates.length+'): '+esc(fmtTourDepList(r.dates))+(t?' · було: '+esc(fmtTourDepList(tourDepartures(t))):'')):`<span style="color:#a83820">не вдалось розпізнати дати «${esc(r.rawDate)}»</span>`}</div>
         </div>
       </div>`;
     }).join('')+`</div>`;
@@ -3414,11 +3471,11 @@ function commitTourDatesBulkImport(){
   document.querySelectorAll('.trDatesBulkRowChk').forEach(chk=>{
     if(!chk.checked) return;
     const r=_tourDatesBulkParsed[Number(chk.dataset.i)];
-    if(!r||!r.iso) return;
+    if(!r||!r.dates.length) return;
     const t=tours.find(x=>x.id===r.code);
     if(!t) return;
-    tourLogEntry(t,'дата виїзду',fmtTourDateShort(t.next_departure)||'—',fmtTourDateShort(r.iso)||'—');
-    t.next_departure=r.iso;
+    tourLogEntry(t,'дати виїзду',fmtTourDepList(tourDepartures(t)),fmtTourDepList(r.dates));
+    setTourDepartures(t,r.dates);
     t.updated_at=now;
     updated++;
   });
@@ -3580,7 +3637,7 @@ function renderTours(){
   if(q) list=list.filter(t=>(t.title+' '+t.id+' '+(t.cities_departure||'')).toLowerCase().includes(q));
   list.sort((a,b)=>{
     const aUp=tourHasUpcomingDate(a), bUp=tourHasUpcomingDate(b);
-    if(aUp&&bUp) return a.next_departure.localeCompare(b.next_departure); // ISO strings sort chronologically as-is
+    if(aUp&&bUp) return tourNextDate(a).localeCompare(tourNextDate(b)); // ISO strings sort chronologically as-is
     if(aUp!==bUp) return aUp?-1:1; // any upcoming date beats "no date"
     return (b.updated_at||'').localeCompare(a.updated_at||''); // both dateless — fall back to most-recently-touched
   });
@@ -3595,6 +3652,8 @@ function renderTours(){
     const linkedCount=tasks.filter(x=>x.tourId===t.id&&!x.arch).length;
     const statusCls='trs-'+t.status;
     const noDate=!tourHasUpcomingDate(t);
+    const ups=tourUpcomingDates(t);
+    const moreDates=ups.slice(1);
     return `<article class="tour-card${noDate?' tour-card-nodate':''}" onclick="openTourDetail('${t.id}')">
       <div class="tour-card-header">
         <span class="tour-code">${esc(t.id)}</span>
@@ -3611,7 +3670,8 @@ function renderTours(){
           <div class="tour-detail-row"><span class="tour-detail-label">Міста виїзду:</span><span class="tour-detail-val">${esc(t.cities_departure||'—')}</span></div>
           ${cleanTourCountries(t.countries)?`<div class="tour-detail-row"><span class="tour-detail-label">Маршрут:</span><span class="tour-detail-val">${esc(cleanTourCountries(t.countries))}</span></div>`:''}
           ${t.duration_days?`<div class="tour-detail-row"><span class="tour-detail-label">Тривалість:</span><span class="tour-detail-val">${esc(t.duration_days)} дн.</span></div>`:''}
-          <div class="tour-detail-row"><span class="tour-detail-label">Найближчий виїзд:</span>${tourHasUpcomingDate(t)?`<span class="tour-detail-val">${esc(fmtTourDateShort(t.next_departure))}</span>`:`<span class="tour-detail-val tour-nodate">Без дати</span>`}</div>
+          <div class="tour-detail-row"><span class="tour-detail-label">Найближчий виїзд:</span>${ups.length?`<span class="tour-detail-val">${esc(fmtTourDateShort(ups[0]))}</span>`:`<span class="tour-detail-val tour-nodate">Без дати</span>`}</div>
+          ${moreDates.length?`<div class="tour-detail-row"><span class="tour-detail-label">Наступні виїзди:</span><span class="tour-detail-val" title="${esc(fmtTourDepList(moreDates))}">${esc(moreDates.slice(0,8).map(fmtTourDateShort).join(', '))}${moreDates.length>8?` <span class="tour-detail-sub">+${moreDates.length-8} ще</span>`:''}</span></div>`:''}
           <div class="tour-detail-row"><span class="tour-detail-label">Буклет оновлено:</span><span class="tour-detail-val">${t.pdf_updated_at?fmtTourDate(t.pdf_updated_at):'ще не завантажено'}</span></div>
           <div class="tour-detail-row"><span class="tour-detail-label">Завдання:</span><span class="tour-detail-val">${linkedCount}</span></div>
         </div>
@@ -3626,6 +3686,8 @@ function renderTours(){
 }
 function openTourAdd(id){
   trCurId=id;
+  document.getElementById('trDepInput').value='';
+  document.getElementById('trDepErr').style.display='none';
   const existingBlocks=document.getElementById('trExistingBlocks');
   const staleFlag=document.getElementById('trStaleFlag');
   if(id){
@@ -3641,10 +3703,8 @@ function openTourAdd(id){
     document.getElementById('trCities').value=t.cities_departure||'';
     document.getElementById('trCityTax').value=t.city_tax_price||'';
     document.getElementById('trCityTaxChild').value=t.city_tax_price_child!=null?t.city_tax_price_child:'';
-    document.getElementById('trNextDate').value=t.next_departure||'';
-    const trNdTxt=document.getElementById('trNextDateTxt');
-    if(t.next_departure){trNdTxt.textContent=fmtTourDateShort(t.next_departure);trNdTxt.className='';}
-    else{trNdTxt.textContent='Оберіть дату...';trNdTxt.className='placeholder';}
+    document.getElementById('trNextDate').value='';
+    _trDeps=tourDepartures(t);renderTourDepartures();
     renderTourFeeRows(t.extra_fees);
     document.getElementById('trPdfUrl').value=t.pdf_url||'';
     document.getElementById('trSiteUrl').value=t.site_url||'';
@@ -3669,8 +3729,7 @@ function openTourAdd(id){
     document.getElementById('trPriceChild').value='';
     document.getElementById('trCityTax').value='';
     document.getElementById('trCityTaxChild').value='';
-    const trNdTxt0=document.getElementById('trNextDateTxt');
-    trNdTxt0.textContent='Оберіть дату...';trNdTxt0.className='placeholder';
+    _trDeps=[];renderTourDepartures();
     renderTourFeeRows([]);
     document.getElementById('trBtn').textContent='Створити';
     document.getElementById('trPdfMeta').textContent='';
@@ -3682,6 +3741,35 @@ function openTourAdd(id){
   openM('mTour');
 }
 function openTourDetail(id){ openTourAdd(id); }
+// ── Поле «Дати виїздів» у паспорті туру ──
+let _trDeps=[];
+function renderTourDepartures(){
+  const el=document.getElementById('trDepList');
+  if(!el) return;
+  const list=normTourDates(_trDeps), today=kyivDateISO(), next=list.find(d=>d>=today)||'';
+  _trDeps=list;
+  el.innerHTML=list.length?list.map(d=>`<span class="tr-dep-chip${d<today?' past':''}${d===next?' next':''}" title="${d<today?'Дата минула':d===next?'Найближчий виїзд':''}">${esc(fmtTourDateShort(d))}<button type="button" aria-label="Видалити дату" onclick="removeTourDeparture('${d}')">×</button></span>`).join(''):'<span class="tr-dep-empty">Дат ще немає</span>';
+  const c=document.getElementById('trDepCount');
+  if(c) c.textContent=list.length?('· усього '+list.length+', майбутніх '+list.filter(d=>d>=today).length):'';
+}
+function addTourDepartures(isos){ _trDeps=normTourDates([..._trDeps,...isos]); renderTourDepartures(); }
+function removeTourDeparture(iso){ _trDeps=_trDeps.filter(d=>d!==iso); renderTourDepartures(); }
+function addTourDepartureFromInput(){
+  const inp=document.getElementById('trDepInput'), err=document.getElementById('trDepErr');
+  const v=inp.value.trim();
+  if(!v) return;
+  const ds=extractTourDates(v);
+  const found=v.match(TOUR_DATE_G)||[];
+  // помилка, якщо у вводі є щось окрім дат або хоч одна дата нереальна (напр. 32.13.2027)
+  if(!ds||!ds.length||ds.length<new Set(found.map(parseTourDateToISO)).size){
+    err.textContent='Не вдалося розпізнати дати. Формат: 31.05.2027, 16.08.2027 (день.місяць.рік).';
+    err.style.display='block';
+    return;
+  }
+  err.style.display='none';
+  addTourDepartures(ds);
+  inp.value='';
+}
 function saveTourPassport(){
   const title=document.getElementById('trTitle').value.trim();
   if(!title){alert('Вкажіть назву туру.');document.getElementById('trTitle').focus();return;}
@@ -3692,7 +3780,10 @@ function saveTourPassport(){
   const cityTax=parseFloat(document.getElementById('trCityTax').value)||0;
   const cityTaxChild=numOrNull('trCityTaxChild');
   const cities=document.getElementById('trCities').value.trim();
-  const nextDate=document.getElementById('trNextDate').value;
+  // якщо в полі дат лишився невнесений текст — спершу додаємо його до списку (або зупиняємось із помилкою)
+  if(document.getElementById('trDepInput').value.trim()){ addTourDepartureFromInput(); if(document.getElementById('trDepInput').value.trim()) return; }
+  const deps=normTourDates(_trDeps);
+  const nextDate=nextDepartureOf(deps);
   const extraFees=collectTourFees();
   const pdfUrl=document.getElementById('trPdfUrl').value.trim();
   const siteUrl=document.getElementById('trSiteUrl').value.trim();
@@ -3711,7 +3802,7 @@ function saveTourPassport(){
     if(Number(t.city_tax_price||0)!==cityTax||!childEq(t.city_tax_price_child,cityTaxChild)) tourLogEntry(t,'City Tax',priceLbl(t.city_tax_price,t.city_tax_price_child,t.currency),priceLbl(cityTax,cityTaxChild,currency));
     if(Number(t.checkpoint_price||0)===price&&childEq(t.checkpoint_price_child,priceChild)&&Number(t.city_tax_price||0)===cityTax&&childEq(t.city_tax_price_child,cityTaxChild)&&t.currency!==currency) tourLogEntry(t,'валюта',t.currency,currency);
     if((t.cities_departure||'')!==cities) tourLogEntry(t,'міста виїзду',t.cities_departure||'—',cities||'—');
-    if((t.next_departure||'')!==nextDate) tourLogEntry(t,'дата виїзду',fmtTourDateShort(t.next_departure)||'—',fmtTourDateShort(nextDate)||'—');
+    if(fmtTourDepList(tourDepartures(t))!==fmtTourDepList(deps)) tourLogEntry(t,'дати виїзду',fmtTourDepList(tourDepartures(t)),fmtTourDepList(deps));
     const feeStr=f=>f.name+': '+Number(f.amount).toFixed(2)+(f.amount_child!=null?'/'+Number(f.amount_child).toFixed(2):'');
     const oldFeesStr=(t.extra_fees||[]).map(feeStr).join(', ')||'—';
     const newFeesStr=extraFees.map(feeStr).join(', ')||'—';
@@ -3723,11 +3814,11 @@ function saveTourPassport(){
       t.pdf_updated_at=pdfUrl?now:'';
     }
     if((t.pdf_design_year||'')!==pdfYear) tourLogEntry(t,'дизайн буклету',t.pdf_design_year||'—',pdfYear||'—');
-    Object.assign(t,{title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,notes,pdf_design_year:pdfYear,updated_at:now});
+    Object.assign(t,{title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,departures:deps,extra_fees:extraFees,pdf_url:pdfUrl,site_url:siteUrl,notes,pdf_design_year:pdfYear,updated_at:now});
     showToast('Тур збережено!','Зміни зафіксовано в історії');
   } else {
     const newId='t_'+Date.now().toString(36);
-    const t={id:newId,title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,extra_fees:extraFees,
+    const t={id:newId,title,status,currency,checkpoint_price:price,checkpoint_price_child:priceChild,city_tax_price:cityTax,city_tax_price_child:cityTaxChild,cities_departure:cities,next_departure:nextDate,departures:deps,extra_fees:extraFees,
       pdf_url:pdfUrl,pdf_updated_at:pdfUrl?now:'',site_url:siteUrl,notes,pdf_design_year:pdfYear,
       created_at:now,updated_at:now,log:[]};
     tourLogEntry(t,'створення туру','—',title);
@@ -4138,7 +4229,7 @@ function batchArchive(){
   if(!batchSelected.size)return;
   if(!canDo('extended')&&!isSuperAdmin()){alert('Пакетне архівування потребує розширеного доступу.');return;}
   if(!confirm('Перемістити '+batchSelected.size+' завдань до архіву?'))return;
-  const d=new Date().toISOString().split('T')[0];
+  const d=kyivDateISO();
   batchSelected.forEach(id=>{
     const t=tasks.find(t=>t.id===id);
     if(t){t.arch=true;t.archAt=d;saveArchiveDoc(t);}
@@ -4170,7 +4261,7 @@ document.addEventListener('keydown',e=>{
 async function reqNotifPerm(){if('Notification' in window&&Notification.permission==='default') await Notification.requestPermission();}
 function checkDeadlines(){
   if(!('Notification' in window)||Notification.permission!=='granted') return;
-  const today=new Date();today.setHours(0,0,0,0);
+  const today=kyivTodayDate();
   tasks.filter(t=>!t.arch&&t.deadline&&t.status!=='done').forEach(t=>{
     const dl=new Date(t.deadline+'T00:00:00');
     const diff=Math.ceil((dl-today)/86400000);
@@ -4192,7 +4283,7 @@ function initTheme(){
 }
 
 /* ── VACATION helpers ── */
-function todayISO(){return new Date().toISOString().split('T')[0];}
+function todayISO(){return kyivDateISO();}
 function isOnVacation(m){
   if(!m.vacFrom||!m.vacTo) return false;
   const t=todayISO(); return t>=m.vacFrom&&t<=m.vacTo;
@@ -4282,8 +4373,7 @@ function calConfirmDate(){
     const m=managers.find(x=>x.code===code);
     if(m){m[field]=iso;save();renderMgrList();renderVacBanner();}
   } else if(calMode==='trNextDate'){
-    document.getElementById('trNextDate').value=iso;
-    const t=document.getElementById('trNextDateTxt');t.textContent=fmtTourDateShort(iso);t.className='';
+    addTourDepartures([iso]);
   }
   closeCal();
 }
@@ -4432,7 +4522,7 @@ function cavH(code){
 }
 function isOverdue(t){
   if(!t.deadline||t.status==='done'||t.arch) return false;
-  const today=new Date();today.setHours(0,0,0,0);
+  const today=kyivTodayDate();
   return new Date(t.deadline+'T00:00:00')<today;
 }
 function isUrl(s){return /^https?:\/\//i.test(s)||/^www\./i.test(s);}
@@ -4724,8 +4814,8 @@ function togCmt(id,ev){
 function addCmt(id,ev){
   if(ev)ev.stopPropagation();
   const tx=document.getElementById('ct'+id).value.trim();if(!tx)return;
-  const t=findTask(id),n=new Date();
-  t.cmts.push({by:curU,t:n.getHours()+':'+String(n.getMinutes()).padStart(2,'0'),tx});
+  const t=findTask(id),k=kyivParts();
+  t.cmts.push({by:curU,t:k.h+':'+String(k.mi).padStart(2,'0'),tx}); // час коментаря — київський
   logEntry('comment',id,t.title||t.url||t.note||'—',null,null,tx.slice(0,60)+(tx.length>60?'…':''));
   tgNotifyComment(t, tx, curU);
   document.getElementById('ct'+id).value='';document.getElementById('cb'+id).classList.remove('show');
@@ -5054,7 +5144,7 @@ function askDel(id){
 async function doDel(){
   const t=findTask(dId);
   logEntry('archive',dId,t.title||t.url||t.note||'—');
-  t.arch=true;t.archAt=new Date().toISOString().split('T')[0];
+  t.arch=true;t.archAt=kyivDateISO();
   await saveArchiveDoc(t); // must complete before save() removes it from main doc
   closeM('mCf');save();rStats();render();rArch();
 }
@@ -5869,7 +5959,7 @@ function mkT(_skipOff){
   if(!toVal){alert('Оберіть виконавця.');document.getElementById('fTo').focus();return;}
   // Нове завдання в неробочий час — спочатку показати повідомлення (редагування не стосується)
   if(!_wasEdit&&_skipOff!==true&&!isWorkTime()){askOffHours(()=>mkT(true));return;}
-  const today=new Date().toISOString().split('T')[0];
+  const today=kyivDateISO();
   if(eId){
     const t=findTask(eId);
     if(!t||!canEditTask(t)){alert('Недостатньо прав для редагування цього завдання.');closeM('mAdd');return;}
@@ -5919,8 +6009,8 @@ function mkT(_skipOff){
     }
   } else {
     const now=new Date();
-    const today=now.toISOString().split('T')[0];
-    const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    const today=kyivDateISO(now);
+    const timeStr=kyivTimeHM(now); // київський час
     const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
     const _fTourSelC=document.getElementById('fTourSel');
     tasks.unshift({id:newId,title:T,url:U.replace(/^https?:\/\//,''),note:N,
@@ -5947,8 +6037,8 @@ function mkQ(_skipOff){
   if(_skipOff!==true&&!isWorkTime()){askOffHours(()=>mkQ(true));return;}
   const iU=/^https?:\/\//.test(v)||/^www\./.test(v);
   const now=new Date();
-  const today=now.toISOString().split('T')[0];
-  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const today=kyivDateISO(now);
+  const timeStr=kyivTimeHM(now); // київський час
   const defaultTo=(managers.find(m=>m.role==='admin'&&!m.hidden)||managers.find(m=>!m.hidden)||managers[0])?.code||curU;
   const newId=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():Date.now()+'_'+Math.random().toString(36).slice(2);
   // Always title:'' so placeholder phrase shows; text goes to url or note
@@ -6077,29 +6167,7 @@ function closeM(id){document.getElementById(id).classList.add('hide');}
 });
 document.getElementById('mOff').addEventListener('click',function(e){if(e.target===this)offHoursCancel();});
 
-/* ── WORK HOURS HELPERS ──
-   Робочий графік (cfg.s / cfg.e / cfg.days) заданий за КИЇВСЬКИМ часом, незалежно від того,
-   де зараз користувач. Тому всі перевірки робочого часу рахуємо в Europe/Kyiv, а не за
-   локальним поясом браузера (new Date().getHours() повертає саме локальний час). */
-const WORK_TZ=(function(){
-  for(const z of ['Europe/Kyiv','Europe/Kiev']){ // 'Europe/Kiev' — для старіших браузерів
-    try{ new Intl.DateTimeFormat('en-GB',{timeZone:z}); return z; }catch(e){}
-  }
-  return undefined; // аварійний варіант: локальний час
-})();
-const _WT_FMT=new Intl.DateTimeFormat('en-GB',{timeZone:WORK_TZ,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',weekday:'short'});
-const _WT_WD={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
-// Розкладає момент часу за київським часом: рік, місяць (1-12), день, год, хв, день тижня (0=Нд), 'HH:MM'
-function kyivParts(d){
-  const p={};
-  _WT_FMT.formatToParts(d||new Date()).forEach(x=>{p[x.type]=x.value;});
-  const h=String(Number(p.hour)%24).padStart(2,'0'); // страховка від "24:00" в окремих браузерах
-  return {y:+p.year,mo:+p.month,d:+p.day,h:+h,mi:+p.minute,wd:_WT_WD[p.weekday],ts:h+':'+p.minute};
-}
-function normHM(str,def){ // '9:00' → '09:00', щоб рядкове порівняння працювало коректно
-  const m=/^(\d{1,2}):(\d{2})$/.exec(str||'');
-  return m?m[1].padStart(2,'0')+':'+m[2]:def;
-}
+/* ── WORK HOURS HELPERS ── (київський час: ядро — див. «KYIV TIME» на початку скрипта) */
 function isWorkTime(d){
   const k=kyivParts(d);
   return (cfg.days||[]).includes(k.wd)&&k.ts>=normHM(cfg.s,'09:00')&&k.ts<=normHM(cfg.e,'18:00');
